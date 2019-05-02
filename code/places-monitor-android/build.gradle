@@ -1,0 +1,109 @@
+apply plugin: "com.android.library"
+apply plugin: "jacoco"
+apply plugin: "com.jfrog.bintray"
+
+ext {
+    srcFolders = file("./").listFiles().findAll {
+        !it.isFile() && !it.name.startsWith("gradle") && !it.name.startsWith("test") && (it.name != "mobile-sdk-demoapp")
+    }.collect { "./" + it.name + "/src/main/java" }
+
+}
+
+repositories {
+    google()
+    jcenter()
+}
+
+android {
+    compileSdkVersion 28
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+
+    flavorDimensions "target", "coreImplementation"
+    productFlavors {
+        coreBundle {
+            dimension "coreImplementation"
+        }
+
+        phone {
+            dimension "target"
+        }
+
+        watch {
+            dimension "target"
+        }
+
+    }
+
+    buildTypes {
+        debug {
+            testCoverageEnabled true
+            debuggable true
+        }
+
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+
+    compileOptions {
+        sourceCompatibility rootProject.ext.sourceCompatibility
+        targetCompatibility rootProject.ext.targetCompatibility
+    }
+
+}
+
+dependencies {
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.adobe.marketing.mobile:sdk-core:1.2.2'
+    implementation 'com.adobe.marketing.mobile:places:1.0.0'
+    implementation 'com.google.android.gms:play-services-location:16.0.0'
+    testImplementation 'junit:junit:4.12'
+    testImplementation "org.mockito:mockito-core:${rootProject.ext.mockitoCoreVersion}"
+    testImplementation 'org.powermock:powermock-api-mockito2:2.0.0'
+    testImplementation 'org.powermock:powermock-module-junit4:2.0.0'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+}
+
+tasks.withType(Test) {
+    testLogging {
+        exceptionFormat "full"
+        events "started", "skipped", "passed", "failed"
+        showStandardStreams true
+    }
+}
+
+task platformUnitTestJacocoReport(type: JacocoReport, dependsOn: "testPhoneCoreBundleDebugUnitTest") {
+    sourceDirectories = files(android.sourceSets.main.java.sourceFiles)
+    sourceDirectories += files(android.sourceSets.coreBundle.java.sourceFiles)
+    sourceDirectories += files(android.sourceSets.phone.java.sourceFiles)
+    executionData "$buildDir/jacoco/testPhoneCoreBundleDebugUnitTest.exec"
+    classDirectories = fileTree(dir: "$buildDir/intermediates/classes/phoneCoreBundle/debug/com/adobe/marketing/mobile")
+}
+
+tasks.withType(Test) {
+    jacoco {
+        includeNoLocationClasses = false
+        includes = ['*/phone/java/com/adobe/marketing/mobile/*.java']
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        force 'org.codehaus.groovy:groovy-all:2.4.12'
+    }
+}

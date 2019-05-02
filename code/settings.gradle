@@ -1,0 +1,3 @@
+include ':places-monitor-android', ':testapp'
+
+rootProject.name = "places-monitor"

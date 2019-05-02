@@ -1,0 +1,31 @@
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.4.0'
+        classpath 'org.codehaus.groovy:groovy-all:2.4.15'
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.9.4"
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+    }
+}
+
+ext {
+    // android config
+    minSdkVersion = 14
+    targetSdkVersion = 27
+    compileSdkVersion = 27
+    versionCode = 1
+    //versionName = "5.0.0b2"
+
+    // java config
+    sourceCompatibility = JavaVersion.VERSION_1_7
+    targetCompatibility = JavaVersion.VERSION_1_7
+
+    // dependencies
+    junitVersion = "4.12"
+    mockitoCoreVersion = "2.10.0"
+    testSupportLibVersion = "1.0.1"
+    testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
+}

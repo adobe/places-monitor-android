@@ -1,0 +1,19 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.adobe.marketing.mobile.placesmonitor" >
+    <application>
+        <receiver android:name="com.adobe.marketing.mobile.PlacesLocationBroadcastReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.adobe.marketing.mobile.PlacesLocationBroadcastReceiver.locationUpdates" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name="com.adobe.marketing.mobile.PlacesGeofenceBroadcastReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.adobe.marketing.mobile.PlacesGeofenceBroadcastReceiver.geofenceUpdates" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+</manifest>
