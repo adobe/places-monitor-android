@@ -1,7 +1,10 @@
-# THE CODE IN THIS REPO IS NOT READY FOR PRODUCTION USE
+# UNDER CONSTRUCTION
+
+### The code in this repository is not yet ready for production use
 
 We are in the process of migrating our project to be open sourced.  Please be patient as we get everything settled.  Thanks!
 
+<!--
 # Getting started with the Places Monitor for Android
 
 Table of Contents
@@ -67,3 +70,5 @@ To improve user experience, Android 8.0 (Oreo - API level 26) imposes background
 
 ## Licensing
 This project is licensed under the Apache V2 License. See [LICENSE](LICENSE) for more information.
+
+-->
