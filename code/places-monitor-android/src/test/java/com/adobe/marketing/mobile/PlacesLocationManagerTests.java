@@ -25,6 +25,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
+import java.lang.reflect.Modifier;
 import android.support.v4.app.ActivityCompat;
 
 import com.google.android.gms.common.api.ApiException;
@@ -54,6 +56,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,7 +68,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.junit.Assert.*;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Context.class, App.class, LocationServices.class, PendingIntent.class, ActivityCompat.class, LocationResult.class})
+@PrepareForTest({Context.class, App.class, LocationServices.class, PendingIntent.class, ActivityCompat.class, LocationResult.class, Build.class})
 public class PlacesLocationManagerTests {
 	private final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
 	private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
@@ -114,6 +117,7 @@ public class PlacesLocationManagerTests {
 	@Before
 	public void before() throws Exception {
 		PowerMockito.mockStatic(App.class);
+		PowerMockito.mockStatic(Build.class);
 		PowerMockito.mockStatic(LocationServices.class);
 		PowerMockito.mockStatic(PendingIntent.class);
 		PowerMockito.mockStatic(ActivityCompat.class);
@@ -125,7 +129,7 @@ public class PlacesLocationManagerTests {
 		Mockito.when(App.getCurrentActivity()).thenReturn(activity);
 		Mockito.when(LocationServices.getFusedLocationProviderClient(context)).thenReturn(locationProviderClient);
 		Mockito.when(PendingIntent.getBroadcast(eq(context), eq(0), any(Intent.class),
-												eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(pendingIntent);
+				eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(pendingIntent);
 		Mockito.when(App.getAppContext()).thenReturn(context);
 		Mockito.when(ActivityCompat.shouldShowRequestPermissionRationale(activity, FINE_LOCATION)).thenReturn(false);
 		Mockito.when(ActivityCompat.checkSelfPermission(context, FINE_LOCATION)).thenReturn(PackageManager.PERMISSION_GRANTED);
@@ -134,7 +138,7 @@ public class PlacesLocationManagerTests {
 		// mock instance methods
 		Mockito.when(locationProviderClient.removeLocationUpdates(pendingIntent)).thenReturn(mockTask);
 		Mockito.when(mockSettingsClient.checkLocationSettings(any(LocationSettingsRequest.class))).thenReturn(
-			mockTaskSettingsResponse);
+				mockTaskSettingsResponse);
 		Mockito.when(locationProviderClient.getLastLocation()).thenReturn(mockTaskLocation);
 	}
 
@@ -168,13 +172,13 @@ public class PlacesLocationManagerTests {
 
 		// verify the location request parameters
 		assertEquals("the location request interval should be correct", PlacesMonitorTestConstants.Location.REQUEST_INTERVAL,
-					 locationRequestArgumentCaptor.getValue().getInterval());
+				locationRequestArgumentCaptor.getValue().getInterval());
 		assertEquals("the location fastest request interval should be correct",
-					 PlacesMonitorTestConstants.Location.REQUEST_FASTEST_INTERVAL,
-					 locationRequestArgumentCaptor.getValue().getFastestInterval());
+				PlacesMonitorTestConstants.Location.REQUEST_FASTEST_INTERVAL,
+				locationRequestArgumentCaptor.getValue().getFastestInterval());
 		assertEquals("the location small displacement should be correct",
-					 PlacesMonitorTestConstants.Location.REQUEST_SMALLEST_DISPLACEMENT,
-					 locationRequestArgumentCaptor.getValue().getSmallestDisplacement(), 0.0);
+				PlacesMonitorTestConstants.Location.REQUEST_SMALLEST_DISPLACEMENT,
+				locationRequestArgumentCaptor.getValue().getSmallestDisplacement(), 0.0);
 	}
 
 
@@ -223,7 +227,7 @@ public class PlacesLocationManagerTests {
 		final ArgumentCaptor<OnSuccessListener> onSuccessCallback = ArgumentCaptor.forClass(OnSuccessListener.class);
 		final ArgumentCaptor<LocationRequest> locationRequestArgumentCaptor = ArgumentCaptor.forClass(LocationRequest.class);
 		Mockito.when(PendingIntent.getBroadcast(eq(context), eq(0), any(Intent.class),
-												eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
+				eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
 
 		// test
 		locationManager.startMonitoring();
@@ -247,7 +251,7 @@ public class PlacesLocationManagerTests {
 		final ArgumentCaptor<OnFailureListener> onFailureCallback = ArgumentCaptor.forClass(OnFailureListener.class);
 		final ArgumentCaptor<LocationRequest> locationRequestArgumentCaptor = ArgumentCaptor.forClass(LocationRequest.class);
 		Mockito.when(PendingIntent.getBroadcast(eq(context), eq(0), any(Intent.class),
-												eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
+				eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
 
 		// test
 		locationManager.startMonitoring();
@@ -273,7 +277,7 @@ public class PlacesLocationManagerTests {
 		final ArgumentCaptor<OnFailureListener> onFailureCallback = ArgumentCaptor.forClass(OnFailureListener.class);
 		final ArgumentCaptor<LocationRequest> locationRequestArgumentCaptor = ArgumentCaptor.forClass(LocationRequest.class);
 		Mockito.when(PendingIntent.getBroadcast(eq(context), eq(0), any(Intent.class),
-												eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
+				eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
 
 		// test
 		locationManager.startMonitoring();
@@ -295,8 +299,10 @@ public class PlacesLocationManagerTests {
 
 
 	@Test
-	public void test_startMonitoring_when_permissionNotGranted() {
+	public void test_startMonitoring_when_permissionNotGranted() throws Exception {
 		// setup
+		setFinalStatic(Build.VERSION.class.getField("SDK_INT"), 25);
+		setFinalStatic(Build.VERSION_CODES.class.getField("M"), 24);
 		Mockito.when(ActivityCompat.checkSelfPermission(context, FINE_LOCATION)).thenReturn(PackageManager.PERMISSION_DENIED);
 
 
@@ -393,7 +399,7 @@ public class PlacesLocationManagerTests {
 		// setup
 		final ArgumentCaptor<OnCompleteListener> onCompleteCallback = ArgumentCaptor.forClass(OnCompleteListener.class);
 		Mockito.when(PendingIntent.getBroadcast(eq(context), eq(0), any(Intent.class),
-												eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
+				eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
 
 		// test
 		locationManager.stopMonitoring();
@@ -631,6 +637,14 @@ public class PlacesLocationManagerTests {
 		PowerMockito.mockStatic(LocationResult.class);
 		PowerMockito.when(LocationResult.class, "extractResult", any(Intent.class)).thenReturn(locationResult);
 		when(intent.getAction()).thenReturn(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_LOCATION);
+	}
+
+	static void setFinalStatic(Field field, Object newValue) throws Exception {
+		field.setAccessible(true);
+		Field modifiersField = Field.class.getDeclaredField("modifiers");
+		modifiersField.setAccessible(true);
+		modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+		field.set(null, newValue);
 	}
 
 }
