@@ -1,18 +1,20 @@
-/*
- Copyright 2019 Adobe. All rights reserved.
- This file is licensed to you under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License. You may obtain a copy
- of the License at http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software distributed under
- the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
- OF ANY KIND, either express or implied. See the License for the specific language
- governing permissions and limitations under the License.
-*/
-
-//
-// PlacesMonitorListenerHubSharedStateTests.java
-//
+/* **************************************************************************
+ *
+ * ADOBE CONFIDENTIAL
+ * ___________________
+ *
+ * Copyright 2019 Adobe Inc.
+ * All Rights Reserved.
+ *
+ * NOTICE:  All information contained herein is, and remains
+ * the property of Adobe Inc. and its suppliers,
+ * if any.  The intellectual and technical concepts contained
+ * herein are proprietary to Adobe Inc. and its
+ * suppliers and are protected by trade secret or copyright law.
+ * Dissemination of this information or reproduction of this material
+ * is strictly forbidden unless prior written permission is obtained
+ * from Adobe Inc..
+ **************************************************************************/
 
 package com.adobe.marketing.mobile;
 
@@ -36,97 +38,101 @@ import static org.mockito.Mockito.when;
 @PrepareForTest({PlacesMonitorInternal.class, ExtensionApi.class})
 public class PlacesMonitorListenerHubSharedStateTests {
 
-    @Mock
-    PlacesMonitorInternal mockPlacesMonitorInternal;
+	@Mock
+	PlacesMonitorInternal mockPlacesMonitorInternal;
 
-    @Mock
-    ExtensionApi extensionApi;
-
-
-    private int EXECUTOR_TIMEOUT = 5;  // 5 milliseconds
-    private PlacesMonitorListenerHubSharedState placesMonitorListenerHubSharedState;
-    private ExecutorService executor = Executors.newSingleThreadExecutor();
+	@Mock
+	ExtensionApi extensionApi;
 
 
-    @Before
-    public void beforeEach() {
-        placesMonitorListenerHubSharedState = new PlacesMonitorListenerHubSharedState(extensionApi, PlacesMonitorTestConstants.EventType.HUB, PlacesMonitorTestConstants.EventSource.SHARED_STATE);
-        when(mockPlacesMonitorInternal.getExecutor()).thenReturn(executor);
-        when(extensionApi.getExtension()).thenReturn(mockPlacesMonitorInternal);
-    }
+	private int EXECUTOR_TIMEOUT = 5;  // 5 milliseconds
+	private PlacesMonitorListenerHubSharedState placesMonitorListenerHubSharedState;
+	private ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    @Test
-    public void testHear_WhenConfigurationSharedStateEvent() {
-        // setup
-        EventData eventData = new EventData();
-        eventData.putString(PlacesMonitorConstants.SharedState.STATEOWNER, PlacesMonitorConstants.SharedState.CONFIGURATION);
-        Event event = new Event.Builder("testEvent","test source", "test type").setData(eventData).build();
 
-        // test
-        placesMonitorListenerHubSharedState.hear(event);
-        waitForExecutor();
+	@Before
+	public void beforeEach() {
+		placesMonitorListenerHubSharedState = new PlacesMonitorListenerHubSharedState(extensionApi,
+				PlacesMonitorTestConstants.EventType.HUB, PlacesMonitorTestConstants.EventSource.SHARED_STATE);
+		when(mockPlacesMonitorInternal.getExecutor()).thenReturn(executor);
+		when(extensionApi.getExtension()).thenReturn(mockPlacesMonitorInternal);
+	}
 
-        // verify
-        verify(mockPlacesMonitorInternal, times(1)).processEvents();
-    }
+	@Test
+	public void testHear_WhenConfigurationSharedStateEvent() {
+		// setup
+		EventData eventData = new EventData();
+		eventData.putString(PlacesMonitorConstants.SharedState.STATEOWNER, PlacesMonitorConstants.SharedState.CONFIGURATION);
+		Event event = new Event.Builder("testEvent", "test source", "test type").setData(eventData).build();
 
-    @Test
-    public void testHear_WithNullEventData() {
-        // setup
-        Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventType.HUB, PlacesMonitorTestConstants.EventSource.SHARED_STATE).setData(null).build();
+		// test
+		placesMonitorListenerHubSharedState.hear(event);
+		waitForExecutor();
 
-        // test
-        placesMonitorListenerHubSharedState.hear(event);
-        waitForExecutor();
+		// verify
+		verify(mockPlacesMonitorInternal, times(1)).processEvents();
+	}
 
-        // verify
-        verify(mockPlacesMonitorInternal, times(0)).processEvents();
-    }
+	@Test
+	public void testHear_WithNullEventData() {
+		// setup
+		Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventType.HUB,
+										PlacesMonitorTestConstants.EventSource.SHARED_STATE).setData(null).build();
 
-    @Test
-    public void testHear_WithNullParentExtension() {
-        // setup
-        EventData eventData = new EventData();
-        eventData.putString(PlacesMonitorConstants.SharedState.STATEOWNER, PlacesMonitorConstants.SharedState.CONFIGURATION);
-        Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventType.HUB, PlacesMonitorTestConstants.EventSource.SHARED_STATE).setData(eventData).build();
-        when(extensionApi.getExtension()).thenReturn(null);
+		// test
+		placesMonitorListenerHubSharedState.hear(event);
+		waitForExecutor();
 
-        // test
-        placesMonitorListenerHubSharedState.hear(event);
-        waitForExecutor();
+		// verify
+		verify(mockPlacesMonitorInternal, times(0)).processEvents();
+	}
 
-        // verify
-        verify(mockPlacesMonitorInternal, times(0)).processEvents();
-    }
+	@Test
+	public void testHear_WithNullParentExtension() {
+		// setup
+		EventData eventData = new EventData();
+		eventData.putString(PlacesMonitorConstants.SharedState.STATEOWNER, PlacesMonitorConstants.SharedState.CONFIGURATION);
+		Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventType.HUB,
+										PlacesMonitorTestConstants.EventSource.SHARED_STATE).setData(eventData).build();
+		when(extensionApi.getExtension()).thenReturn(null);
 
-    @Test
-    public void testHear_WhenOtherSharedStateEvent() {
-        // setup
-        EventData eventData = new EventData();
-        eventData.putString(PlacesMonitorConstants.SharedState.STATEOWNER, "OtherSharedState");
-        Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventType.HUB, PlacesMonitorTestConstants.EventSource.SHARED_STATE).setData(eventData).build();
+		// test
+		placesMonitorListenerHubSharedState.hear(event);
+		waitForExecutor();
 
-        // test
-        placesMonitorListenerHubSharedState.hear(event);
-        waitForExecutor();
+		// verify
+		verify(mockPlacesMonitorInternal, times(0)).processEvents();
+	}
 
-        // verify
-        verify(mockPlacesMonitorInternal, times(0)).processEvents();
-    }
+	@Test
+	public void testHear_WhenOtherSharedStateEvent() {
+		// setup
+		EventData eventData = new EventData();
+		eventData.putString(PlacesMonitorConstants.SharedState.STATEOWNER, "OtherSharedState");
+		Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventType.HUB,
+										PlacesMonitorTestConstants.EventSource.SHARED_STATE).setData(eventData).build();
 
-    void waitForExecutor() {
-        Future<?> future = executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                // Fake task to check the execution termination
-            }
-        });
+		// test
+		placesMonitorListenerHubSharedState.hear(event);
+		waitForExecutor();
 
-        try {
-            future.get(EXECUTOR_TIMEOUT, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            fail(String.format("Executor took longer than %s (sec)", EXECUTOR_TIMEOUT));
-        }
-    }
+		// verify
+		verify(mockPlacesMonitorInternal, times(0)).processEvents();
+	}
+
+	void waitForExecutor() {
+		Future<?> future = executor.submit(new Runnable() {
+			@Override
+			public void run() {
+				// Fake task to check the execution termination
+			}
+		});
+
+		try {
+			future.get(EXECUTOR_TIMEOUT, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			fail(String.format("Executor took longer than %s (sec)", EXECUTOR_TIMEOUT));
+		}
+	}
 
 }
