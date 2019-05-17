@@ -3,7 +3,6 @@
  This file is licensed to you under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License. You may obtain a copy
  of the License at http://www.apache.org/licenses/LICENSE-2.0
-
  Unless required by applicable law or agreed to in writing, software distributed under
  the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
  OF ANY KIND, either express or implied. See the License for the specific language
@@ -14,9 +13,12 @@
 // PlacesMonitorConstants.java
 //
 
+
 package com.adobe.marketing.mobile;
 
 final class PlacesMonitorConstants {
+	static final int MONITOR_LOCATION_PERMISSION_REQUEST_CODE = 92847;
+
 	static final String LOG_TAG = PlacesMonitor.class.getSimpleName();
 	static final String EXTENSION_NAME = "com.adobe.placesMonitor";
 
@@ -29,10 +31,13 @@ final class PlacesMonitorConstants {
 	static final String EVENTNAME_UPDATE = "update location";
 	static final int NEARBY_GEOFENCES_COUNT = 20;
 
+	static final String INTERNAL_INTENT_ACTION_LOCATION = "intentactionlocation";
+	static final String INTERNAL_INTENT_ACTION_GEOFENCE = "intentactiongeofence";
+
 	static final class Location {
 		static final int REQUEST_INTERVAL = 3600;				// 1 hour
 		static final int REQUEST_FASTEST_INTERVAL = 1800;    	// 30 minutes
-		static final int REQUEST_SMALLEST_DISPLACEMENT = 2000;   // 2 kilometer
+		static final int REQUEST_SMALLEST_DISPLACEMENT = 1000;   // 1 kilometer
 
 		private Location() {
 		}
@@ -85,6 +90,13 @@ final class PlacesMonitorConstants {
 		static final String PLACES = "com.adobe.module.places";
 
 		private SharedState() {
+		}
+	}
+
+	static final class SharedPreference {
+		static final String MONITORING_FENCES_KEY = "adb_monitoringFences";
+		static final String USERWITHIN_GEOFENCES_KEY = "adb_userWithinGeofences";
+		private SharedPreference() {
 		}
 	}
 

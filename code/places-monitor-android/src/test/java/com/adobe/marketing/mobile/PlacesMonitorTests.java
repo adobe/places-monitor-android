@@ -3,7 +3,6 @@
  This file is licensed to you under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License. You may obtain a copy
  of the License at http://www.apache.org/licenses/LICENSE-2.0
-
  Unless required by applicable law or agreed to in writing, software distributed under
  the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
  OF ANY KIND, either express or implied. See the License for the specific language
@@ -13,6 +12,7 @@
 //
 // PlacesMonitorTests.java
 //
+
 
 package com.adobe.marketing.mobile;
 
@@ -34,156 +34,160 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @PrepareForTest({MobileCore.class})
 public class PlacesMonitorTests {
 
-    @Before
-    public void before() {
-        PowerMockito.mockStatic(MobileCore.class);
-    }
+	@Before
+	public void before() {
+		PowerMockito.mockStatic(MobileCore.class);
+	}
 
-    // ========================================================================================
-    // extensionVersion
-    // ========================================================================================
+	// ========================================================================================
+	// extensionVersion
+	// ========================================================================================
 
-    @Test
-    public void test_extensionVersionAPI() {
-        // test
-        String extensionVersion = PlacesMonitor.extensionVersion();
-        assertEquals("The Extension version API returns the correct value", PlacesMonitorTestConstants.EXTENSION_VERSION, extensionVersion);
-    }
+	@Test
+	public void test_extensionVersionAPI() {
+		// test
+		String extensionVersion = PlacesMonitor.extensionVersion();
+		assertEquals("The Extension version API returns the correct value", PlacesMonitorTestConstants.EXTENSION_VERSION,
+					 extensionVersion);
+	}
 
-    // ========================================================================================
-    // registerExtension
-    // ========================================================================================
+	// ========================================================================================
+	// registerExtension
+	// ========================================================================================
 
-    @Test
-    public void test_registerExtensionAPI() {
-        // test
-        PlacesMonitor.registerExtension();
-        final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
+	@Test
+	public void test_registerExtensionAPI() {
+		// test
+		PlacesMonitor.registerExtension();
+		final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
 
-        // The monitor extension should register with core
-        verifyStatic(MobileCore.class, Mockito.times(1));
-        MobileCore.registerExtension(eq(PlacesMonitorInternal.class), callbackCaptor.capture());
+		// The monitor extension should register with core
+		verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.registerExtension(eq(PlacesMonitorInternal.class), callbackCaptor.capture());
 
-        // verify the callback
-        ExtensionErrorCallback extensionErrorCallback = callbackCaptor.getValue();
-        assertNotNull("The extension callback should not be null", extensionErrorCallback);
+		// verify the callback
+		ExtensionErrorCallback extensionErrorCallback = callbackCaptor.getValue();
+		assertNotNull("The extension callback should not be null", extensionErrorCallback);
 
-        // should not crash on calling the callback
-        extensionErrorCallback.error(ExtensionError.UNEXPECTED_ERROR);
-    }
-
-
-    // ========================================================================================
-    // start
-    // ========================================================================================
-
-    @Test
-    public void test_startAPI() {
-        // setup
-        Mockito.when(MobileCore.dispatchEvent(any(Event.class), any(ExtensionErrorCallback.class))).thenReturn(true);
-
-        // setup argument captors
-        final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
-
-        // test
-        PlacesMonitor.start();
-
-        // The start event should be dispatched
-        verifyStatic(MobileCore.class, Mockito.times(1));
-        MobileCore.dispatchEvent(eventCaptor.capture(), callbackCaptor.capture());
-
-        // verify dispatched event
-        Event event = eventCaptor.getValue();
-        assertNotNull("The dispatched event should not be null", event);
-        assertEquals("the event name should be correct" , PlacesMonitorTestConstants.EVENTNAME_START, event.getName());
-        assertEquals("the event type should be correct" , PlacesMonitorTestConstants.EventType.MONITOR, event.getType());
-        assertEquals("the event source should be correct" , PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT, event.getSource());
-    }
-
-    // ========================================================================================
-    // stop
-    // ========================================================================================
-
-    @Test
-    public void test_stopAPI() {
-        // setup
-        Mockito.when(MobileCore.dispatchEvent(any(Event.class), any(ExtensionErrorCallback.class))).thenReturn(true);
-
-        // setup argument captors
-        final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
-
-        // test
-        PlacesMonitor.stop();
-
-        // The start event should be dispatched
-        verifyStatic(MobileCore.class, Mockito.times(1));
-        MobileCore.dispatchEvent(eventCaptor.capture(), callbackCaptor.capture());
-
-        // verify dispatched event
-        Event event = eventCaptor.getValue();
-        assertNotNull("The dispatched event should not be null", event);
-        assertEquals("the event name should be correct" , PlacesMonitorTestConstants.EVENTNAME_STOP, event.getName());
-        assertEquals("the event type should be correct" , PlacesMonitorTestConstants.EventType.MONITOR, event.getType());
-        assertEquals("the event source should be correct" , PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT, event.getSource());
-    }
+		// should not crash on calling the callback
+		extensionErrorCallback.error(ExtensionError.UNEXPECTED_ERROR);
+	}
 
 
-    // ========================================================================================
-    // updateLocation
-    // ========================================================================================
+	// ========================================================================================
+	// start
+	// ========================================================================================
 
-    @Test
-    public void test_updateLocationAPI() {
-        // setup
-        Mockito.when(MobileCore.dispatchEvent(any(Event.class), any(ExtensionErrorCallback.class))).thenReturn(true);
+	@Test
+	public void test_startAPI() {
+		// setup
+		Mockito.when(MobileCore.dispatchEvent(any(Event.class), any(ExtensionErrorCallback.class))).thenReturn(true);
 
-        // setup argument captors
-        final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
+		// setup argument captors
+		final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+		final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
 
-        // test
-        PlacesMonitor.updateLocation();
+		// test
+		PlacesMonitor.start();
 
-        // The start event should be dispatched
-        verifyStatic(MobileCore.class, Mockito.times(1));
-        MobileCore.dispatchEvent(eventCaptor.capture(), callbackCaptor.capture());
+		// The start event should be dispatched
+		verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchEvent(eventCaptor.capture(), callbackCaptor.capture());
 
-        // verify dispatched event
-        Event event = eventCaptor.getValue();
-        assertNotNull("The dispatched event should not be null", event);
-        assertEquals("the event name should be correct" , PlacesMonitorTestConstants.EVENTNAME_UPDATE, event.getName());
-        assertEquals("the event type should be correct" , PlacesMonitorTestConstants.EventType.MONITOR, event.getType());
-        assertEquals("the event source should be correct" , PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT, event.getSource());
-    }
+		// verify dispatched event
+		Event event = eventCaptor.getValue();
+		assertNotNull("The dispatched event should not be null", event);
+		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_START, event.getName());
+		assertEquals("the event type should be correct", PlacesMonitorTestConstants.EventType.MONITOR, event.getType());
+		assertEquals("the event source should be correct", PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT,
+					 event.getSource());
+	}
 
-    // ========================================================================================
-    // dispatchEventCallback
-    // ========================================================================================
+	// ========================================================================================
+	// stop
+	// ========================================================================================
 
-    @Test
-    public void test_dispatchEventCallback_When_validError() {
-        // setup
-        Mockito.when(MobileCore.dispatchEvent(any(Event.class), any(ExtensionErrorCallback.class))).thenReturn(true);
+	@Test
+	public void test_stopAPI() {
+		// setup
+		Mockito.when(MobileCore.dispatchEvent(any(Event.class), any(ExtensionErrorCallback.class))).thenReturn(true);
 
-        // setup argument captors
-        final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
+		// setup argument captors
+		final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+		final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
 
-        // test
-        PlacesMonitor.start();
+		// test
+		PlacesMonitor.stop();
 
-        // The start event should be dispatched
-        verifyStatic(MobileCore.class, Mockito.times(1));
-        MobileCore.dispatchEvent(any(Event.class), callbackCaptor.capture());
+		// The start event should be dispatched
+		verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchEvent(eventCaptor.capture(), callbackCaptor.capture());
+
+		// verify dispatched event
+		Event event = eventCaptor.getValue();
+		assertNotNull("The dispatched event should not be null", event);
+		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_STOP, event.getName());
+		assertEquals("the event type should be correct", PlacesMonitorTestConstants.EventType.MONITOR, event.getType());
+		assertEquals("the event source should be correct", PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT,
+					 event.getSource());
+	}
 
 
-        // verify dispatch event error callback
-        ExtensionErrorCallback extensionErrorCallback = callbackCaptor.getValue();
-        assertNotNull("The dispatch event error callback should not be null", extensionErrorCallback);
+	// ========================================================================================
+	// updateLocation
+	// ========================================================================================
 
-        // should not crash or throw exception on calling the callback
-        extensionErrorCallback.error(ExtensionError.BAD_NAME);
-    }
+	@Test
+	public void test_updateLocationAPI() {
+		// setup
+		Mockito.when(MobileCore.dispatchEvent(any(Event.class), any(ExtensionErrorCallback.class))).thenReturn(true);
+
+		// setup argument captors
+		final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+		final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
+
+		// test
+		PlacesMonitor.updateLocation();
+
+		// The start event should be dispatched
+		verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchEvent(eventCaptor.capture(), callbackCaptor.capture());
+
+		// verify dispatched event
+		Event event = eventCaptor.getValue();
+		assertNotNull("The dispatched event should not be null", event);
+		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_UPDATE, event.getName());
+		assertEquals("the event type should be correct", PlacesMonitorTestConstants.EventType.MONITOR, event.getType());
+		assertEquals("the event source should be correct", PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT,
+					 event.getSource());
+	}
+
+	// ========================================================================================
+	// dispatchEventCallback
+	// ========================================================================================
+
+	@Test
+	public void test_dispatchEventCallback_When_validError() {
+		// setup
+		Mockito.when(MobileCore.dispatchEvent(any(Event.class), any(ExtensionErrorCallback.class))).thenReturn(true);
+
+		// setup argument captors
+		final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
+
+		// test
+		PlacesMonitor.start();
+
+		// The start event should be dispatched
+		verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchEvent(any(Event.class), callbackCaptor.capture());
+
+
+		// verify dispatch event error callback
+		ExtensionErrorCallback extensionErrorCallback = callbackCaptor.getValue();
+		assertNotNull("The dispatch event error callback should not be null", extensionErrorCallback);
+
+		// should not crash or throw exception on calling the callback
+		extensionErrorCallback.error(ExtensionError.BAD_NAME);
+	}
 
 }
