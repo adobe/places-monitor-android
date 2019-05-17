@@ -23,6 +23,7 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Build;
@@ -30,6 +31,7 @@ import android.support.v4.app.ActivityCompat;
 
 
 import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -48,8 +50,6 @@ import java.util.List;
 
 class PlacesLocationManager {
 
-
-	private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
 	// permission constants
 	private final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
 	private FusedLocationProviderClient fusedLocationClient;
@@ -113,13 +113,35 @@ class PlacesLocationManager {
 				isRequestingLocationUpdates = false;
 
 				switch (statusCode) {
-					case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-						Log.debug(PlacesMonitorConstants.LOG_TAG, "Failed to start location updates, status code : RESOLUTION_REQUIRED");
-						break;
+					case LocationSettingsStatusCodes.RESOLUTION_REQUIRED: {
+						Log.debug(PlacesMonitorConstants.LOG_TAG, "Failed to start location updates, status code : RESOLUTION_REQUIRED.  Attempting to get permission.");
 
-					case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+						// Location settings are not satisfied. But could be fixed by showing the
+						// user a dialog.
+						try {
+							final Activity currentActivity = App.getCurrentActivity();
+							if (currentActivity == null) {
+								break;
+							}
+
+							final ResolvableApiException resolvable = (ResolvableApiException) e;
+							resolvable.startResolutionForResult(App.getCurrentActivity(), LocationSettingsStatusCodes.RESOLUTION_REQUIRED);
+						} catch (IntentSender.SendIntentException ex) {
+							// Ignore the error.
+						} catch (ClassCastException ex) {
+							// Ignore, should be an impossible error.
+						}
+
+						break;
+					}
+					case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE: {
 						Log.error(PlacesMonitorConstants.LOG_TAG,
-								  "Failed to start location updates, status code : SETTINGS_CHANGE_UNAVAILABLE");
+								"Failed to start location updates, status code : SETTINGS_CHANGE_UNAVAILABLE");
+						break;
+					}
+					default: {
+						break;
+					}
 				}
 
 			}
@@ -170,36 +192,36 @@ class PlacesLocationManager {
 
 		if (intent == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					  "Cannot process the location update, The received intent from the location broadcast receiver  is null");
+						"Cannot process the location update, The received intent from the location broadcast receiver  is null");
 			return;
 		}
 
 		final String action = intent.getAction();
 
 		if (!PlacesMonitorConstants.INTERNAL_INTENT_ACTION_LOCATION.equals(action)) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					  "Cannot process the location update, Invalid action type received from location broadcast receiver");
+			Log.trace(PlacesMonitorConstants.LOG_TAG,
+						"Cannot process the location update, Invalid action type received from location broadcast receiver");
 			return;
 		}
 
 		LocationResult result = LocationResult.extractResult(intent);
 
 		if (result == null) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "Cannot process the location update, Received location result is null");
+			Log.trace(PlacesMonitorConstants.LOG_TAG, "Cannot process the location update, Received location result is null");
 			return;
 		}
 
 		List<Location> locations = result.getLocations();
 
 		if (locations == null || locations.isEmpty()) {
-			Log.error(PlacesMonitorConstants.LOG_TAG, "Cannot process the location update, Received location result is null");
+			Log.trace(PlacesMonitorConstants.LOG_TAG, "Cannot process the location update, Received location array is null");
 			return;
 		}
 
 		Location location = locations.get(0);
 
 		if (location == null) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "Cannot process the location update, Received location is null");
+			Log.trace(PlacesMonitorConstants.LOG_TAG, "Cannot process the location update, Received location is null");
 			return;
 		}
 
@@ -269,7 +291,7 @@ class PlacesLocationManager {
 			// previously and checked "Never ask again".
 			ActivityCompat.requestPermissions(activity,
 											  new String[] {FINE_LOCATION},
-											  REQUEST_PERMISSIONS_REQUEST_CODE);
+											  PlacesMonitorConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE);
 		}
 	}
 

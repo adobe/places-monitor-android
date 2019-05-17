@@ -37,7 +37,7 @@ final class PlacesMonitorTestConstants {
 	static final class Location {
 		static final int REQUEST_INTERVAL = 3600;				// 1 hour
 		static final int REQUEST_FASTEST_INTERVAL = 1800;    	// 30 minutes
-		static final int REQUEST_SMALLEST_DISPLACEMENT = 2000;   // 2 kilometer
+		static final int REQUEST_SMALLEST_DISPLACEMENT = 1000;   // 1 kilometer
 
 		private Location() {
 		}
@@ -90,6 +90,13 @@ final class PlacesMonitorTestConstants {
 		static final String PLACES = "com.adobe.module.places";
 
 		private SharedState() {
+		}
+	}
+
+	static final class SharedPreference {
+		static final String MONITORING_FENCES_KEY = "adb_monitoringFences";
+		static final String USERWITHIN_GEOFENCES_KEY = "adb_userWithinGeofences";
+		private SharedPreference() {
 		}
 	}
 

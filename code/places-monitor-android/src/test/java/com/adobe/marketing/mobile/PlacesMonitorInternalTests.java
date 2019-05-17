@@ -103,7 +103,7 @@ public class PlacesMonitorInternalTests {
 				callbackCaptor2.capture());
 
 		// verify that loadFences is called
-		verify(geofenceManager, times(1)).loadMonitoringFences();
+		verify(geofenceManager, times(1)).loadPersistedData();
 
 		// verify register listener error callback are not null
 		assertNotNull("The register listener error callback should not be null", callbackCaptor1.getValue());
@@ -135,7 +135,7 @@ public class PlacesMonitorInternalTests {
 				callbackCaptor2.capture());
 
 		// verify that loadFences is called
-		verify(geofenceManager, times(1)).loadMonitoringFences();
+		verify(geofenceManager, times(1)).loadPersistedData();
 
 		// verify that the internal receivers are registered
 		verify(localBroadcastManager, times(0)).registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class));

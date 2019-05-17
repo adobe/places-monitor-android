@@ -89,7 +89,7 @@ class PlacesMonitorInternal extends Extension {
 		// initialize location, geofence Manager and the events queue
 		locationManager = new PlacesLocationManager(this);
 		geofenceManager = new PlacesGeofenceManager();
-		geofenceManager.loadMonitoringFences();
+		geofenceManager.loadPersistedData();
 		eventQueue = new ConcurrentLinkedQueue<>();
 
 		Context context = App.getAppContext();
@@ -128,7 +128,7 @@ class PlacesMonitorInternal extends Extension {
 	void getPOIsForLocation(final Location location) {
 		if (location == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					  "PlacesMonitorInternal : Null location is obtained from OS, Ignoring to get near by pois");
+						"PlacesMonitorInternal : Null location is obtained from OS, Ignoring to get near by pois");
 			return;
 		}
 
@@ -168,8 +168,8 @@ class PlacesMonitorInternal extends Extension {
 				public void error(final ExtensionError extensionError) {
 					if (extensionError != null) {
 						Log.warning(PlacesMonitorConstants.LOG_TAG,
-								  String.format("PlacesMonitorInternal : Could not process event, an error occurred while retrieving configuration shared state: %s",
-												extensionError.getErrorName()));
+									String.format("PlacesMonitorInternal : Could not process event, an error occurred while retrieving configuration shared state: %s",
+												  extensionError.getErrorName()));
 					}
 				}
 			};
@@ -179,7 +179,7 @@ class PlacesMonitorInternal extends Extension {
 			// NOTE: configuration is mandatory processing the event, so if shared state is null (pending) stop processing events
 			if (configSharedState == null) {
 				Log.warning(PlacesMonitorConstants.LOG_TAG,
-						  "PlacesMonitorInternal : Could not process event, configuration shared state is pending");
+							"PlacesMonitorInternal : Could not process event, configuration shared state is pending");
 				return;
 			}
 
@@ -206,7 +206,7 @@ class PlacesMonitorInternal extends Extension {
 			updateLocation();
 		} else {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					  "PlacesMonitorInternal : Could not process places monitor request event, Invalid/Unknown event name");
+						"PlacesMonitorInternal : Could not process places monitor request event, Invalid/Unknown event name");
 		}
 	}
 

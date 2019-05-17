@@ -38,6 +38,7 @@ import com.google.android.gms.tasks.Task;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,14 +46,15 @@ import java.util.Set;
 class PlacesGeofenceManager {
 
 	static private String MONITOR_SHARED_PREFERENCE_KEY = "com.adobe.placesMonitor";
-	static private String MONITORING_FENCES_KEY = "monitoringFences";
 	private final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
 	private PendingIntent geofencePendingIntent;
 	private Set<String> monitoringFences;
+	private Set<String> userWithinGeofences;
 	private GeofencingClient geofencingClient;
 
 	PlacesGeofenceManager() {
 		monitoringFences = new HashSet<String>();
+		userWithinGeofences = new HashSet<String>();
 	}
 
 	void startMonitoringFences(List<PlacesPOI> nearByPOIs) {
@@ -70,9 +72,61 @@ class PlacesGeofenceManager {
 			return;
 		}
 
+
 		addNearbyFences(nearByPOIs);
 		removeNonNearbyFences(nearByPOIs);
+
+		// identify the newly entered regions and dispatch an entry event
+		List <PlacesPOI> newlyEnteredPois = findNewlyEnteredPOIs(nearByPOIs);
+
+		for (PlacesPOI poi : newlyEnteredPois) {
+			Geofence geofence = new Geofence.Builder().setRequestId(poi.getIdentifier()).setTransitionTypes(
+				Geofence.GEOFENCE_TRANSITION_ENTER).setCircularRegion(poi.getLatitude(), poi.getLongitude(), poi.getRadius()).build();
+			Places.processGeofence(geofence, Geofence.GEOFENCE_TRANSITION_ENTER);
+		}
 	}
+
+	List <PlacesPOI> findNewlyEnteredPOIs(List<PlacesPOI> nearbyPOIs) {
+		// First, remove the userWithinGeofence poi that are not currently nearbypois
+
+		// convert list into a hashMap for convenience
+		Map<String, PlacesPOI> poisMap = new HashMap<String, PlacesPOI>();
+
+		for (PlacesPOI i : nearbyPOIs) {
+			poisMap.put(i.getIdentifier(), i);
+		}
+
+		// using iterator to remove the pois from userWithinGeofences which are not a part of nearbypois
+		for (Iterator<String> iterator = userWithinGeofences.iterator(); iterator.hasNext();) {
+			String eachID = iterator.next();
+
+			if (!poisMap.containsKey(eachID)) {
+				iterator.remove();
+			}
+		}
+
+
+		// Second, check for the newEntryPOI comparing the inmemory userWithinGeofences list
+		List <PlacesPOI> newlyEnteredPois = new ArrayList<PlacesPOI>();
+
+		for (PlacesPOI poi : nearbyPOIs) {
+
+			// if the user is withIn the poi and we haven't recorded that yet, then add them to newlyEnteredPois list
+			if (poi.containsUser() && !userWithinGeofences.contains(poi.getIdentifier())) {
+				userWithinGeofences.add(poi.getIdentifier());
+				newlyEnteredPois.add(poi);
+			}
+
+			// if the user is not withIn the poi and userWithinGeofences list contains the poi, remove it
+			if (!poi.containsUser() && userWithinGeofences.contains(poi.getIdentifier())) {
+				userWithinGeofences.remove(poi.getIdentifier());
+			}
+		}
+
+		saveUserWithinGeofences();
+		return newlyEnteredPois;
+	}
+
 
 	void stopMonitoringFences() {
 
@@ -123,28 +177,73 @@ class PlacesGeofenceManager {
 		final String action = intent.getAction();
 
 		if (!PlacesMonitorConstants.INTERNAL_INTENT_ACTION_GEOFENCE.equals(action)) {
-			Log.error(PlacesMonitorConstants.LOG_TAG,
-					  "Cannot process the geofence trigger, Invalid action type received from geofence broadcast receiver.");
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"Cannot process the geofence trigger, Invalid action type received from geofence broadcast receiver.");
 			return;
 		}
 
 		GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
 
 		if (geofencingEvent.hasError()) {
-			Log.error(PlacesMonitorConstants.LOG_TAG,
-					  "Cannot process the geofence trigger, Geofencing event has error. Ignoring region event.");
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"Cannot process the geofence trigger, Geofencing event has error. Ignoring region event.");
 			return;
 		}
 
-		Places.processGeofenceEvent(geofencingEvent);
+		List<Geofence> obtainedGeofences = geofencingEvent.getTriggeringGeofences();
+
+		if (obtainedGeofences == null || obtainedGeofences.isEmpty()) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"Cannot process the geofence trigger, null or empty geofence obtained from the geofence trigger");
+
+			return;
+		}
+
+		// curate the obtained geofence list
+		List<Geofence> curatedGeofences  = getCuratedGeofencesList(obtainedGeofences, geofencingEvent.getGeofenceTransition());
+
+		// dispatch a region event for the places list
+		for (Geofence geofence : curatedGeofences) {
+			Places.processGeofence(geofence, geofencingEvent.getGeofenceTransition());
+		}
 	}
 
+	// ================================================================================================================================
+	// getCuratedGeofencesList - Compares with the existing inmemory userWithinGeofences list and get the to be processed geofence list
+	// ================================================================================================================================
+	List<Geofence> getCuratedGeofencesList(final List<Geofence> obtainedGeofences, final int transitionType) {
+		List<Geofence> curatedGeofenceList = new ArrayList<Geofence>();
+
+		// if entry event, add geofence to the userWithinGeofence
+		if (transitionType == Geofence.GEOFENCE_TRANSITION_ENTER) {
+			for (Geofence geofence : obtainedGeofences) {
+				if (!userWithinGeofences.contains(geofence.getRequestId())) {
+					curatedGeofenceList.add(geofence);
+					userWithinGeofences.add(geofence.getRequestId());
+				}
+			}
+		}
+
+		// if exit event, remove from the userWithinGeofence
+		else if (transitionType == Geofence.GEOFENCE_TRANSITION_EXIT) {
+			for (Geofence geofence : obtainedGeofences) {
+				if (userWithinGeofences.contains(geofence.getRequestId())) {
+					userWithinGeofences.remove(geofence.getRequestId());
+				}
+
+				curatedGeofenceList.add(geofence);
+			}
+		}
+
+		return curatedGeofenceList;
+
+	}
 
 	// ========================================================================================
 	// Load/Save Monitored Fences to persistence
 	// ========================================================================================
 
-	void loadMonitoringFences() {
+	void loadPersistedData() {
 		SharedPreferences sharedPreferences = getSharedPreference();
 
 		if (sharedPreferences == null) {
@@ -153,7 +252,8 @@ class PlacesGeofenceManager {
 			return;
 		}
 
-		monitoringFences = sharedPreferences.getStringSet(MONITORING_FENCES_KEY, new HashSet<String>());
+		userWithinGeofences = sharedPreferences.getStringSet(PlacesMonitorConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY, new HashSet<String>());
+		monitoringFences = sharedPreferences.getStringSet(PlacesMonitorConstants.SharedPreference.MONITORING_FENCES_KEY, new HashSet<String>());
 	}
 
 	void saveMonitoringFences() {
@@ -173,7 +273,28 @@ class PlacesGeofenceManager {
 			return;
 		}
 
-		editor.putStringSet(MONITORING_FENCES_KEY, monitoringFences);
+		editor.putStringSet(PlacesMonitorConstants.SharedPreference.MONITORING_FENCES_KEY, monitoringFences);
+		editor.commit();
+	}
+
+	void saveUserWithinGeofences() {
+		SharedPreferences sharedPreferences = getSharedPreference();
+
+		if (sharedPreferences == null) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"Unable to save userWithIn geofences from persistence, sharedPreference is null");
+			return;
+		}
+
+		SharedPreferences.Editor editor = sharedPreferences.edit();
+
+		if (editor == null) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"Unable to save userWithIn geofences from persistence, shared preference editor is null");
+			return;
+		}
+
+		editor.putStringSet(PlacesMonitorConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY, userWithinGeofences);
 		editor.commit();
 	}
 

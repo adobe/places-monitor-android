@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 
+import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingEvent;
 import com.google.android.gms.location.GeofencingRequest;
@@ -49,9 +50,9 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @PrepareForTest({Context.class, App.class, LocationServices.class, PendingIntent.class, ActivityCompat.class, Intent.class, Places.class, GeofencingEvent.class})
 public class PlacesGeofenceManagerTests {
 	static private String MONITOR_SHARED_PREFERENCE_KEY = "com.adobe.placesMonitor";
-	static private String MONITORING_FENCES_KEY = "monitoringFences";
 	private final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
 	private PlacesGeofenceManager geofenceManager;
+
 
 	@Mock
 	Context context;
@@ -149,7 +150,7 @@ public class PlacesGeofenceManagerTests {
 		assertEquals("in memory list of poi should is correct", 4, monitoringFences.size());
 
 		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(1)).putStringSet(eq(MONITORING_FENCES_KEY), persistedPOICaptor.capture());
+		verify(mockSharedPreferenceEditor, times(1)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), persistedPOICaptor.capture());
 		assertEquals("persisted poi list should is correct", 4, persistedPOICaptor.getValue().size());
 	}
 
@@ -170,7 +171,7 @@ public class PlacesGeofenceManagerTests {
 		assertEquals("in memory list of poi should is correct", 4, monitoringFences.size());
 
 		// verify the persisted pois are untouched
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
+		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
 	}
 
 	@Test
@@ -224,7 +225,7 @@ public class PlacesGeofenceManagerTests {
 		assertTrue(monitoringFences.contains("id10"));
 
 		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(2)).putStringSet(eq(MONITORING_FENCES_KEY), persistedPOICaptor.capture());
+		verify(mockSharedPreferenceEditor, times(2)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), persistedPOICaptor.capture());
 		assertEquals("persisted poi list should is correct", 2, persistedPOICaptor.getValue().size());
 		assertTrue(persistedPOICaptor.getValue().contains("id9"));
 		assertTrue(persistedPOICaptor.getValue().contains("id10"));
@@ -282,7 +283,7 @@ public class PlacesGeofenceManagerTests {
 		assertTrue(monitoringFences.contains("id3"));
 
 		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(2)).putStringSet(eq(MONITORING_FENCES_KEY), persistedPOICaptor.capture());
+		verify(mockSharedPreferenceEditor, times(2)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), persistedPOICaptor.capture());
 		assertEquals("persisted poi list should is correct", 3, persistedPOICaptor.getValue().size());
 		assertTrue(persistedPOICaptor.getValue().contains("id5"));
 		assertTrue(persistedPOICaptor.getValue().contains("id6"));
@@ -324,7 +325,7 @@ public class PlacesGeofenceManagerTests {
 		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
 
 		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(1)).putStringSet(eq(MONITORING_FENCES_KEY), persistedPOICaptor.capture());
+		verify(mockSharedPreferenceEditor, times(1)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), persistedPOICaptor.capture());
 		assertEquals("persisted poi list should is correct", 0, persistedPOICaptor.getValue().size());
 	}
 
@@ -355,7 +356,7 @@ public class PlacesGeofenceManagerTests {
 		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
 
 		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
+		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
 	}
 
 
@@ -384,7 +385,7 @@ public class PlacesGeofenceManagerTests {
 		assertEquals("in memory list of poi should is correct", poiSetC().size(), monitoringFences.size());
 
 		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
+		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
 	}
 
 	@Test
@@ -410,7 +411,7 @@ public class PlacesGeofenceManagerTests {
 		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
 
 		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
+		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
 	}
 
 
@@ -436,7 +437,7 @@ public class PlacesGeofenceManagerTests {
 		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
 
 		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
+		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
 	}
 
 	@Test
@@ -461,7 +462,7 @@ public class PlacesGeofenceManagerTests {
 		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
 
 		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
+		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
 	}
 
 	@Test
@@ -486,7 +487,7 @@ public class PlacesGeofenceManagerTests {
 		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
 
 		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
+		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
 	}
 
 	@Test
@@ -512,7 +513,7 @@ public class PlacesGeofenceManagerTests {
 		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
 
 		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
+		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
 	}
 
 	// ========================================================================================
@@ -545,7 +546,7 @@ public class PlacesGeofenceManagerTests {
 		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
 
 		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(1)).putStringSet(eq(MONITORING_FENCES_KEY), persistedPOICaptor.capture());
+		verify(mockSharedPreferenceEditor, times(1)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), persistedPOICaptor.capture());
 		assertEquals("persisted poi list should is correct", 0, persistedPOICaptor.getValue().size());
 
 	}
@@ -615,16 +616,114 @@ public class PlacesGeofenceManagerTests {
 	@Test
 	public void test_onGeofenceReceived() throws Exception {
 		// setup
+		List<Geofence> obtainedGeofence = new ArrayList<>();
+		Geofence geofence = new Geofence.Builder().setRequestId("id1").setTransitionTypes(
+			Geofence.GEOFENCE_TRANSITION_ENTER).setCircularRegion(22.33, -33.33,
+					100).setExpirationDuration(Geofence.NEVER_EXPIRE).build();
+		obtainedGeofence.add(geofence);
+
+		Mockito.when(mockGeofencingEvent.getTriggeringGeofences()).thenReturn(obtainedGeofence);
+		Mockito.when(mockGeofencingEvent.getGeofenceTransition()).thenReturn(Geofence.GEOFENCE_TRANSITION_ENTER);
 		PowerMockito.when(GeofencingEvent.class, "fromIntent", any(Intent.class)).thenReturn(mockGeofencingEvent);
 		when(intent.getAction()).thenReturn(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_GEOFENCE);
+
 
 		// test
 		geofenceManager.onGeofenceReceived(intent);
 
 		// verify
 		verifyStatic(Places.class, Mockito.times(1));
-		Places.processGeofenceEvent(mockGeofencingEvent);
+		Places.processGeofence(geofence, Geofence.GEOFENCE_TRANSITION_ENTER);
 	}
+
+	@Test
+	public void test_onGeofenceReceived_ForEntry_whenPOIAlreadyEntered() throws Exception {
+		// setup
+		HashSet<String> initialUserWithinGeofenceSet = new HashSet<String>();
+		initialUserWithinGeofenceSet.add("id1");
+		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", initialUserWithinGeofenceSet);
+
+		List<Geofence> obtainedGeofence = new ArrayList<>();
+		Geofence geofence = new Geofence.Builder().setRequestId("id1").setTransitionTypes(
+			Geofence.GEOFENCE_TRANSITION_ENTER).setCircularRegion(22.33, -33.33,
+					100).setExpirationDuration(Geofence.NEVER_EXPIRE).build();
+		obtainedGeofence.add(geofence);
+
+		Mockito.when(mockGeofencingEvent.getTriggeringGeofences()).thenReturn(obtainedGeofence);
+		Mockito.when(mockGeofencingEvent.getGeofenceTransition()).thenReturn(Geofence.GEOFENCE_TRANSITION_ENTER);
+		PowerMockito.when(GeofencingEvent.class, "fromIntent", any(Intent.class)).thenReturn(mockGeofencingEvent);
+		when(intent.getAction()).thenReturn(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_GEOFENCE);
+
+
+		// test
+		geofenceManager.onGeofenceReceived(intent);
+
+		// verify
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.processGeofence(any(Geofence.class), anyInt());
+	}
+
+	@Test
+	public void test_onGeofenceReceived_ForExit_whenPOIAlreadyEntered() throws Exception {
+		// setup
+		HashSet<String> initialUserWithinGeofenceSet = new HashSet<String>();
+		initialUserWithinGeofenceSet.add("id1");
+		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", initialUserWithinGeofenceSet);
+
+		List<Geofence> obtainedGeofence = new ArrayList<>();
+		Geofence geofence = new Geofence.Builder().setRequestId("id1").setTransitionTypes(
+			Geofence.GEOFENCE_TRANSITION_EXIT).setCircularRegion(22.33, -33.33,
+					100).setExpirationDuration(Geofence.NEVER_EXPIRE).build();
+		obtainedGeofence.add(geofence);
+
+		Mockito.when(mockGeofencingEvent.getTriggeringGeofences()).thenReturn(obtainedGeofence);
+		Mockito.when(mockGeofencingEvent.getGeofenceTransition()).thenReturn(Geofence.GEOFENCE_TRANSITION_EXIT);
+		PowerMockito.when(GeofencingEvent.class, "fromIntent", any(Intent.class)).thenReturn(mockGeofencingEvent);
+		when(intent.getAction()).thenReturn(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_GEOFENCE);
+
+
+		// test
+		geofenceManager.onGeofenceReceived(intent);
+
+		// verify
+		verifyStatic(Places.class, Mockito.times(1));
+		Places.processGeofence(geofence, Geofence.GEOFENCE_TRANSITION_EXIT);
+
+		// verify result
+		HashSet<String> resultUserWithInGeofences = Whitebox.getInternalState(geofenceManager, "userWithinGeofences");
+		assertEquals(0, resultUserWithInGeofences.size());
+	}
+
+	@Test
+	public void test_onGeofenceReceived_ForExit_whenPOINotAlreadyEntered() throws Exception {
+		// setup
+		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", new HashSet<String>());
+
+		List<Geofence> obtainedGeofence = new ArrayList<>();
+		Geofence geofence = new Geofence.Builder().setRequestId("id1").setTransitionTypes(
+				Geofence.GEOFENCE_TRANSITION_EXIT).setCircularRegion(22.33, -33.33,
+				100).setExpirationDuration(Geofence.NEVER_EXPIRE).build();
+		obtainedGeofence.add(geofence);
+
+		Mockito.when(mockGeofencingEvent.getTriggeringGeofences()).thenReturn(obtainedGeofence);
+		Mockito.when(mockGeofencingEvent.getGeofenceTransition()).thenReturn(Geofence.GEOFENCE_TRANSITION_EXIT);
+		PowerMockito.when(GeofencingEvent.class, "fromIntent", any(Intent.class)).thenReturn(mockGeofencingEvent);
+		when(intent.getAction()).thenReturn(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_GEOFENCE);
+
+
+		// test
+		geofenceManager.onGeofenceReceived(intent);
+
+		// verify that exit event goes out, if the poi is not already entered.
+		verifyStatic(Places.class, Mockito.times(1));
+		Places.processGeofence(geofence, Geofence.GEOFENCE_TRANSITION_EXIT);
+
+		// verify result
+		HashSet<String> resultUserWithInGeofences = Whitebox.getInternalState(geofenceManager, "userWithinGeofences");
+		assertEquals(0, resultUserWithInGeofences.size());
+	}
+
+
 
 	@Test
 	public void test_onGeofenceReceived_when_nullIntent() throws Exception {
@@ -638,6 +737,93 @@ public class PlacesGeofenceManagerTests {
 		// verify
 		verifyStatic(Places.class, Mockito.times(0));
 		Places.processGeofenceEvent(mockGeofencingEvent);
+	}
+
+	// ========================================================================================
+	// findNewlyEnteredPOIs
+	// ========================================================================================
+	@Test
+	public void test_findNewlyEnteredPOIs_when_noInitiallyEnteredPOIs() {
+		// setup
+		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", new HashSet<String>());
+
+		List<PlacesPOI> nearByPOIs = new ArrayList<PlacesPOI>();
+		PlacesPOI poi2 = new PlacesPOI("id2", "name2", 22.22, 33.33, 100, "libraryID", 200, null);
+		PlacesPOI poi3 = new PlacesPOI("id3", "name3", 22.22, 33.33, 100, "libraryID", 200, null);
+		PlacesPOI poi4 = new PlacesPOI("id4", "name3", 22.22, 33.33, 100, "libraryID", 200, null);
+		poi2.setContainsUser(true);
+		poi3.setContainsUser(false);
+		poi4.setContainsUser(true);
+		nearByPOIs.add(poi2);
+		nearByPOIs.add(poi3);
+		nearByPOIs.add(poi4);
+
+		// test
+		List<PlacesPOI> newlyEnteredPOI = geofenceManager.findNewlyEnteredPOIs(nearByPOIs);
+
+		// verify the stored in memory userWithinGeofences variable
+		HashSet<String> resultUserWithInGeofences = Whitebox.getInternalState(geofenceManager, "userWithinGeofences");
+		assertEquals(2, resultUserWithInGeofences.size());
+		assertTrue(resultUserWithInGeofences.contains("id2"));
+		assertTrue(resultUserWithInGeofences.contains("id4"));
+
+		// verify newlyEntered POI
+		assertEquals(2, newlyEnteredPOI.size());
+		assertEquals("id2", newlyEnteredPOI.get(0).getIdentifier());
+		assertEquals("id4", newlyEnteredPOI.get(1).getIdentifier());
+	}
+
+	@Test
+	public void test_findNewlyEnteredPOIs_when_allPOIsAlreadyEntered() {
+		// setup
+		HashSet<String> initialUserWithinGeofenceSet = new HashSet<String>();
+		initialUserWithinGeofenceSet.add("id1");
+		initialUserWithinGeofenceSet.add("id2");
+		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", initialUserWithinGeofenceSet);
+
+		List<PlacesPOI> nearByPOIs = new ArrayList<PlacesPOI>();
+		PlacesPOI poi2 = new PlacesPOI("id2", "name2", 22.22, 33.33, 100, "libraryID", 200, null);
+		PlacesPOI poi3 = new PlacesPOI("id3", "name3", 22.22, 33.33, 100, "libraryID", 200, null);
+		PlacesPOI poi4 = new PlacesPOI("id4", "name3", 22.22, 33.33, 100, "libraryID", 200, null);
+		poi2.setContainsUser(true);
+		poi3.setContainsUser(false);
+		poi4.setContainsUser(true);
+		nearByPOIs.add(poi2);
+		nearByPOIs.add(poi3);
+		nearByPOIs.add(poi4);
+
+		// test
+		List<PlacesPOI> newlyEnteredPOI = geofenceManager.findNewlyEnteredPOIs(nearByPOIs);
+
+		// verify the stored in memory userWithinGeofences variable
+		HashSet<String> resultUserWithInGeofences = Whitebox.getInternalState(geofenceManager, "userWithinGeofences");
+		assertEquals(2, resultUserWithInGeofences.size());
+		assertTrue(resultUserWithInGeofences.contains("id2"));
+		assertTrue(resultUserWithInGeofences.contains("id4"));
+
+		// verify newlyEntered POI
+		assertEquals(1, newlyEnteredPOI.size());
+		assertEquals("id4", newlyEnteredPOI.get(0).getIdentifier());
+	}
+
+
+	@Test
+	public void test_findNewlyEnteredPOIs_when_removesAllPOIsIfthereAreNoNearByPOIS() {
+		// setup
+		HashSet<String> initialUserWithinGeofenceSet = new HashSet<String>();
+		initialUserWithinGeofenceSet.add("id1");
+		initialUserWithinGeofenceSet.add("id2");
+		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", initialUserWithinGeofenceSet);
+
+		// test
+		List<PlacesPOI> newlyEnteredPOI = geofenceManager.findNewlyEnteredPOIs(new ArrayList<PlacesPOI>());
+
+		// verify the stored in memory userWithinGeofences variable
+		HashSet<String> resultUserWithInGeofences = Whitebox.getInternalState(geofenceManager, "userWithinGeofences");
+		assertEquals(0, resultUserWithInGeofences.size());
+
+		// verify newlyEntered POI
+		assertEquals(0, newlyEnteredPOI.size());
 	}
 
 	@Test
@@ -674,37 +860,51 @@ public class PlacesGeofenceManagerTests {
 	// ========================================================================================
 
 	@Test
-	public void test_loadMonitoringFences() {
+	public void test_loadPersistedData() {
 		// setup
-		Set<String> pois = poiSetA();
+		Set<String> savedMonitoringPois = poiSetA();
+		Set<String> savedUserWithinPois = poiSetB();
 		Whitebox.setInternalState(geofenceManager, "monitoringFences", new HashSet<>());
+		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", new HashSet<>());
 
-		when(mockSharedPreference.getStringSet(eq(MONITORING_FENCES_KEY), any(Set.class))).thenReturn(pois);
+
+		when(mockSharedPreference.getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), any(Set.class))).thenReturn(savedMonitoringPois);
+		when(mockSharedPreference.getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY), any(Set.class))).thenReturn(savedUserWithinPois);
 
 		// test
-		geofenceManager.loadMonitoringFences();
+		geofenceManager.loadPersistedData();
 
 		// verify
-		verify(mockSharedPreference, times(1)).getStringSet(eq(MONITORING_FENCES_KEY), any(Set.class));
-		assertEquals(pois, Whitebox.getInternalState(geofenceManager, "monitoringFences"));
+		verify(mockSharedPreference, times(1)).getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), any(Set.class));
+		assertEquals(savedMonitoringPois, Whitebox.getInternalState(geofenceManager, "monitoringFences"));
+		assertEquals(savedUserWithinPois, Whitebox.getInternalState(geofenceManager, "userWithinGeofences"));
 	}
 
 	@Test
 	public void test_loadMonitoringFences_whenSharedPreference_isNull() {
 		// setup
-		Set<String> pois = poiSetA();
+		Set<String> savedMonitoringPois = poiSetA();
+		Set<String> savedUserWithinPois = poiSetB();
 		Whitebox.setInternalState(geofenceManager, "monitoringFences", new HashSet<>());
+		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", new HashSet<>());
 		Mockito.when(context.getSharedPreferences(MONITOR_SHARED_PREFERENCE_KEY, 0)).thenReturn(null);
 
-		when(mockSharedPreference.getStringSet(eq(MONITORING_FENCES_KEY), any(Set.class))).thenReturn(pois);
+		when(mockSharedPreference.getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), any(Set.class))).thenReturn(savedMonitoringPois);
+		when(mockSharedPreference.getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY), any(Set.class))).thenReturn(savedMonitoringPois);
 
 		// test
-		geofenceManager.loadMonitoringFences();
+		geofenceManager.loadPersistedData();
 
 		// verify
-		verify(mockSharedPreference, times(0)).getStringSet(eq(MONITORING_FENCES_KEY), any(Set.class));
+		verify(mockSharedPreference, times(0)).getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), any(Set.class));
 		HashSet<String> loadedPois = Whitebox.getInternalState(geofenceManager, "monitoringFences");
 		assertEquals(0, loadedPois.size());
+
+
+		// verify
+		verify(mockSharedPreference, times(0)).getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY), any(Set.class));
+		HashSet<String> loadedUserWithinFences = Whitebox.getInternalState(geofenceManager, "userWithinGeofences");
+		assertEquals(0, loadedUserWithinFences.size());
 	}
 
 	// ========================================================================================
@@ -723,7 +923,7 @@ public class PlacesGeofenceManagerTests {
 
 		// verify
 		verify(mockSharedPreference, times(1)).edit();
-		verify(mockSharedPreferenceEditor, times(1)).putStringSet(eq(MONITORING_FENCES_KEY), persistedPOICaptor.capture());
+		verify(mockSharedPreferenceEditor, times(1)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), persistedPOICaptor.capture());
 		verify(mockSharedPreferenceEditor, times(1)).commit();
 		assertEquals(pois, persistedPOICaptor.getValue());
 	}
@@ -741,7 +941,7 @@ public class PlacesGeofenceManagerTests {
 
 		// verify
 		verify(mockSharedPreference, times(0)).edit();
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
+		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
 		verify(mockSharedPreferenceEditor, times(0)).commit();
 	}
 
@@ -756,7 +956,62 @@ public class PlacesGeofenceManagerTests {
 		geofenceManager.saveMonitoringFences();
 
 		// verify
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
+		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
+		verify(mockSharedPreferenceEditor, times(0)).commit();
+	}
+
+	// ========================================================================================
+	// saveUserWithinGeofences
+	// ========================================================================================
+
+	@Test
+	public void test_saveUserWithinGeofences() {
+		// setup
+		Set<String> pois = poiSetA();
+		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", pois);
+		final ArgumentCaptor<Set<String>> persistedPOICaptor = ArgumentCaptor.forClass(Set.class);
+
+		// test
+		geofenceManager.saveUserWithinGeofences();
+
+		// verify
+		verify(mockSharedPreference, times(1)).edit();
+		verify(mockSharedPreferenceEditor, times(1)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY), persistedPOICaptor.capture());
+		verify(mockSharedPreferenceEditor, times(1)).commit();
+		assertEquals(pois, persistedPOICaptor.getValue());
+	}
+
+
+	@Test
+	public void test_saveUserWithinGeofences_when_sharedPreference_isNull() {
+		// setup
+		Set<String> pois = poiSetA();
+		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", pois);
+		Mockito.when(context.getSharedPreferences(MONITOR_SHARED_PREFERENCE_KEY, 0)).thenReturn(null);
+
+		// test
+		geofenceManager.saveUserWithinGeofences();
+
+		// verify
+		verify(mockSharedPreference, times(0)).edit();
+		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY),
+				ArgumentMatchers.<String>anySet());
+		verify(mockSharedPreferenceEditor, times(0)).commit();
+	}
+
+	@Test
+	public void test_saveUserWithinGeofences_when_sharedPreferenceEditor_isNull() {
+		// setup
+		Set<String> pois = poiSetA();
+		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", pois);
+		Mockito.when(mockSharedPreference.edit()).thenReturn(null);
+
+		// test
+		geofenceManager.saveUserWithinGeofences();
+
+		// verify
+		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY),
+				ArgumentMatchers.<String>anySet());
 		verify(mockSharedPreferenceEditor, times(0)).commit();
 	}
 

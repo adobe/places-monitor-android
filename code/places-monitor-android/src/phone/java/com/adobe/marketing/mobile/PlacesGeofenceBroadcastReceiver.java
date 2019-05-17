@@ -14,7 +14,7 @@ public class PlacesGeofenceBroadcastReceiver extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		if (intent == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					  "PlacesGeofenceBroadcastReceiver : Cannot process the geofence trigger, the received intent is null.");
+						"PlacesGeofenceBroadcastReceiver : Cannot process the geofence trigger, the received intent is null.");
 			return;
 		}
 
@@ -22,13 +22,13 @@ public class PlacesGeofenceBroadcastReceiver extends BroadcastReceiver {
 
 		if (!ACTION_GEOFENCE_UPDATE.equals(action)) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					  "PlacesGeofenceBroadcastReceiver : Unable to process the geofence trigger, invalid action type received");
+						"PlacesGeofenceBroadcastReceiver : Unable to process the geofence trigger, invalid action type received");
 			return;
 		}
 
 		if (context == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					  "PlacesGeofenceBroadcastReceiver : Unable to process the geofence trigger, context is null");
+						"PlacesGeofenceBroadcastReceiver : Unable to process the geofence trigger, context is null");
 			return;
 		}
 
