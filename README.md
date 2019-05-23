@@ -1,10 +1,3 @@
-# UNDER CONSTRUCTION
-
-### The code in this repository is not yet ready for production use
-
-We are in the process of migrating our project to be open sourced.  Please be patient as we get everything settled.  Thanks!
-
-<!--
 # Getting started with the Places Monitor for Android
 
 Table of Contents
@@ -14,7 +7,7 @@ Table of Contents
 3. [Contributing to the project](#contributing-to-the-project)
 4. [Environment setup](#environment-setup)
     - [Open the Android Studio project](#open-the-android-studio-project)
-    - [Command line integration](#command-line-integration)
+    <!-- - [Command line integration](#command-line-integration) -->
 5. [Tips for Location testing on Android](#tips-for-location-testing-on-android)
 6. [Licensing](#licensing)
 
@@ -25,8 +18,15 @@ The Places Monitor for Android is used to manage the integration between Android
 ## Current version
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.adobe.marketing.mobile/places-monitor.svg?logo=android&logoColor=white)](https://mvnrepository.com/artifact/com.adobe.marketing.mobile/places-monitor)
+
+Integrate the Places Monitor into your app by including the following in your gradle file's `dependencies`:
+
+```implementation 'com.adobe.marketing.mobile:places-monitor:1.+'```
+
+<!--
 [![CircleCI](https://img.shields.io/circleci/project/github/adobe/places-monitor-android/master.svg?logo=circleci)](https://circleci.com/gh/adobe/workflows/places-monitor-android)
 [![Code Coverage](https://img.shields.io/codecov/c/github/adobe/places-monitor-android/master.svg?logo=codecov)](https://codecov.io/gh/adobe/places-monitor-android/branch/master)
+-->
 
 ## Contributing to the project
 
@@ -42,6 +42,7 @@ Android Studio 3.4 or newer is required to open this project.  If necessary, ple
 
 In Android Studio, open the `code/build.gradle` file
 
+<!--
 #### Command line integration
 
 From command line you can build the project by running the following command:
@@ -55,6 +56,7 @@ You can also run the unit test suite from command line:
 ~~~~
 make test
 ~~~~
+-->
 
 ## Tips for Location testing on Android
 
@@ -70,5 +72,3 @@ To improve user experience, Android 8.0 (Oreo - API level 26) imposes background
 
 ## Licensing
 This project is licensed under the Apache V2 License. See [LICENSE](LICENSE) for more information.
-
--->
