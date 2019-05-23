@@ -17,7 +17,7 @@ The Places Monitor for Android is used to manage the integration between Android
 
 ## Current version
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.adobe.marketing.mobile/places-monitor.svg?logo=android&logoColor=white)](https://mvnrepository.com/artifact/com.adobe.marketing.mobile/places-monitor)
+[![Maven Central](https://img.shields.io/maven-central/v/com.adobe.marketing.mobile/places-monitor.svg?logo=android&logoColor=white&label=places-monitor)](https://mvnrepository.com/artifact/com.adobe.marketing.mobile/places-monitor)
 
 Integrate the Places Monitor into your app by including the following in your gradle file's `dependencies`:
 
