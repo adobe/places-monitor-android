@@ -17,6 +17,10 @@
 package com.adobe.marketing.mobile;
 
 final class PlacesMonitorTestConstants {
+
+	static final int MONITOR_PERMISSION_MASK = 0xADBE;
+	static final int MONITOR_LOCATION_PERMISSION_REQUEST_CODE = MONITOR_PERMISSION_MASK | 1;
+
 	static final String LOG_TAG = PlacesMonitor.class.getSimpleName();
 	static final String EXTENSION_NAME = "com.adobe.placesMonitor";
 
