@@ -17,7 +17,7 @@
 package com.adobe.marketing.mobile;
 
 final class PlacesMonitorConstants {
-	static final int MONITOR_PERMISSION_MASK = 0xADBE;
+	static final private int MONITOR_PERMISSION_MASK = 0xAD00;
 	static final int MONITOR_LOCATION_PERMISSION_REQUEST_CODE = MONITOR_PERMISSION_MASK | 1;
 
 	static final String LOG_TAG = PlacesMonitor.class.getSimpleName();
