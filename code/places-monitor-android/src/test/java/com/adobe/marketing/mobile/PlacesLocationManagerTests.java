@@ -68,7 +68,6 @@ import static org.junit.Assert.*;
 @PrepareForTest({Context.class, App.class, LocationServices.class, PendingIntent.class, ActivityCompat.class, LocationResult.class, Build.class})
 public class PlacesLocationManagerTests {
 	private final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
-	private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 92847;
 	private PlacesLocationManager locationManager;
 	private LocationResult locationResult;
 
@@ -308,7 +307,7 @@ public class PlacesLocationManagerTests {
 
 		// verify
 		verifyStatic(ActivityCompat.class, Mockito.times(1));
-		ActivityCompat.requestPermissions(activity, new String[] {FINE_LOCATION}, REQUEST_PERMISSIONS_REQUEST_CODE);
+		ActivityCompat.requestPermissions(activity, new String[] {FINE_LOCATION}, PlacesMonitorTestConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE);
 	}
 
 

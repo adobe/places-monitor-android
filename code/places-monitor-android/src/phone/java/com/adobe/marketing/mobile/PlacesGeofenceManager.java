@@ -57,7 +57,7 @@ class PlacesGeofenceManager {
 	void startMonitoringFences(List<PlacesPOI> nearByPOIs) {
 		if (nearByPOIs == null || nearByPOIs.isEmpty()) {
 			Log.debug(PlacesMonitorConstants.LOG_TAG,
-					  "Places Extension responded with no regions around the current location to be monitored. Removing all the currently monitored geofence.");
+					"Places Extension responded with no regions around the current location to be monitored. Removing all the currently monitored geofence.");
 			nearByPOIs = new ArrayList<PlacesPOI>();
 		}
 
@@ -65,7 +65,7 @@ class PlacesGeofenceManager {
 
 		if (geofencingClient == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Unable to start monitoring geofences, geofencingClient instance is null");
+					"Unable to start monitoring geofences, geofencingClient instance is null");
 			return;
 		}
 
@@ -77,8 +77,12 @@ class PlacesGeofenceManager {
 		List <PlacesPOI> newlyEnteredPois = findNewlyEnteredPOIs(nearByPOIs);
 
 		for (PlacesPOI poi : newlyEnteredPois) {
-			Geofence geofence = new Geofence.Builder().setRequestId(poi.getIdentifier()).setTransitionTypes(
-				Geofence.GEOFENCE_TRANSITION_ENTER).setCircularRegion(poi.getLatitude(), poi.getLongitude(), poi.getRadius()).build();
+			Geofence geofence = new Geofence.Builder()
+					.setRequestId(poi.getIdentifier())
+					.setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
+					.setCircularRegion(poi.getLatitude(), poi.getLongitude(), poi.getRadius())
+					.setExpirationDuration(Geofence.NEVER_EXPIRE)
+					.build();
 			Places.processGeofence(geofence, Geofence.GEOFENCE_TRANSITION_ENTER);
 		}
 	}
@@ -112,6 +116,7 @@ class PlacesGeofenceManager {
 			if (poi.containsUser() && !userWithinGeofences.contains(poi.getIdentifier())) {
 				userWithinGeofences.add(poi.getIdentifier());
 				newlyEnteredPois.add(poi);
+				continue;
 			}
 
 			// if the user is not withIn the poi and userWithinGeofences list contains the poi, remove it
@@ -131,7 +136,7 @@ class PlacesGeofenceManager {
 
 		if (geofencingClient == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Unable to stop monitoring geofences, geofencingClient instance is null");
+					"Unable to stop monitoring geofences, geofencingClient instance is null");
 			return;
 		}
 
@@ -139,7 +144,7 @@ class PlacesGeofenceManager {
 
 		if (geofenceIntent == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Unable to stop monitoring geofences, Places Geofence Broadcast Receiver was never initialized");
+					"Unable to stop monitoring geofences, Places Geofence Broadcast Receiver was never initialized");
 			return;
 		}
 
@@ -167,7 +172,7 @@ class PlacesGeofenceManager {
 	void onGeofenceReceived(final Intent intent) {
 		if (intent == null) {
 			Log.error(PlacesMonitorConstants.LOG_TAG,
-					  "Cannot process the geofence trigger, The received intent from the geofence broadcast receiver is null.");
+					"Cannot process the geofence trigger, The received intent from the geofence broadcast receiver is null.");
 			return;
 		}
 
@@ -175,7 +180,7 @@ class PlacesGeofenceManager {
 
 		if (!PlacesMonitorConstants.INTERNAL_INTENT_ACTION_GEOFENCE.equals(action)) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Cannot process the geofence trigger, Invalid action type received from geofence broadcast receiver.");
+					"Cannot process the geofence trigger, Invalid action type received from geofence broadcast receiver.");
 			return;
 		}
 
@@ -183,7 +188,7 @@ class PlacesGeofenceManager {
 
 		if (geofencingEvent.hasError()) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Cannot process the geofence trigger, Geofencing event has error. Ignoring region event.");
+					"Cannot process the geofence trigger, Geofencing event has error. Ignoring region event.");
 			return;
 		}
 
@@ -191,7 +196,7 @@ class PlacesGeofenceManager {
 
 		if (obtainedGeofences == null || obtainedGeofences.isEmpty()) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Cannot process the geofence trigger, null or empty geofence obtained from the geofence trigger");
+					"Cannot process the geofence trigger, null or empty geofence obtained from the geofence trigger");
 
 			return;
 		}
@@ -217,6 +222,9 @@ class PlacesGeofenceManager {
 				if (!userWithinGeofences.contains(geofence.getRequestId())) {
 					curatedGeofenceList.add(geofence);
 					userWithinGeofences.add(geofence.getRequestId());
+				}
+				else {
+					Log.debug(PlacesMonitorConstants.LOG_TAG, "Ignoring to process the entry of geofence" + geofence.getRequestId() + ".Because an entry was already recorded");
 				}
 			}
 		}
@@ -245,7 +253,7 @@ class PlacesGeofenceManager {
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Unable to load monitoring geofences from persistence, sharedPreference is null");
+					"Unable to load monitoring geofences from persistence, sharedPreference is null");
 			return;
 		}
 
@@ -258,7 +266,7 @@ class PlacesGeofenceManager {
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Unable to save monitoring geofences from persistence, sharedPreference is null");
+					"Unable to save monitoring geofences from persistence, sharedPreference is null");
 			return;
 		}
 
@@ -266,7 +274,7 @@ class PlacesGeofenceManager {
 
 		if (editor == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Unable to save monitoring geofences from persistence, shared preference editor is null");
+					"Unable to save monitoring geofences from persistence, shared preference editor is null");
 			return;
 		}
 
@@ -279,7 +287,7 @@ class PlacesGeofenceManager {
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Unable to save userWithIn geofences from persistence, sharedPreference is null");
+					"Unable to save userWithIn geofences from persistence, sharedPreference is null");
 			return;
 		}
 
@@ -287,7 +295,7 @@ class PlacesGeofenceManager {
 
 		if (editor == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Unable to save userWithIn geofences from persistence, shared preference editor is null");
+					"Unable to save userWithIn geofences from persistence, shared preference editor is null");
 			return;
 		}
 
@@ -305,7 +313,7 @@ class PlacesGeofenceManager {
 
 		if (!checkPermissions()) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Unable to monitor geofences, App permission to use FINE_LOCATION is not granted.");
+					"Unable to monitor geofences, App permission to use FINE_LOCATION is not granted.");
 			return;
 		}
 
@@ -313,7 +321,7 @@ class PlacesGeofenceManager {
 
 		if (geofenceIntent == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Unable to stop monitoring geofences, Places Geofence Broadcast Receiver was never initialized");
+					"Unable to stop monitoring geofences, Places Geofence Broadcast Receiver was never initialized");
 			return;
 		}
 
@@ -324,16 +332,16 @@ class PlacesGeofenceManager {
 			}
 
 			final Geofence fence = new Geofence.Builder()
-			.setRequestId(poi.getIdentifier())
-			.setCircularRegion(poi.getLatitude(), poi.getLongitude(), poi.getRadius())
-			.setExpirationDuration(Geofence.NEVER_EXPIRE)
-			.setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
-								Geofence.GEOFENCE_TRANSITION_EXIT)
-			.build();
+					.setRequestId(poi.getIdentifier())
+					.setCircularRegion(poi.getLatitude(), poi.getLongitude(), poi.getRadius())
+					.setExpirationDuration(Geofence.NEVER_EXPIRE)
+					.setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
+							Geofence.GEOFENCE_TRANSITION_EXIT)
+					.build();
 			Log.debug(PlacesMonitorConstants.LOG_TAG, "Monitoring location with id " + poi.getIdentifier() +
-					  " name " + poi.getName() +
-					  " latitude " + poi.getLatitude() +
-					  " longitude " + poi.getLongitude());
+					" name " + poi.getName() +
+					" latitude " + poi.getLatitude() +
+					" longitude " + poi.getLongitude());
 			geofences.add(fence);
 		}
 
@@ -441,7 +449,7 @@ class PlacesGeofenceManager {
 
 		if (context == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Unable to create an intent to receive location updates, App Context not available");
+					"Unable to create an intent to receive location updates, App Context not available");
 			return null;
 		}
 
@@ -496,7 +504,7 @@ class PlacesGeofenceManager {
 		}
 
 		int permissionState = ActivityCompat.checkSelfPermission(context,
-							  FINE_LOCATION);
+				FINE_LOCATION);
 		return permissionState == PackageManager.PERMISSION_GRANTED;
 	}
 }
