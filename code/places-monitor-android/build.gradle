@@ -97,9 +97,44 @@ task platformUnitTestJacocoReport(type: JacocoReport, dependsOn: "testPhoneCoreB
 
 tasks.withType(Test) {
     jacoco {
+        append = true
+        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         includeNoLocationClasses = false
         includes = ['*/phone/java/com/adobe/marketing/mobile/*.java']
     }
+}
+
+android.libraryVariants.all { variant ->
+    tasks.withType(Javadoc) {
+        source = [android.sourceSets.main.java.sourceFiles, android.sourceSets.phone.java.sourceFiles,
+                  android.sourceSets.coreBundle.java.sourceFiles]
+        ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+
+        doFirst{classpath = files(variant.javaCompile.classpath.files) + files(ext.androidJar)}
+
+
+        exclude "**/BuildConfig.java"
+        exclude "**/R.java"
+        options {
+            links "https://developer.android.com/reference"
+        }
+    }
+
+}
+
+task javadocInternal(type: Javadoc) {
+    destinationDir = reporting.file("javadocInternal")
+    options.memberLevel = JavadocMemberLevel.PRIVATE
+}
+
+task javadocPublic(type: Javadoc) {
+    destinationDir = reporting.file("javadocPublic")
+    options.memberLevel = JavadocMemberLevel.PUBLIC
+}
+
+task javadocPublish(type: Jar) {
+    from javadocPublic
+    classifier = 'javadoc'
 }
 
 configurations.all {
