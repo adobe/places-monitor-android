@@ -20,16 +20,30 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
-
+/**
+ * BroadCast receiver for the location updates
+ * <p>
+ *  Receive broadcast messages from the Android system about the current location.
+ */
 public class PlacesLocationBroadcastReceiver extends BroadcastReceiver {
 	static final String ACTION_LOCATION_UPDATE =
-		"com.adobe.marketing.mobile.PlacesLocationBroadcastReceiver.locationUpdates";
+			"com.adobe.marketing.mobile.PlacesLocationBroadcastReceiver.locationUpdates";
 
+	/**
+	 * This method is called when the BroadcastReceiver is receiving an intent broadcast with current location.
+	 * <p>
+	 *  Broadcasts the obtained intent to the internal receiver created and listened by {@link PlacesMonitorInternal}
+	 *  No action is taken if the passed intent or context is null.
+	 *  No action is taken if the action of the intent is not equal to {@link #ACTION_LOCATION_UPDATE}
+	 *
+	 * @param context the application's {@link Context}
+	 * @param intent the broadcasted location message wrapped in an intent
+	 */
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		if (intent == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"PlacesLocationBroadcastReceiver : Unable to process the location update, the received intent is null");
+					"PlacesLocationBroadcastReceiver : Unable to process the location update, the received intent is null");
 			return;
 		}
 
@@ -37,13 +51,13 @@ public class PlacesLocationBroadcastReceiver extends BroadcastReceiver {
 
 		if (!ACTION_LOCATION_UPDATE.equals(action)) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"PlacesLocationBroadcastReceiver : Unable to process the location update, invalid action type received");
+					"PlacesLocationBroadcastReceiver : Unable to process the location update, invalid action type received");
 			return;
 		}
 
 		if (context == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"PlacesLocationBroadcastReceiver : Unable to process the location, context is null");
+					"PlacesLocationBroadcastReceiver : Unable to process the location, context is null");
 			return;
 		}
 
@@ -51,7 +65,7 @@ public class PlacesLocationBroadcastReceiver extends BroadcastReceiver {
 		intent.setAction(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_LOCATION);
 		LocalBroadcastManager manager = LocalBroadcastManager.getInstance(context);
 		Log.debug(PlacesMonitorConstants.LOG_TAG,
-				  "PlacesLocationBroadcastReceiver : Broadcasting the obtained location to the PlacesMonitorInternal class");
+				"PlacesLocationBroadcastReceiver : Broadcasting the obtained location to the PlacesMonitorInternal class");
 		manager.sendBroadcast(intent);
 	}
 

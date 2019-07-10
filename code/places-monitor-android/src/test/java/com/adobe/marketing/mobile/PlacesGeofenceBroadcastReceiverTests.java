@@ -13,6 +13,7 @@
 // PlacesGeofenceBroadcastReceiverTests.java
 //
 
+
 package com.adobe.marketing.mobile;
 
 import android.content.Context;
@@ -40,7 +41,7 @@ import static org.mockito.Mockito.when;
 public class PlacesGeofenceBroadcastReceiverTests {
 
 	static final String ACTION_GEOFENCE_UPDATE =
-		"com.adobe.marketing.mobile.PlacesGeofenceBroadcastReceiver.geofenceUpdates";
+			"com.adobe.marketing.mobile.PlacesGeofenceBroadcastReceiver.geofenceUpdates";
 	private PlacesGeofenceBroadcastReceiver receiver;
 
 	@Mock
@@ -54,7 +55,6 @@ public class PlacesGeofenceBroadcastReceiverTests {
 
 	@Before
 	public void before() throws Exception {
-
 		receiver = new PlacesGeofenceBroadcastReceiver();
 		when(mockIntent.getAction()).thenReturn(ACTION_GEOFENCE_UPDATE);
 	}

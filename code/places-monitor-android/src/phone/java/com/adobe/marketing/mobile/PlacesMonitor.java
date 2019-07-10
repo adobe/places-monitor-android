@@ -13,7 +13,6 @@
 // PlacesMonitor.java
 //
 
-
 package com.adobe.marketing.mobile;
 
 public class PlacesMonitor {
@@ -64,6 +63,15 @@ public class PlacesMonitor {
 		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_UPDATE);
 	}
 
+	/**
+	 * Dispatches an {@link Event} to {@link EventHub} for the Places Monitor Extension to process.
+	 * <ul>
+	 * 		<li> EventType : {@link PlacesMonitorConstants.EventType#MONITOR} </li>
+	 * 		<li> EventSource : {@link PlacesMonitorConstants.EventSource#REQUEST_CONTENT} </li>
+	 * </ul>
+	 *
+	 * @param eventName The name of the {@link Event} being dispatched
+	 */
 	private static void dispatchMonitorEvent(final String eventName) {
 
 		final Event monitorEvent = new Event.Builder(eventName,
@@ -75,13 +83,13 @@ public class PlacesMonitor {
 			@Override
 			public void error(final ExtensionError extensionError) {
 				Log.error(PlacesMonitorConstants.LOG_TAG, String.format("An error occurred dispatching event '%s', %s",
-						  monitorEvent.getName(), extensionError.getErrorName()));
+						monitorEvent.getName(), extensionError.getErrorName()));
 			}
 		};
 
 		if (MobileCore.dispatchEvent(monitorEvent, extensionErrorCallback)) {
 			Log.debug(PlacesMonitorConstants.LOG_TAG, String.format("Places Monitor dispatched an event '%s'",
-					  monitorEvent.getName()));
+					monitorEvent.getName()));
 		}
 	}
 }

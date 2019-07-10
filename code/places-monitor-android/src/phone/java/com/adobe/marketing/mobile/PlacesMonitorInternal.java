@@ -13,7 +13,6 @@
 // PlacesMonitorInternal.java
 //
 
-
 package com.adobe.marketing.mobile;
 
 import android.content.BroadcastReceiver;
@@ -31,7 +30,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 class PlacesMonitorInternal extends Extension {
-
 
 	private ConcurrentLinkedQueue<Event> eventQueue;
 	private PlacesLocationManager locationManager;
@@ -53,36 +51,52 @@ class PlacesMonitorInternal extends Extension {
 		}
 	};
 
+	/**
+	 * Constructor.
+	 *
+	 * <p>
+	 * Called during the Places Monitor Extension registration. The following listeners are registered during the registration
+	 * <ul>
+	 *     <li> {@link PlacesMonitorListenerHubSharedState} listening to event with EventType {@link PlacesMonitorConstants.EventType#HUB}
+	 *     and EventSource {@link PlacesMonitorConstants.EventSource#SHARED_STATE}</li>
+	 *     <li> {@link PlacesMonitorListenerMonitorRequestContent} listening to event with EventType {@link PlacesMonitorConstants.EventType#MONITOR}
+	 *     and EventSource {@link PlacesMonitorConstants.EventSource#REQUEST_CONTENT}</li>
+	 * </ul>
+	 *
+	 * The {@link #locationManager}, {@link #geofenceManager} along with internal BroadcastReceivers {@link #internalLocationReceiver} and {@link #internalGeofenceReceiver} are also initialized
+	 *
+	 * @param extensionApi {@link ExtensionApi} instance
+	 */
 	protected PlacesMonitorInternal(final ExtensionApi extensionApi) {
 		super(extensionApi);
 
 		// register a listener for shared state changes
 		extensionApi.registerEventListener(
-			PlacesMonitorConstants.EventType.HUB,
-			PlacesMonitorConstants.EventSource.SHARED_STATE,
-		PlacesMonitorListenerHubSharedState.class, new ExtensionErrorCallback<ExtensionError>() {
-			@Override
-			public void error(ExtensionError extensionError) {
-				if (extensionError != null) {
-					Log.warning("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerHubSharedState for Event Hub shared state events: %s",
-								extensionError.getErrorName());
-				}
-			}
-		});
+				PlacesMonitorConstants.EventType.HUB,
+				PlacesMonitorConstants.EventSource.SHARED_STATE,
+				PlacesMonitorListenerHubSharedState.class, new ExtensionErrorCallback<ExtensionError>() {
+					@Override
+					public void error(ExtensionError extensionError) {
+						if (extensionError != null) {
+							Log.warning("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerHubSharedState for Event Hub shared state events: %s",
+									extensionError.getErrorName());
+						}
+					}
+				});
 
 		// register a listener for monitor request events
 		extensionApi.registerEventListener(
-			PlacesMonitorConstants.EventType.MONITOR,
-			PlacesMonitorConstants.EventSource.REQUEST_CONTENT,
-		PlacesMonitorListenerMonitorRequestContent.class, new ExtensionErrorCallback<ExtensionError>() {
-			@Override
-			public void error(ExtensionError extensionError) {
-				if (extensionError != null) {
-					Log.warning("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerPlacesResponseContent for Places Monitor request events: %s",
-								extensionError.getErrorName());
-				}
-			}
-		});
+				PlacesMonitorConstants.EventType.MONITOR,
+				PlacesMonitorConstants.EventSource.REQUEST_CONTENT,
+				PlacesMonitorListenerMonitorRequestContent.class, new ExtensionErrorCallback<ExtensionError>() {
+					@Override
+					public void error(ExtensionError extensionError) {
+						if (extensionError != null) {
+							Log.warning("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerPlacesResponseContent for Places Monitor request events: %s",
+									extensionError.getErrorName());
+						}
+					}
+				});
 
 		// initialize location, geofence Manager and the events queue
 		locationManager = new PlacesLocationManager(this);
@@ -94,7 +108,7 @@ class PlacesMonitorInternal extends Extension {
 
 		if (context == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"PlacesMonitorInternal : Context is null, Internal Broadcast receivers not initialized");
+					"PlacesMonitorInternal : Context is null, Internal Broadcast receivers not initialized");
 			return;
 		}
 
@@ -106,48 +120,82 @@ class PlacesMonitorInternal extends Extension {
 	}
 
 
+	/**
+	 * Overridden method of {@link Extension} class to provide a valid extension name to register with the eventHub.
+	 *
+	 * @return A {@link String} extension name for Places Monitor
+	 */
 	@Override
 	protected String getName() {
 		return PlacesMonitorConstants.EXTENSION_NAME;
 	}
 
+	/**
+	 * Overridden method of {@link Extension} class to provide a extension version.
+	 *
+	 * @return A {@link String} extension version
+	 */
 	@Override
 	protected String getVersion() {
 		return PlacesMonitorConstants.EXTENSION_VERSION;
 	}
 
+	/**
+	 * Overridden method of {@link Extension} class called when the extension is unregistered by the core.
+	 *
+	 * <p>
+	 * On unregister of places monitor extension the shared states are cleared
+	 */
 	@Override
 	protected void onUnregistered() {
 		super.onUnregistered();
 		getApi().clearSharedEventStates(null);
 	}
 
-
+	/**
+	 * Gets the nearbyPOIs for the given location
+	 *
+	 * <p>
+	 * This method is called by the {@link #locationManager} with the current device location to fetch the closest
+	 * {@link PlacesMonitorConstants#NEARBY_GEOFENCES_COUNT} near by points of interest around the given location.
+	 * The obtainted POIs are then passed to {@link #geofenceManager} to start monitoring for entry and exits.
+	 *
+	 * @param location A {@link Location} instance representing device's current location.å
+	 */
 	void getPOIsForLocation(final Location location) {
 		if (location == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"PlacesMonitorInternal : Null location is obtained from OS, Ignoring to get near by pois");
+					"PlacesMonitorInternal : Null location is obtained from OS, Ignoring to get near by pois");
 			return;
 		}
 
 		Log.debug(PlacesMonitorConstants.LOG_TAG,
-				  "PlacesMonitorInternal : New location obtained: " + location.getLatitude() + location.getLongitude() +
-				  "Attempting to get the near by pois");
+				"PlacesMonitorInternal : New location obtained: " + location.getLatitude() + location.getLongitude() +
+						"Attempting to get the near by pois");
 		Places.getNearbyPointsOfInterest(location, PlacesMonitorConstants.NEARBY_GEOFENCES_COUNT,
-		new AdobeCallback<List<PlacesPOI>>() {
-			@Override
-			public void call(List<PlacesPOI> placesPOIS) {
-				geofenceManager.startMonitoringFences(placesPOIS);
+				new AdobeCallback<List<PlacesPOI>>() {
+					@Override
+					public void call(List<PlacesPOI> placesPOIS) {
+						geofenceManager.startMonitoringFences(placesPOIS);
 
-			}
-		}, new AdobeCallback<PlacesRequestError>() {
-			@Override
-			public void call(PlacesRequestError placesRequestError) {
-				// TODO : Read error and recover if possible
-			}
-		});
+					}
+				}, new AdobeCallback<PlacesRequestError>() {
+					@Override
+					public void call(PlacesRequestError placesRequestError) {
+						// TODO : Read error and recover if possible
+					}
+				});
 	}
 
+	/**
+	 * This method queues the provided event in the {@link #eventQueue}.
+	 *
+	 * <p>
+	 * The queued events are then processed in an orderly fashion
+	 * No action is taken if the provided event's value is null.
+	 *
+	 * @param event The {@link Event} thats needs to be queued
+	 */
 	void queueEvent(final Event event) {
 		if (event == null) {
 			return;
@@ -156,7 +204,13 @@ class PlacesMonitorInternal extends Extension {
 		eventQueue.add(event);
 	}
 
-
+	/**
+	 * Processes the queuedEvent one by one until the queue is empty.
+	 *
+	 * <p>
+	 * Stops processing the events in the queue if the configuration shared state is not available.
+	 * If the configuration is available then we process the event and poll it out of the {@link #eventQueue}.
+	 */
 	void processEvents() {
 		while (!eventQueue.isEmpty()) {
 			Event eventToProcess = eventQueue.peek();
@@ -166,18 +220,18 @@ class PlacesMonitorInternal extends Extension {
 				public void error(final ExtensionError extensionError) {
 					if (extensionError != null) {
 						Log.warning(PlacesMonitorConstants.LOG_TAG,
-									String.format("PlacesMonitorInternal : Could not process event, an error occurred while retrieving configuration shared state: %s",
-												  extensionError.getErrorName()));
+								String.format("PlacesMonitorInternal : Could not process event, an error occurred while retrieving configuration shared state: %s",
+										extensionError.getErrorName()));
 					}
 				}
 			};
 			Map<String, Object> configSharedState = getApi().getSharedEventState(PlacesMonitorConstants.SharedState.CONFIGURATION,
-													eventToProcess, extensionErrorCallback);
+					eventToProcess, extensionErrorCallback);
 
 			// NOTE: configuration is mandatory processing the event, so if shared state is null (pending) stop processing events
 			if (configSharedState == null) {
 				Log.warning(PlacesMonitorConstants.LOG_TAG,
-							"PlacesMonitorInternal : Could not process event, configuration shared state is pending");
+						"PlacesMonitorInternal : Could not process event, configuration shared state is pending");
 				return;
 			}
 
@@ -193,6 +247,14 @@ class PlacesMonitorInternal extends Extension {
 	}
 
 
+	/**
+	 * Method to process the Places Monitor Request Content {@link Event}'s.
+	 *
+	 * <p>
+	 * Reads the event name of the given event and processes them accordingly.
+	 *
+	 * @param event The Places Monitor RequestContent {@link Event} to process
+	 */
 	private void processMonitorRequestEvent(final Event event) {
 		final String eventName = event.getName();
 
@@ -204,23 +266,43 @@ class PlacesMonitorInternal extends Extension {
 			updateLocation();
 		} else {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"PlacesMonitorInternal : Could not process places monitor request event, Invalid/Unknown event name");
+					"PlacesMonitorInternal : Could not process places monitor request event, Invalid/Unknown event name");
 		}
 	}
 
 	// ========================================================================================
 	// Public API handlers
 	// ========================================================================================
-
+	/**
+	 * Handler for places monitor extension's start public api call.
+	 *
+	 * <p>
+	 *  This method requests the {@link #locationManager} to start monitoring the device current location.
+	 */
 	private void startMonitoring() {
 		locationManager.startMonitoring();
 	}
 
+
+	/**
+	 * Handler for places monitor extension's stop public api call.
+	 *
+	 * <p>
+	 *  This method requests the {@link #locationManager} to stop monitoring the device current location.
+	 *  It also requests the {@link #geofenceManager} to stop monitoring the fences that are currently being monitored.
+	 *
+	 */
 	private void stopMonitoring() {
 		locationManager.stopMonitoring();
 		geofenceManager.stopMonitoringFences();
 	}
 
+	/**
+	 * Handler for places monitor extension's updateLocation public api call.
+	 *
+	 * <p>
+	 *  This method requests the location manager to update the device current location immediately.
+	 */
 	private void updateLocation() {
 		locationManager.updateLocation();
 	}
@@ -231,7 +313,11 @@ class PlacesMonitorInternal extends Extension {
 	// ========================================================================================
 	// Getters for private members
 	// ========================================================================================
-
+	/**
+	 * Getter for the {@link #executorService}. Access to which is mutex protected.
+	 *
+	 * @return A non-null {@link ExecutorService} instance
+	 */
 	ExecutorService getExecutor() {
 		synchronized (executorMutex) {
 			if (executorService == null) {
@@ -242,6 +328,11 @@ class PlacesMonitorInternal extends Extension {
 		}
 	}
 
+	/**
+	 * Getter for the {@link #eventQueue}.
+	 *
+	 * @return A non-null {@link ConcurrentLinkedQueue} instance
+	 */
 	ConcurrentLinkedQueue<Event> getEventQueue() {
 		return eventQueue;
 	}

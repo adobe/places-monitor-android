@@ -13,7 +13,6 @@
 // PlacesMonitorListenerMonitorRequestContentTests.java
 //
 
-
 package com.adobe.marketing.mobile;
 
 import org.junit.Before;
@@ -59,7 +58,7 @@ public class PlacesMonitorListenerMonitorRequestContentTests {
 	public void testHear_WithNullEventData() {
 		// setup
 		Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventType.MONITOR,
-										PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(null).build();
+				PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(null).build();
 
 		// test
 		listener.hear(event);
@@ -75,7 +74,7 @@ public class PlacesMonitorListenerMonitorRequestContentTests {
 		EventData eventData = new EventData();
 		eventData.putString("dummyKey", "dummyValue");
 		Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventType.MONITOR,
-										PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(eventData).build();
+				PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(eventData).build();
 		when(extensionApi.getExtension()).thenReturn(null);
 
 		// test
@@ -93,7 +92,7 @@ public class PlacesMonitorListenerMonitorRequestContentTests {
 		EventData eventData = new EventData();
 		eventData.putString("dummyKey", "dummyValue");
 		Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT,
-										PlacesMonitorTestConstants.EventType.MONITOR).setData(eventData).build();
+				PlacesMonitorTestConstants.EventType.MONITOR).setData(eventData).build();
 
 		// test
 		listener.hear(event);

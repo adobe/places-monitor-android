@@ -115,7 +115,7 @@ public class PlacesGeofenceManagerTests {
 		Mockito.when(App.getAppContext()).thenReturn(context);
 		Mockito.when(LocationServices.getGeofencingClient(context)).thenReturn(geofencingClient);
 		Mockito.when(PendingIntent.getBroadcast(eq(context), eq(0), any(Intent.class),
-												eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(geofencePendingIntent);
+				eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(geofencePendingIntent);
 		Mockito.when(App.getAppContext()).thenReturn(context);
 		Mockito.when(ActivityCompat.checkSelfPermission(context, FINE_LOCATION)).thenReturn(PackageManager.PERMISSION_GRANTED);
 
@@ -124,7 +124,7 @@ public class PlacesGeofenceManagerTests {
 		Mockito.when(mockSharedPreference.edit()).thenReturn(mockSharedPreferenceEditor);
 		Mockito.when(geofencingClient.removeGeofences(geofencePendingIntent)).thenReturn(removeTask);
 		Mockito.when(geofencingClient.addGeofences(any(GeofencingRequest.class),
-					 eq(geofencePendingIntent))).thenReturn(addTask);
+				eq(geofencePendingIntent))).thenReturn(addTask);
 		Mockito.when(geofencingClient.removeGeofences(ArgumentMatchers.<String>anyList())).thenReturn(removeTask);
 	}
 
@@ -134,23 +134,30 @@ public class PlacesGeofenceManagerTests {
 	// ========================================================================================
 
 	@Test
-	public void test_startMonitoringFences() {
-		// initial setup with no pois being monitored
-		Whitebox.setInternalState(geofenceManager, "monitoringFences", new HashSet<String>());
+	public void test_startMonitoringFences_Happy() {
 
 		// setup other captors
 		final ArgumentCaptor<OnSuccessListener> onSuccessCallback = ArgumentCaptor.forClass(OnSuccessListener.class);
 		final ArgumentCaptor<OnFailureListener> onFailureCallback = ArgumentCaptor.forClass(OnFailureListener.class);
 		final ArgumentCaptor<GeofencingRequest> addedFences = ArgumentCaptor.forClass(GeofencingRequest.class);
-		final ArgumentCaptor<List<String>> removedFences = ArgumentCaptor.forClass(List.class);
-		final ArgumentCaptor<Set<String>> persistedPOICaptor = ArgumentCaptor.forClass(Set.class);
+		final ArgumentCaptor<OnSuccessListener> onSuccessCallbackRemoveFences = ArgumentCaptor.forClass(
+				OnSuccessListener.class);
+		final ArgumentCaptor<OnFailureListener> onFailureCallbackRemoveFences = ArgumentCaptor.forClass(
+				OnFailureListener.class);
 
 		// test
 		geofenceManager.startMonitoringFences(poiListA());
 
-		// verify method calls
+		// verify the removal of all old pois
+		verify(geofencingClient, times(1)).removeGeofences(any(PendingIntent.class));
+		verify(removeTask, times(1)).addOnSuccessListener(onSuccessCallbackRemoveFences.capture());
+		verify(removeTask, times(1)).addOnFailureListener(onFailureCallbackRemoveFences.capture());
+
+		// trigger the success callback for removal
+		onSuccessCallbackRemoveFences.getValue().onSuccess(mockVoid);
+
+		// verify the addition of new pois
 		verify(geofencingClient, times(1)).addGeofences(addedFences.capture(), eq(geofencePendingIntent));
-		verify(geofencingClient, times(0)).removeGeofences(removedFences.capture());
 		verify(addTask, times(1)).addOnSuccessListener(onSuccessCallback.capture());
 		verify(addTask, times(1)).addOnFailureListener(onFailureCallback.capture());
 
@@ -160,255 +167,85 @@ public class PlacesGeofenceManagerTests {
 		// trigger success callback
 		onSuccessCallback.getValue().onSuccess(mockVoid);
 
-		// verify the in-memory pois
-		Set<String> monitoringFences = Whitebox.getInternalState(geofenceManager, "monitoringFences");
-		assertEquals("in memory list of poi should is correct", 4, monitoringFences.size());
-
-		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(1)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), persistedPOICaptor.capture());
-		assertEquals("persisted poi list should is correct", 4, persistedPOICaptor.getValue().size());
+		// verify process geofence is called twice for the newly entered poi
+		verifyStatic(Places.class, Mockito.times(2));
+		Places.processGeofence(any(Geofence.class), eq(Geofence.GEOFENCE_TRANSITION_ENTER));
 	}
 
 	@Test
-	public void test_startMonitoringFences_when_samePOIList() {
-		// initial setup with no pois being monitored
-		Whitebox.setInternalState(geofenceManager, "monitoringFences", poiSetA());
-
-		// test
-		geofenceManager.startMonitoringFences(poiListA());
-
-		// verify that pois are not added nor removed in the geofence client calls
-		verify(geofencingClient, times(0)).addGeofences(any(GeofencingRequest.class), eq(geofencePendingIntent));
-		verify(geofencingClient, times(0)).removeGeofences(any(List.class));
-
-		// verify the in-memory pois
-		Set<String> monitoringFences = Whitebox.getInternalState(geofenceManager, "monitoringFences");
-		assertEquals("in memory list of poi should is correct", 4, monitoringFences.size());
-
-		// verify the persisted pois are untouched
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
-	}
-
-	@Test
-	public void test_startMonitoringFences_when_completelyDifferentPOIList() {
-		// initial setup with no pois being monitored
-		Whitebox.setInternalState(geofenceManager, "monitoringFences", poiSetA());
-
+	public void test_startMonitoringFences_onFailureToRemoveOldFences_stillAddsNewPOIs() {
 		// setup other captors
-		final ArgumentCaptor<OnSuccessListener> onSuccessCallbackAddFences = ArgumentCaptor.forClass(OnSuccessListener.class);
-		final ArgumentCaptor<OnFailureListener> onFailureCallbackAddFences = ArgumentCaptor.forClass(OnFailureListener.class);
-		final ArgumentCaptor<OnSuccessListener> onSuccessCallbackRemoveFences = ArgumentCaptor.forClass(
-					OnSuccessListener.class);
-		final ArgumentCaptor<OnFailureListener> onFailureCallbackRemoveFences = ArgumentCaptor.forClass(
-					OnFailureListener.class);
-		final ArgumentCaptor<GeofencingRequest> addedFences = ArgumentCaptor.forClass(GeofencingRequest.class);
-		final ArgumentCaptor<List<String>> removedFences = ArgumentCaptor.forClass(List.class);
-		final ArgumentCaptor<Set<String>> persistedPOICaptor = ArgumentCaptor.forClass(Set.class);
-
-		// test
-		geofenceManager.startMonitoringFences(poiListC());
-
-		// verify method calls
-		verify(geofencingClient, times(1)).addGeofences(addedFences.capture(), eq(geofencePendingIntent));
-		verify(geofencingClient, times(1)).removeGeofences(removedFences.capture());
-		verify(addTask, times(1)).addOnSuccessListener(onSuccessCallbackAddFences.capture());
-		verify(addTask, times(1)).addOnFailureListener(onFailureCallbackAddFences.capture());
-		verify(removeTask, times(1)).addOnSuccessListener(onSuccessCallbackRemoveFences.capture());
-		verify(removeTask, times(1)).addOnFailureListener(onFailureCallbackRemoveFences.capture());
-
-
-		// verify that 2 new pois are added to monitor
-		assertEquals("pois added for monitoring should be correct", 2, addedFences.getValue().getGeofences().size());
-		assertEquals("id9", addedFences.getValue().getGeofences().get(0).getRequestId());
-		assertEquals("id10", addedFences.getValue().getGeofences().get(1).getRequestId());
-
-		// verify that 3 old pois are removed from monitoring
-		assertEquals("pois removed from monitoring should be correct", 4, removedFences.getValue().size());
-		assertTrue(removedFences.getValue().contains("id1"));
-		assertTrue(removedFences.getValue().contains("id2"));
-		assertTrue(removedFences.getValue().contains("id3"));
-		assertTrue(removedFences.getValue().contains("id4"));
-
-		// trigger success callback
-		onSuccessCallbackAddFences.getValue().onSuccess(mockVoid);
-		onSuccessCallbackRemoveFences.getValue().onSuccess(mockVoid);
-
-		// verify the in-memory pois
-		Set<String> monitoringFences = Whitebox.getInternalState(geofenceManager, "monitoringFences");
-		assertEquals("in memory list of poi should is correct", 2, monitoringFences.size());
-		assertTrue(monitoringFences.contains("id9"));
-		assertTrue(monitoringFences.contains("id10"));
-
-		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(2)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), persistedPOICaptor.capture());
-		assertEquals("persisted poi list should is correct", 2, persistedPOICaptor.getValue().size());
-		assertTrue(persistedPOICaptor.getValue().contains("id9"));
-		assertTrue(persistedPOICaptor.getValue().contains("id10"));
-	}
-
-
-	@Test
-	public void test_startMonitoringFences_when_newPoiListWithFewSamePois() {
-		// initial setup with no pois being monitored
-		Whitebox.setInternalState(geofenceManager, "monitoringFences", poiSetA());
-
-		// setup other captors
-		final ArgumentCaptor<OnSuccessListener> onSuccessCallbackAddFences = ArgumentCaptor.forClass(OnSuccessListener.class);
-		final ArgumentCaptor<OnFailureListener> onFailureCallbackAddFences = ArgumentCaptor.forClass(OnFailureListener.class);
-		final ArgumentCaptor<OnSuccessListener> onSuccessCallbackRemoveFences = ArgumentCaptor.forClass(
-					OnSuccessListener.class);
-		final ArgumentCaptor<OnFailureListener> onFailureCallbackRemoveFences = ArgumentCaptor.forClass(
-					OnFailureListener.class);
-		final ArgumentCaptor<GeofencingRequest> addedFences = ArgumentCaptor.forClass(GeofencingRequest.class);
-		final ArgumentCaptor<List<String>> removedFences = ArgumentCaptor.forClass(List.class);
-		final ArgumentCaptor<Set<String>> persistedPOICaptor = ArgumentCaptor.forClass(Set.class);
-
-		// test
-		geofenceManager.startMonitoringFences(poiListB());
-
-		// verify method calls
-		verify(geofencingClient, times(1)).addGeofences(addedFences.capture(), eq(geofencePendingIntent));
-		verify(geofencingClient, times(1)).removeGeofences(removedFences.capture());
-		verify(addTask, times(1)).addOnSuccessListener(onSuccessCallbackAddFences.capture());
-		verify(addTask, times(1)).addOnFailureListener(onFailureCallbackAddFences.capture());
-		verify(removeTask, times(1)).addOnSuccessListener(onSuccessCallbackRemoveFences.capture());
-		verify(removeTask, times(1)).addOnFailureListener(onFailureCallbackRemoveFences.capture());
-
-
-		// verify that 2 new pois are added to monitor
-		assertEquals("pois added for monitoring should be correct", 2, addedFences.getValue().getGeofences().size());
-		assertEquals("id5", addedFences.getValue().getGeofences().get(0).getRequestId());
-		assertEquals("id6", addedFences.getValue().getGeofences().get(1).getRequestId());
-
-		// verify that 3 old pois are removed from monitoring
-		assertEquals("pois removed from monitoring should be correct", 3, removedFences.getValue().size());
-		assertTrue(removedFences.getValue().contains("id1"));
-		assertTrue(removedFences.getValue().contains("id2"));
-		assertTrue(removedFences.getValue().contains("id4"));
-
-		// trigger success callback
-		onSuccessCallbackAddFences.getValue().onSuccess(mockVoid);
-		onSuccessCallbackRemoveFences.getValue().onSuccess(mockVoid);
-
-		// verify the in-memory pois
-		Set<String> monitoringFences = Whitebox.getInternalState(geofenceManager, "monitoringFences");
-		assertEquals("in memory list of poi should is correct", 3, monitoringFences.size());
-		assertTrue(monitoringFences.contains("id5"));
-		assertTrue(monitoringFences.contains("id6"));
-		assertTrue(monitoringFences.contains("id3"));
-
-		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(2)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), persistedPOICaptor.capture());
-		assertEquals("persisted poi list should is correct", 3, persistedPOICaptor.getValue().size());
-		assertTrue(persistedPOICaptor.getValue().contains("id5"));
-		assertTrue(persistedPOICaptor.getValue().contains("id6"));
-		assertTrue(persistedPOICaptor.getValue().contains("id3"));
-	}
-
-	@Test
-	public void test_startMonitoringFences_when_noPoisReturned() {
-		// initial setup with no pois being monitored
-		Whitebox.setInternalState(geofenceManager, "monitoringFences", poiSetC());
-
-		// setup other captors
-		final ArgumentCaptor<OnSuccessListener> onSuccessCallbackRemoveFences = ArgumentCaptor.forClass(
-					OnSuccessListener.class);
-		final ArgumentCaptor<OnFailureListener> onFailureCallbackRemoveFences = ArgumentCaptor.forClass(
-					OnFailureListener.class);
-		final ArgumentCaptor<List<String>> removedFences = ArgumentCaptor.forClass(List.class);
-		final ArgumentCaptor<Set<String>> persistedPOICaptor = ArgumentCaptor.forClass(Set.class);
-
-		// test
-		geofenceManager.startMonitoringFences(null);
-
-		// verify method calls
-		verify(geofencingClient, times(0)).addGeofences(any(GeofencingRequest.class), eq(geofencePendingIntent));
-		verify(geofencingClient, times(1)).removeGeofences(removedFences.capture());
-		verify(removeTask, times(1)).addOnSuccessListener(onSuccessCallbackRemoveFences.capture());
-		verify(removeTask, times(1)).addOnFailureListener(onFailureCallbackRemoveFences.capture());
-
-		// verify that 3 old pois are removed from monitoring
-		assertEquals("pois removed from monitoring should be correct", 2, removedFences.getValue().size());
-		assertTrue(removedFences.getValue().contains("id9"));
-		assertTrue(removedFences.getValue().contains("id10"));
-
-		// trigger success callback
-		onSuccessCallbackRemoveFences.getValue().onSuccess(mockVoid);
-
-		// verify the in-memory pois
-		Set<String> monitoringFences = Whitebox.getInternalState(geofenceManager, "monitoringFences");
-		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
-
-		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(1)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), persistedPOICaptor.capture());
-		assertEquals("persisted poi list should is correct", 0, persistedPOICaptor.getValue().size());
-	}
-
-	@Test
-	public void test_startMonitoringFences_when_FailedToAddFences() {
-		// initial setup with no pois being monitored
-		Whitebox.setInternalState(geofenceManager, "monitoringFences", new HashSet<String>());
-
-		// setup other captors
+		final ArgumentCaptor<OnSuccessListener> onSuccessCallback = ArgumentCaptor.forClass(OnSuccessListener.class);
 		final ArgumentCaptor<OnFailureListener> onFailureCallback = ArgumentCaptor.forClass(OnFailureListener.class);
 		final ArgumentCaptor<GeofencingRequest> addedFences = ArgumentCaptor.forClass(GeofencingRequest.class);
+		final ArgumentCaptor<OnSuccessListener> onSuccessCallbackRemoveFences = ArgumentCaptor.forClass(
+				OnSuccessListener.class);
+		final ArgumentCaptor<OnFailureListener> onFailureCallbackRemoveFences = ArgumentCaptor.forClass(
+				OnFailureListener.class);
 
 		// test
 		geofenceManager.startMonitoringFences(poiListA());
 
-		// verify method calls
+		// verify the removal of all old pois
+		verify(geofencingClient, times(1)).removeGeofences(any(PendingIntent.class));
+		verify(removeTask, times(1)).addOnSuccessListener(onSuccessCallbackRemoveFences.capture());
+		verify(removeTask, times(1)).addOnFailureListener(onFailureCallbackRemoveFences.capture());
+
+		// trigger the failure callback for removal
+		onFailureCallbackRemoveFences.getValue().onFailure(new Exception());
+
+		// verify the addition of new pois
 		verify(geofencingClient, times(1)).addGeofences(addedFences.capture(), eq(geofencePendingIntent));
+		verify(addTask, times(1)).addOnSuccessListener(onSuccessCallback.capture());
 		verify(addTask, times(1)).addOnFailureListener(onFailureCallback.capture());
 
 		// verify the added pois are correct
 		assertEquals("pois added for monitoring should be correct", 4, addedFences.getValue().getGeofences().size());
 
 		// trigger success callback
-		onFailureCallback.getValue().onFailure(new Exception());
-
-		// verify the in-memory pois
-		Set<String> monitoringFences = Whitebox.getInternalState(geofenceManager, "monitoringFences");
-		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
-
-		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
+		onSuccessCallback.getValue().onSuccess(mockVoid);
 	}
 
-
 	@Test
-	public void test_startMonitoringFences_when_FailureToRemoveFences() {
-		// initial setup with no pois being monitored
-		Whitebox.setInternalState(geofenceManager, "monitoringFences", poiSetC());
+	public void test_startMonitoringFences_when_FailedToAddFences() {
 
 		// setup other captors
-		final ArgumentCaptor<OnFailureListener> onFailureCallbackRemoveFences = ArgumentCaptor.forClass(
-					OnFailureListener.class);
+		final ArgumentCaptor<OnSuccessListener> onSuccessCallback = ArgumentCaptor.forClass(OnSuccessListener.class);
+		final ArgumentCaptor<OnFailureListener> onFailureCallback = ArgumentCaptor.forClass(OnFailureListener.class);
+		final ArgumentCaptor<GeofencingRequest> addedFences = ArgumentCaptor.forClass(GeofencingRequest.class);
+		final ArgumentCaptor<OnSuccessListener> onSuccessCallbackRemoveFences = ArgumentCaptor.forClass(
+				OnSuccessListener.class);
 
 		// test
-		geofenceManager.startMonitoringFences(null);
+		geofenceManager.startMonitoringFences(poiListA());
 
-		// verify method calls
-		verify(geofencingClient, times(0)).addGeofences(any(GeofencingRequest.class), eq(geofencePendingIntent));
-		verify(removeTask, times(1)).addOnFailureListener(onFailureCallbackRemoveFences.capture());
+		// capture the removal callback
+		verify(removeTask, times(1)).addOnSuccessListener(onSuccessCallbackRemoveFences.capture());
 
+		// trigger the success callback for removal
+		onSuccessCallbackRemoveFences.getValue().onSuccess(mockVoid);
 
-		// trigger success callback
-		onFailureCallbackRemoveFences.getValue().onFailure(new Exception());
+		// verify the addition of new pois
+		verify(geofencingClient, times(1)).addGeofences(addedFences.capture(), eq(geofencePendingIntent));
+		verify(addTask, times(1)).addOnSuccessListener(onSuccessCallback.capture());
+		verify(addTask, times(1)).addOnFailureListener(onFailureCallback.capture());
 
-		// verify the in-memory pois
-		Set<String> monitoringFences = Whitebox.getInternalState(geofenceManager, "monitoringFences");
-		assertEquals("in memory list of poi should is correct", poiSetC().size(), monitoringFences.size());
+		// verify the added pois are correct
+		assertEquals("pois added for monitoring should be correct", 4, addedFences.getValue().getGeofences().size());
 
-		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
+		// trigger failure callback
+		onFailureCallback.getValue().onFailure(new Exception());
+
+		// verify processGeofence is called twice for the newly entered poi
+		verifyStatic(Places.class, Mockito.times(2));
+		Places.processGeofence(any(Geofence.class), eq(Geofence.GEOFENCE_TRANSITION_ENTER));
 	}
 
+
 	@Test
-	public void test_startMonitoringFences_addFence_throwsSecurityExcpetion() {
-		// initial setup with no pois being monitored
-		Whitebox.setInternalState(geofenceManager, "monitoringFences", new HashSet<String>());
+	public void test_startMonitoringFences_addFence_throwsSecurityException() {
 		Mockito.when(geofencingClient.addGeofences(any(GeofencingRequest.class),
-					 eq(geofencePendingIntent))).thenThrow(SecurityException.class);
+				eq(geofencePendingIntent))).thenThrow(SecurityException.class);
 
 		// setup other captors
 		final ArgumentCaptor<GeofencingRequest> addedFences = ArgumentCaptor.forClass(GeofencingRequest.class);
@@ -417,42 +254,22 @@ public class PlacesGeofenceManagerTests {
 		geofenceManager.startMonitoringFences(poiListA());
 
 		// verify method calls
-		verify(geofencingClient, times(1)).addGeofences(addedFences.capture(), eq(geofencePendingIntent));
+		verify(geofencingClient, times(1)).removeGeofences(any(PendingIntent.class));
+		verify(geofencingClient, times(0)).addGeofences(addedFences.capture(), eq(geofencePendingIntent));
 		verify(addTask, times(0)).addOnSuccessListener(any(OnSuccessListener.class));
-
-
-		// verify the in-memory pois
-		Set<String> monitoringFences = Whitebox.getInternalState(geofenceManager, "monitoringFences");
-		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
-
-		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
 	}
-
 
 	@Test
 	public void test_startMonitoringFences_when_geoFencingClient_isNull() {
 		// initial setup with no pois being monitored
 		Mockito.when(LocationServices.getGeofencingClient(context)).thenReturn(null);
 
-		// setup other captors
-		final ArgumentCaptor<List<String>> removedFences = ArgumentCaptor.forClass(List.class);
-
 		// test
 		geofenceManager.startMonitoringFences(poiListA());
 
 		// verify method calls
 		verify(geofencingClient, times(0)).addGeofences(any(GeofencingRequest.class), eq(geofencePendingIntent));
-		verify(geofencingClient, times(0)).removeGeofences(removedFences.capture());
-
-		// verify the added pois are correct
-
-		// verify the in-memory pois
-		Set<String> monitoringFences = Whitebox.getInternalState(geofenceManager, "monitoringFences");
-		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
-
-		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
+		verify(geofencingClient, times(0)).removeGeofences(any(PendingIntent.class));
 	}
 
 	@Test
@@ -460,24 +277,13 @@ public class PlacesGeofenceManagerTests {
 		// initial setup with no pois being monitored
 		Mockito.when(ActivityCompat.checkSelfPermission(context, FINE_LOCATION)).thenReturn(PackageManager.PERMISSION_DENIED);
 
-		// setup other captors
-		final ArgumentCaptor<List<String>> removedFences = ArgumentCaptor.forClass(List.class);
-
 		// test
 		geofenceManager.startMonitoringFences(poiListA());
 
 		// verify method calls
 		verify(geofencingClient, times(0)).addGeofences(any(GeofencingRequest.class), eq(geofencePendingIntent));
-		verify(geofencingClient, times(0)).removeGeofences(removedFences.capture());
+		verify(geofencingClient, times(1)).removeGeofences(any(PendingIntent.class));
 
-		// verify the added pois are correct
-
-		// verify the in-memory pois
-		Set<String> monitoringFences = Whitebox.getInternalState(geofenceManager, "monitoringFences");
-		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
-
-		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
 	}
 
 	@Test
@@ -485,50 +291,27 @@ public class PlacesGeofenceManagerTests {
 		// initial setup with no pois being monitored
 		Mockito.when(App.getAppContext()).thenReturn(null);
 
-		// setup other captors
-		final ArgumentCaptor<List<String>> removedFences = ArgumentCaptor.forClass(List.class);
-
 		// test
 		geofenceManager.startMonitoringFences(poiListA());
 
 		// verify method calls
 		verify(geofencingClient, times(0)).addGeofences(any(GeofencingRequest.class), eq(geofencePendingIntent));
-		verify(geofencingClient, times(0)).removeGeofences(removedFences.capture());
-
-		// verify the added pois are correct
-
-		// verify the in-memory pois
-		Set<String> monitoringFences = Whitebox.getInternalState(geofenceManager, "monitoringFences");
-		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
-
-		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
+		verify(geofencingClient, times(0)).removeGeofences(any(PendingIntent.class));
 	}
 
 	@Test
 	public void test_startMonitoringFences_when_nullPendingIntent() {
 		// initial setup with no pois being monitored
 		Mockito.when(PendingIntent.getBroadcast(eq(context), eq(0), any(Intent.class),
-												eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
-
-		// setup other captors
-		final ArgumentCaptor<List<String>> removedFences = ArgumentCaptor.forClass(List.class);
+				eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
 
 		// test
 		geofenceManager.startMonitoringFences(poiListA());
 
 		// verify method calls
 		verify(geofencingClient, times(0)).addGeofences(any(GeofencingRequest.class), eq(geofencePendingIntent));
-		verify(geofencingClient, times(0)).removeGeofences(removedFences.capture());
+		verify(geofencingClient, times(0)).removeGeofences(any(PendingIntent.class));
 
-		// verify the added pois are correct
-
-		// verify the in-memory pois
-		Set<String> monitoringFences = Whitebox.getInternalState(geofenceManager, "monitoringFences");
-		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
-
-		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
 	}
 
 	// ========================================================================================
@@ -538,7 +321,6 @@ public class PlacesGeofenceManagerTests {
 	@Test
 	public void test_stopMonitoringFences() {
 		// setup
-		Whitebox.setInternalState(geofenceManager, "monitoringFences", poiSetA());
 		final ArgumentCaptor<OnSuccessListener> onSuccessCallback = ArgumentCaptor.forClass(OnSuccessListener.class);
 		final ArgumentCaptor<OnFailureListener> onFailureCallback = ArgumentCaptor.forClass(OnFailureListener.class);
 		final ArgumentCaptor<Set<String>> persistedPOICaptor = ArgumentCaptor.forClass(Set.class);
@@ -555,15 +337,6 @@ public class PlacesGeofenceManagerTests {
 
 		// trigger the success callback
 		onSuccessCallback.getValue().onSuccess(mockVoid);
-
-		// verify the in-memory pois
-		Set<String> monitoringFences = Whitebox.getInternalState(geofenceManager, "monitoringFences");
-		assertEquals("in memory list of poi should is correct", 0, monitoringFences.size());
-
-		// verify the persisted pois
-		verify(mockSharedPreferenceEditor, times(1)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), persistedPOICaptor.capture());
-		assertEquals("persisted poi list should is correct", 0, persistedPOICaptor.getValue().size());
-
 	}
 
 
@@ -602,7 +375,7 @@ public class PlacesGeofenceManagerTests {
 	public void test_stopMonitoringFences_when_geofencingIntent_isNull() {
 		// setup
 		Mockito.when(PendingIntent.getBroadcast(eq(context), eq(0), any(Intent.class),
-												eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
+				eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
 
 		// test
 		geofenceManager.stopMonitoringFences();
@@ -633,8 +406,8 @@ public class PlacesGeofenceManagerTests {
 		// setup
 		List<Geofence> obtainedGeofence = new ArrayList<>();
 		Geofence geofence = new Geofence.Builder().setRequestId("id1").setTransitionTypes(
-			Geofence.GEOFENCE_TRANSITION_ENTER).setCircularRegion(22.33, -33.33,
-					100).setExpirationDuration(Geofence.NEVER_EXPIRE).build();
+				Geofence.GEOFENCE_TRANSITION_ENTER).setCircularRegion(22.33, -33.33,
+				100).setExpirationDuration(Geofence.NEVER_EXPIRE).build();
 		obtainedGeofence.add(geofence);
 
 		Mockito.when(mockGeofencingEvent.getTriggeringGeofences()).thenReturn(obtainedGeofence);
@@ -660,8 +433,8 @@ public class PlacesGeofenceManagerTests {
 
 		List<Geofence> obtainedGeofence = new ArrayList<>();
 		Geofence geofence = new Geofence.Builder().setRequestId("id1").setTransitionTypes(
-			Geofence.GEOFENCE_TRANSITION_ENTER).setCircularRegion(22.33, -33.33,
-					100).setExpirationDuration(Geofence.NEVER_EXPIRE).build();
+				Geofence.GEOFENCE_TRANSITION_ENTER).setCircularRegion(22.33, -33.33,
+				100).setExpirationDuration(Geofence.NEVER_EXPIRE).build();
 		obtainedGeofence.add(geofence);
 
 		Mockito.when(mockGeofencingEvent.getTriggeringGeofences()).thenReturn(obtainedGeofence);
@@ -687,8 +460,8 @@ public class PlacesGeofenceManagerTests {
 
 		List<Geofence> obtainedGeofence = new ArrayList<>();
 		Geofence geofence = new Geofence.Builder().setRequestId("id1").setTransitionTypes(
-			Geofence.GEOFENCE_TRANSITION_EXIT).setCircularRegion(22.33, -33.33,
-					100).setExpirationDuration(Geofence.NEVER_EXPIRE).build();
+				Geofence.GEOFENCE_TRANSITION_EXIT).setCircularRegion(22.33, -33.33,
+				100).setExpirationDuration(Geofence.NEVER_EXPIRE).build();
 		obtainedGeofence.add(geofence);
 
 		Mockito.when(mockGeofencingEvent.getTriggeringGeofences()).thenReturn(obtainedGeofence);
@@ -724,7 +497,6 @@ public class PlacesGeofenceManagerTests {
 		Mockito.when(mockGeofencingEvent.getGeofenceTransition()).thenReturn(Geofence.GEOFENCE_TRANSITION_EXIT);
 		PowerMockito.when(GeofencingEvent.class, "fromIntent", any(Intent.class)).thenReturn(mockGeofencingEvent);
 		when(intent.getAction()).thenReturn(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_GEOFENCE);
-
 
 		// test
 		geofenceManager.onGeofenceReceived(intent);
@@ -879,101 +651,39 @@ public class PlacesGeofenceManagerTests {
 		// setup
 		Set<String> savedMonitoringPois = poiSetA();
 		Set<String> savedUserWithinPois = poiSetB();
-		Whitebox.setInternalState(geofenceManager, "monitoringFences", new HashSet<>());
 		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", new HashSet<>());
 
-
-		when(mockSharedPreference.getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), any(Set.class))).thenReturn(savedMonitoringPois);
-		when(mockSharedPreference.getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY), any(Set.class))).thenReturn(savedUserWithinPois);
+		when(mockSharedPreference.getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY),
+				any(Set.class))).thenReturn(savedUserWithinPois);
 
 		// test
 		geofenceManager.loadPersistedData();
 
 		// verify
-		verify(mockSharedPreference, times(1)).getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), any(Set.class));
-		assertEquals(savedMonitoringPois, Whitebox.getInternalState(geofenceManager, "monitoringFences"));
 		assertEquals(savedUserWithinPois, Whitebox.getInternalState(geofenceManager, "userWithinGeofences"));
 	}
 
 	@Test
-	public void test_loadMonitoringFences_whenSharedPreference_isNull() {
+	public void test_loadPersistedData_whenSharedPreference_isNull() {
 		// setup
 		Set<String> savedMonitoringPois = poiSetA();
-		Set<String> savedUserWithinPois = poiSetB();
-		Whitebox.setInternalState(geofenceManager, "monitoringFences", new HashSet<>());
 		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", new HashSet<>());
 		Mockito.when(context.getSharedPreferences(MONITOR_SHARED_PREFERENCE_KEY, 0)).thenReturn(null);
 
-		when(mockSharedPreference.getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), any(Set.class))).thenReturn(savedMonitoringPois);
-		when(mockSharedPreference.getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY), any(Set.class))).thenReturn(savedMonitoringPois);
+		when(mockSharedPreference.getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY),
+				any(Set.class))).thenReturn(savedMonitoringPois);
 
 		// test
 		geofenceManager.loadPersistedData();
 
-		// verify
-		verify(mockSharedPreference, times(0)).getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), any(Set.class));
-		HashSet<String> loadedPois = Whitebox.getInternalState(geofenceManager, "monitoringFences");
-		assertEquals(0, loadedPois.size());
-
 
 		// verify
-		verify(mockSharedPreference, times(0)).getStringSet(eq(PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY), any(Set.class));
+		verify(mockSharedPreference, times(0)).getStringSet(eq(
+				PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY), any(Set.class));
 		HashSet<String> loadedUserWithinFences = Whitebox.getInternalState(geofenceManager, "userWithinGeofences");
 		assertEquals(0, loadedUserWithinFences.size());
 	}
 
-	// ========================================================================================
-	// saveMonitoringFences
-	// ========================================================================================
-
-	@Test
-	public void test_saveMonitoringFences() {
-		// setup
-		Set<String> pois = poiSetA();
-		Whitebox.setInternalState(geofenceManager, "monitoringFences", pois);
-		final ArgumentCaptor<Set<String>> persistedPOICaptor = ArgumentCaptor.forClass(Set.class);
-
-		// test
-		geofenceManager.saveMonitoringFences();
-
-		// verify
-		verify(mockSharedPreference, times(1)).edit();
-		verify(mockSharedPreferenceEditor, times(1)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), persistedPOICaptor.capture());
-		verify(mockSharedPreferenceEditor, times(1)).commit();
-		assertEquals(pois, persistedPOICaptor.getValue());
-	}
-
-
-	@Test
-	public void test_saveMonitoringFences_when_sharedPreference_isNull() {
-		// setup
-		Set<String> pois = poiSetA();
-		Whitebox.setInternalState(geofenceManager, "monitoringFences", pois);
-		Mockito.when(context.getSharedPreferences(MONITOR_SHARED_PREFERENCE_KEY, 0)).thenReturn(null);
-
-		// test
-		geofenceManager.saveMonitoringFences();
-
-		// verify
-		verify(mockSharedPreference, times(0)).edit();
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
-		verify(mockSharedPreferenceEditor, times(0)).commit();
-	}
-
-	@Test
-	public void test_saveMonitoringFences_when_sharedPreferenceEditor_isNull() {
-		// setup
-		Set<String> pois = poiSetA();
-		Whitebox.setInternalState(geofenceManager, "monitoringFences", pois);
-		Mockito.when(mockSharedPreference.edit()).thenReturn(null);
-
-		// test
-		geofenceManager.saveMonitoringFences();
-
-		// verify
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.MONITORING_FENCES_KEY), ArgumentMatchers.<String>anySet());
-		verify(mockSharedPreferenceEditor, times(0)).commit();
-	}
 
 	// ========================================================================================
 	// saveUserWithinGeofences
@@ -991,7 +701,8 @@ public class PlacesGeofenceManagerTests {
 
 		// verify
 		verify(mockSharedPreference, times(1)).edit();
-		verify(mockSharedPreferenceEditor, times(1)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY), persistedPOICaptor.capture());
+		verify(mockSharedPreferenceEditor, times(1)).putStringSet(eq(
+				PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY), persistedPOICaptor.capture());
 		verify(mockSharedPreferenceEditor, times(1)).commit();
 		assertEquals(pois, persistedPOICaptor.getValue());
 	}
@@ -1009,7 +720,8 @@ public class PlacesGeofenceManagerTests {
 
 		// verify
 		verify(mockSharedPreference, times(0)).edit();
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY),
+		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(
+				PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY),
 				ArgumentMatchers.<String>anySet());
 		verify(mockSharedPreferenceEditor, times(0)).commit();
 	}
@@ -1025,7 +737,8 @@ public class PlacesGeofenceManagerTests {
 		geofenceManager.saveUserWithinGeofences();
 
 		// verify
-		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY),
+		verify(mockSharedPreferenceEditor, times(0)).putStringSet(eq(
+				PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY),
 				ArgumentMatchers.<String>anySet());
 		verify(mockSharedPreferenceEditor, times(0)).commit();
 	}
@@ -1078,8 +791,12 @@ public class PlacesGeofenceManagerTests {
 
 	private List<PlacesPOI> poiListA() {
 		List<PlacesPOI> pois = new ArrayList<>();
-		pois.add(new PlacesPOI("id1", "name1", 22.22, 33.33, 100, "libraryID", 200, null));
-		pois.add(new PlacesPOI("id2", "name2", 22.22, 33.33, 100, "libraryID", 200, null));
+		PlacesPOI poi1 = new PlacesPOI("id1", "name1", 22.22, 33.33, 100, "libraryID", 200, null);
+		poi1.setContainsUser(true);
+		pois.add(poi1);
+		PlacesPOI poi2 = new PlacesPOI("id2", "name2", 22.22, 33.33, 100, "libraryID", 200, null);
+		poi2.setContainsUser(true);
+		pois.add(poi2);
 		pois.add(new PlacesPOI("id3", "name3", 22.22, 33.33, 100, "libraryID", 200, null));
 		pois.add(new PlacesPOI("id4", "name4", 22.22, 33.33, 100, "libraryID", 200, null));
 		return pois;

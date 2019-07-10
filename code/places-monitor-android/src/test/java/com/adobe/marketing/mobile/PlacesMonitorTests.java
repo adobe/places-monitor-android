@@ -48,7 +48,7 @@ public class PlacesMonitorTests {
 		// test
 		String extensionVersion = PlacesMonitor.extensionVersion();
 		assertEquals("The Extension version API returns the correct value", PlacesMonitorTestConstants.EXTENSION_VERSION,
-					 extensionVersion);
+				extensionVersion);
 	}
 
 	// ========================================================================================
@@ -100,7 +100,7 @@ public class PlacesMonitorTests {
 		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_START, event.getName());
 		assertEquals("the event type should be correct", PlacesMonitorTestConstants.EventType.MONITOR, event.getType());
 		assertEquals("the event source should be correct", PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT,
-					 event.getSource());
+				event.getSource());
 	}
 
 	// ========================================================================================
@@ -129,7 +129,7 @@ public class PlacesMonitorTests {
 		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_STOP, event.getName());
 		assertEquals("the event type should be correct", PlacesMonitorTestConstants.EventType.MONITOR, event.getType());
 		assertEquals("the event source should be correct", PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT,
-					 event.getSource());
+				event.getSource());
 	}
 
 
@@ -159,7 +159,7 @@ public class PlacesMonitorTests {
 		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_UPDATE, event.getName());
 		assertEquals("the event type should be correct", PlacesMonitorTestConstants.EventType.MONITOR, event.getType());
 		assertEquals("the event source should be correct", PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT,
-					 event.getSource());
+				event.getSource());
 	}
 
 	// ========================================================================================

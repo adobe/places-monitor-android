@@ -16,13 +16,40 @@
 
 package com.adobe.marketing.mobile;
 
+
+/**
+ * Listens for {@link PlacesMonitorConstants.EventType#MONITOR}, {@link PlacesMonitorConstants.EventSource#REQUEST_CONTENT} events
+ * Monitor Request Content events consist of the following
+ * <ul>
+ *     <li>Event to Start Monitoring</li>
+ *     <li>Event to Stop Monitoring</li>
+ *     <li>Event to Update Location</li>
+ * </ul>
+ * @see PlacesMonitorInternal
+ */
 class PlacesMonitorListenerMonitorRequestContent extends ExtensionListener {
 
-	protected PlacesMonitorListenerMonitorRequestContent(final ExtensionApi extension, final String type,
-			final String source) {
-		super(extension, type, source);
+	/**
+	 * Constructor.
+	 *
+	 * @param extensionApi an instance of  {@link ExtensionApi}
+	 * @param type  {@link EventType} this listener is registered to handle
+	 * @param source {@link EventSource} this listener is registered to handle
+	 */
+	protected PlacesMonitorListenerMonitorRequestContent(final ExtensionApi extensionApi, final String type,
+														 final String source) {
+		super(extensionApi, type, source);
 	}
 
+	/**
+	 * Method that gets called when {@link PlacesMonitorConstants.EventType#MONITOR},
+	 * {@link PlacesMonitorConstants.EventSource#REQUEST_CONTENT} event is dispatched through eventHub.
+	 * <p>
+	 * {@link PlacesMonitorInternal} queues the event and attempts to process them immediately.
+	 *
+	 * @param event placesmonitor requestContent {@link Event} to be processed
+	 * @see PlacesMonitorInternal#processEvents()
+	 */
 	@Override
 	public void hear(final Event event) {
 		if (event.getEventData() == null) {

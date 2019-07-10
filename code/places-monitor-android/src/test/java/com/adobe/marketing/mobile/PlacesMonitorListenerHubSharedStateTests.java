@@ -13,7 +13,6 @@
 // PlacesMonitorListenerHubSharedStateTests.java
 //
 
-
 package com.adobe.marketing.mobile;
 
 import org.junit.Before;
@@ -75,7 +74,7 @@ public class PlacesMonitorListenerHubSharedStateTests {
 	public void testHear_WithNullEventData() {
 		// setup
 		Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventType.HUB,
-										PlacesMonitorTestConstants.EventSource.SHARED_STATE).setData(null).build();
+				PlacesMonitorTestConstants.EventSource.SHARED_STATE).setData(null).build();
 
 		// test
 		placesMonitorListenerHubSharedState.hear(event);
@@ -91,7 +90,7 @@ public class PlacesMonitorListenerHubSharedStateTests {
 		EventData eventData = new EventData();
 		eventData.putString(PlacesMonitorConstants.SharedState.STATEOWNER, PlacesMonitorConstants.SharedState.CONFIGURATION);
 		Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventType.HUB,
-										PlacesMonitorTestConstants.EventSource.SHARED_STATE).setData(eventData).build();
+				PlacesMonitorTestConstants.EventSource.SHARED_STATE).setData(eventData).build();
 		when(extensionApi.getExtension()).thenReturn(null);
 
 		// test
@@ -108,7 +107,7 @@ public class PlacesMonitorListenerHubSharedStateTests {
 		EventData eventData = new EventData();
 		eventData.putString(PlacesMonitorConstants.SharedState.STATEOWNER, "OtherSharedState");
 		Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventType.HUB,
-										PlacesMonitorTestConstants.EventSource.SHARED_STATE).setData(eventData).build();
+				PlacesMonitorTestConstants.EventSource.SHARED_STATE).setData(eventData).build();
 
 		// test
 		placesMonitorListenerHubSharedState.hear(event);

@@ -44,7 +44,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 public class PlacesLocationBroadcastReceiverTests {
 
 	static final String ACTION_LOCATION_UPDATE =
-		"com.adobe.marketing.mobile.PlacesLocationBroadcastReceiver.locationUpdates";
+			"com.adobe.marketing.mobile.PlacesLocationBroadcastReceiver.locationUpdates";
 	private PlacesLocationBroadcastReceiver receiver;
 
 	@Mock

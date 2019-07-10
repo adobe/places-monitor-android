@@ -15,16 +15,14 @@
 
 package com.adobe.marketing.mobile;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Build;
 import java.lang.reflect.Modifier;
-import android.support.v4.app.ActivityCompat;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Status;
@@ -65,9 +63,8 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.junit.Assert.*;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Context.class, App.class, LocationServices.class, PendingIntent.class, ActivityCompat.class, LocationResult.class, Build.class})
+@PrepareForTest({Context.class, App.class, LocationServices.class, PendingIntent.class, LocationResult.class, Build.class, PlacesActivity.class})
 public class PlacesLocationManagerTests {
-	private final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
 	private PlacesLocationManager locationManager;
 	private LocationResult locationResult;
 
@@ -110,32 +107,40 @@ public class PlacesLocationManagerTests {
 	@Mock
 	PlacesMonitorInternal mockPlacesMonitorInternal;
 
+	@Mock
+	SharedPreferences mockSharedPreference;
+
+	@Mock
+	SharedPreferences.Editor mockSharedPreferenceEditor;
+
 	@Before
 	public void before() throws Exception {
 		PowerMockito.mockStatic(App.class);
 		PowerMockito.mockStatic(Build.class);
 		PowerMockito.mockStatic(LocationServices.class);
 		PowerMockito.mockStatic(PendingIntent.class);
-		PowerMockito.mockStatic(ActivityCompat.class);
-
-		locationManager = new PlacesLocationManager(mockPlacesMonitorInternal);
+		PowerMockito.mockStatic(PlacesActivity.class);
 
 		// mock static methods
 		Mockito.when(App.getAppContext()).thenReturn(context);
 		Mockito.when(App.getCurrentActivity()).thenReturn(activity);
 		Mockito.when(LocationServices.getFusedLocationProviderClient(context)).thenReturn(locationProviderClient);
 		Mockito.when(PendingIntent.getBroadcast(eq(context), eq(0), any(Intent.class),
-												eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(pendingIntent);
+				eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(pendingIntent);
 		Mockito.when(App.getAppContext()).thenReturn(context);
-		Mockito.when(ActivityCompat.shouldShowRequestPermissionRationale(activity, FINE_LOCATION)).thenReturn(false);
-		Mockito.when(ActivityCompat.checkSelfPermission(context, FINE_LOCATION)).thenReturn(PackageManager.PERMISSION_GRANTED);
 		Mockito.when(LocationServices.getSettingsClient(context)).thenReturn(mockSettingsClient);
+		Mockito.when(PlacesActivity.isFineLocationPermissionGranted()).thenReturn(true);
 
 		// mock instance methods
+		Mockito.when(context.getSharedPreferences(PlacesMonitorTestConstants.SharedPreference.MASTER_KEY,
+				0)).thenReturn(mockSharedPreference);
+		Mockito.when(mockSharedPreference.edit()).thenReturn(mockSharedPreferenceEditor);
 		Mockito.when(locationProviderClient.removeLocationUpdates(pendingIntent)).thenReturn(mockTask);
 		Mockito.when(mockSettingsClient.checkLocationSettings(any(LocationSettingsRequest.class))).thenReturn(
-			mockTaskSettingsResponse);
+				mockTaskSettingsResponse);
 		Mockito.when(locationProviderClient.getLastLocation()).thenReturn(mockTaskLocation);
+
+		locationManager = new PlacesLocationManager(mockPlacesMonitorInternal);
 	}
 
 
@@ -163,18 +168,18 @@ public class PlacesLocationManagerTests {
 		// verify if location updates are requested
 		verify(locationProviderClient, times(1)).requestLocationUpdates(locationRequestArgumentCaptor.capture(),
 				eq(pendingIntent));
-		Boolean isRequestingLocationUpdates = Whitebox.getInternalState(locationManager, "isRequestingLocationUpdates");
-		assertTrue("The location update flag should be set to true", isRequestingLocationUpdates);
+		Boolean hasMonitoringStarted = Whitebox.getInternalState(locationManager, "hasMonitoringStarted");
+		assertTrue("The location update flag should be set to true", hasMonitoringStarted);
 
 		// verify the location request parameters
 		assertEquals("the location request interval should be correct", PlacesMonitorTestConstants.Location.REQUEST_INTERVAL,
-					 locationRequestArgumentCaptor.getValue().getInterval());
+				locationRequestArgumentCaptor.getValue().getInterval());
 		assertEquals("the location fastest request interval should be correct",
-					 PlacesMonitorTestConstants.Location.REQUEST_FASTEST_INTERVAL,
-					 locationRequestArgumentCaptor.getValue().getFastestInterval());
+				PlacesMonitorTestConstants.Location.REQUEST_FASTEST_INTERVAL,
+				locationRequestArgumentCaptor.getValue().getFastestInterval());
 		assertEquals("the location small displacement should be correct",
-					 PlacesMonitorTestConstants.Location.REQUEST_SMALLEST_DISPLACEMENT,
-					 locationRequestArgumentCaptor.getValue().getSmallestDisplacement(), 0.0);
+				PlacesMonitorTestConstants.Location.REQUEST_SMALLEST_DISPLACEMENT,
+				locationRequestArgumentCaptor.getValue().getSmallestDisplacement(), 0.0);
 	}
 
 
@@ -189,9 +194,33 @@ public class PlacesLocationManagerTests {
 		// verify if location updates are not requested
 		verify(mockSettingsClient, times(0)).checkLocationSettings(any(LocationSettingsRequest.class));
 		verify(locationProviderClient, times(0)).requestLocationUpdates(any(LocationRequest.class), eq(pendingIntent));
-		Boolean isRequestingLocationUpdates = Whitebox.getInternalState(locationManager, "isRequestingLocationUpdates");
-		assertFalse("The location update flag should be set to false", isRequestingLocationUpdates);
+		Boolean hasMonitoringStarted = Whitebox.getInternalState(locationManager, "hasMonitoringStarted");
+		assertFalse("The location update flag should be set to false", hasMonitoringStarted);
+
+		// verify the SDK donot  askPermissions
+		verifyStatic(PlacesActivity.class, Mockito.times(0));
+		PlacesActivity.askPermission();
 	}
+
+	@Test
+	public void test_startMonitoring_when_FineLocationPermissionNotGranted() {
+		// setup
+		Mockito.when(PlacesActivity.isFineLocationPermissionGranted()).thenReturn(false);
+
+		// test
+		locationManager.startMonitoring();
+
+		// verify the SDK askPermissions
+		verifyStatic(PlacesActivity.class, Mockito.times(1));
+		PlacesActivity.askPermission();
+
+		// verify if location updates are not requested
+		verify(mockSettingsClient, times(0)).checkLocationSettings(any(LocationSettingsRequest.class));
+		verify(locationProviderClient, times(0)).requestLocationUpdates(any(LocationRequest.class), eq(pendingIntent));
+		Boolean hasMonitoringStarted = Whitebox.getInternalState(locationManager, "hasMonitoringStarted");
+		assertFalse("The location update flag should be set to false", hasMonitoringStarted);
+	}
+
 
 
 	@Test
@@ -213,8 +242,8 @@ public class PlacesLocationManagerTests {
 		// verify that the location updates are not requested
 		verify(locationProviderClient, times(0)).requestLocationUpdates(locationRequestArgumentCaptor.capture(),
 				eq(pendingIntent));
-		Boolean isRequestingLocationUpdates = Whitebox.getInternalState(locationManager, "isRequestingLocationUpdates");
-		assertFalse("The location update flag should be set to false", isRequestingLocationUpdates);
+		Boolean hasMonitoringStarted = Whitebox.getInternalState(locationManager, "hasMonitoringStarted");
+		assertFalse("The location update flag should be set to false", hasMonitoringStarted);
 	}
 
 	@Test
@@ -223,7 +252,7 @@ public class PlacesLocationManagerTests {
 		final ArgumentCaptor<OnSuccessListener> onSuccessCallback = ArgumentCaptor.forClass(OnSuccessListener.class);
 		final ArgumentCaptor<LocationRequest> locationRequestArgumentCaptor = ArgumentCaptor.forClass(LocationRequest.class);
 		Mockito.when(PendingIntent.getBroadcast(eq(context), eq(0), any(Intent.class),
-												eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
+				eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
 
 		// test
 		locationManager.startMonitoring();
@@ -237,8 +266,8 @@ public class PlacesLocationManagerTests {
 		// verify that the location updates are not requested
 		verify(locationProviderClient, times(0)).requestLocationUpdates(locationRequestArgumentCaptor.capture(),
 				eq(pendingIntent));
-		Boolean isRequestingLocationUpdates = Whitebox.getInternalState(locationManager, "isRequestingLocationUpdates");
-		assertFalse("The location update flag should be set to false", isRequestingLocationUpdates);
+		Boolean hasMonitoringStarted = Whitebox.getInternalState(locationManager, "hasMonitoringStarted");
+		assertFalse("The location update flag should be set to false", hasMonitoringStarted);
 	}
 
 	@Test
@@ -247,7 +276,7 @@ public class PlacesLocationManagerTests {
 		final ArgumentCaptor<OnFailureListener> onFailureCallback = ArgumentCaptor.forClass(OnFailureListener.class);
 		final ArgumentCaptor<LocationRequest> locationRequestArgumentCaptor = ArgumentCaptor.forClass(LocationRequest.class);
 		Mockito.when(PendingIntent.getBroadcast(eq(context), eq(0), any(Intent.class),
-												eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
+				eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
 
 		// test
 		locationManager.startMonitoring();
@@ -263,8 +292,8 @@ public class PlacesLocationManagerTests {
 		// verify that the location updates are not requested
 		verify(locationProviderClient, times(0)).requestLocationUpdates(locationRequestArgumentCaptor.capture(),
 				eq(pendingIntent));
-		Boolean isRequestingLocationUpdates = Whitebox.getInternalState(locationManager, "isRequestingLocationUpdates");
-		assertFalse("The location update flag should be set to false", isRequestingLocationUpdates);
+		Boolean hasMonitoringStarted = Whitebox.getInternalState(locationManager, "hasMonitoringStarted");
+		assertFalse("The location update flag should be set to false", hasMonitoringStarted);
 	}
 
 	@Test
@@ -273,7 +302,7 @@ public class PlacesLocationManagerTests {
 		final ArgumentCaptor<OnFailureListener> onFailureCallback = ArgumentCaptor.forClass(OnFailureListener.class);
 		final ArgumentCaptor<LocationRequest> locationRequestArgumentCaptor = ArgumentCaptor.forClass(LocationRequest.class);
 		Mockito.when(PendingIntent.getBroadcast(eq(context), eq(0), any(Intent.class),
-												eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
+				eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
 
 		// test
 		locationManager.startMonitoring();
@@ -289,54 +318,9 @@ public class PlacesLocationManagerTests {
 		// verify that the location updates are not requested
 		verify(locationProviderClient, times(0)).requestLocationUpdates(locationRequestArgumentCaptor.capture(),
 				eq(pendingIntent));
-		Boolean isRequestingLocationUpdates = Whitebox.getInternalState(locationManager, "isRequestingLocationUpdates");
-		assertFalse("The location update flag should be set to false", isRequestingLocationUpdates);
-	}
-
-
-	@Test
-	public void test_startMonitoring_when_permissionNotGranted() throws Exception {
-		// setup
-		setFinalStatic(Build.VERSION.class.getField("SDK_INT"), 25);
-		setFinalStatic(Build.VERSION_CODES.class.getField("M"), 24);
-		Mockito.when(ActivityCompat.checkSelfPermission(context, FINE_LOCATION)).thenReturn(PackageManager.PERMISSION_DENIED);
-
-
-		// test
-		locationManager.startMonitoring();
-
-		// verify
-		verifyStatic(ActivityCompat.class, Mockito.times(1));
-		ActivityCompat.requestPermissions(activity, new String[] {FINE_LOCATION}, PlacesMonitorTestConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE);
-	}
-
-
-	@Test
-	public void test_startMonitoring_when_permissionNotGranted_AndActivityIsNull() {
-		// setup
-		Mockito.when(ActivityCompat.checkSelfPermission(context, FINE_LOCATION)).thenReturn(PackageManager.PERMISSION_DENIED);
-		Mockito.when(App.getCurrentActivity()).thenReturn(null);
-
-		// test
-		locationManager.startMonitoring();
-
-		// verify
-		verifyStatic(ActivityCompat.class, Mockito.times(0));
-		ActivityCompat.requestPermissions(any(Activity.class), any(String[].class), anyInt());
-	}
-
-	@Test
-	public void test_startMonitoring_when_permissionNotGranted_and_shouldShowRequestPermissionRationaleTrue() {
-		// setup
-		Mockito.when(ActivityCompat.checkSelfPermission(context, FINE_LOCATION)).thenReturn(PackageManager.PERMISSION_DENIED);
-		Mockito.when(ActivityCompat.shouldShowRequestPermissionRationale(activity, FINE_LOCATION)).thenReturn(true);
-
-		// test
-		locationManager.startMonitoring();
-
-		// verify
-		verifyStatic(ActivityCompat.class, Mockito.times(0));
-		ActivityCompat.requestPermissions(any(Activity.class), any(String[].class), anyInt());
+		Boolean hasMonitoringStarted = Whitebox.getInternalState(locationManager, "hasMonitoringStarted");
+		assertFalse("The location update flag should be set to false", hasMonitoringStarted);
+		assertFalse("The location update flag should be set to false", hasMonitoringStarted);
 	}
 
 
@@ -357,8 +341,8 @@ public class PlacesLocationManagerTests {
 
 		// trigger that callback
 		onCompleteCallback.getValue().onComplete(mockTask);
-		Boolean isRequestingLocationUpdates = Whitebox.getInternalState(locationManager, "isRequestingLocationUpdates");
-		assertFalse("The location update flag should be reset to false", isRequestingLocationUpdates);
+		Boolean hasMonitoringStarted = Whitebox.getInternalState(locationManager, "hasMonitoringStarted");
+		assertFalse("The location update flag should be reset to false", hasMonitoringStarted);
 	}
 
 	@Test
@@ -395,7 +379,7 @@ public class PlacesLocationManagerTests {
 		// setup
 		final ArgumentCaptor<OnCompleteListener> onCompleteCallback = ArgumentCaptor.forClass(OnCompleteListener.class);
 		Mockito.when(PendingIntent.getBroadcast(eq(context), eq(0), any(Intent.class),
-												eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
+				eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
 
 		// test
 		locationManager.stopMonitoring();
@@ -414,7 +398,7 @@ public class PlacesLocationManagerTests {
 		// setup
 		final ArgumentCaptor<OnSuccessListener> onSuccessCallback = ArgumentCaptor.forClass(OnSuccessListener.class);
 		final ArgumentCaptor<OnFailureListener> onFailureCallback = ArgumentCaptor.forClass(OnFailureListener.class);
-		Whitebox.setInternalState(locationManager, "isRequestingLocationUpdates", true);
+		Whitebox.setInternalState(locationManager, "hasMonitoringStarted", true);
 		Whitebox.setInternalState(locationManager, "fusedLocationClient", locationProviderClient);
 
 		// test
@@ -437,7 +421,7 @@ public class PlacesLocationManagerTests {
 		// setup
 		final ArgumentCaptor<OnSuccessListener> onSuccessCallback = ArgumentCaptor.forClass(OnSuccessListener.class);
 		final ArgumentCaptor<OnFailureListener> onFailureCallback = ArgumentCaptor.forClass(OnFailureListener.class);
-		Whitebox.setInternalState(locationManager, "isRequestingLocationUpdates", true);
+		Whitebox.setInternalState(locationManager, "hasMonitoringStarted", true);
 
 		// test
 		locationManager.updateLocation();
@@ -457,7 +441,7 @@ public class PlacesLocationManagerTests {
 	public void test_updateLocation_when_monitoringNotStarted() {
 		// setup
 		final ArgumentCaptor<OnSuccessListener> onSuccessCallback = ArgumentCaptor.forClass(OnSuccessListener.class);
-		Whitebox.setInternalState(locationManager, "isRequestingLocationUpdates", false);
+		Whitebox.setInternalState(locationManager, "hasMonitoringStarted", false);
 
 		// test
 		locationManager.updateLocation();
@@ -469,12 +453,11 @@ public class PlacesLocationManagerTests {
 		verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(mockLocation);
 	}
 
-
 	@Test
 	public void test_updateLocation_when_locationClient_null() {
 		// setup
 		final ArgumentCaptor<OnSuccessListener> onSuccessCallback = ArgumentCaptor.forClass(OnSuccessListener.class);
-		Whitebox.setInternalState(locationManager, "isRequestingLocationUpdates", true);
+		Whitebox.setInternalState(locationManager, "hasMonitoringStarted", true);
 		Mockito.when(LocationServices.getFusedLocationProviderClient(context)).thenReturn(null);
 
 		// test
@@ -492,7 +475,7 @@ public class PlacesLocationManagerTests {
 		// setup
 		final ArgumentCaptor<OnSuccessListener> onSuccessCallback = ArgumentCaptor.forClass(OnSuccessListener.class);
 		final ArgumentCaptor<OnFailureListener> onFailureCallback = ArgumentCaptor.forClass(OnFailureListener.class);
-		Whitebox.setInternalState(locationManager, "isRequestingLocationUpdates", true);
+		Whitebox.setInternalState(locationManager, "hasMonitoringStarted", true);
 
 		// test
 		locationManager.updateLocation();

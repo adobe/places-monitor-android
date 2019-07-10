@@ -1,3 +1,3 @@
-include ':places-monitor-android', ':testapp'
+include ':places-monitor-android'
 
 rootProject.name = "places-monitor"
