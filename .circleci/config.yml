@@ -1,6 +1,4 @@
 version: 2.0
-orbs:
-  codecov: codecov/codecov@1.0.2
 jobs:
   build:
     working_directory: ~/code
@@ -10,17 +8,50 @@ jobs:
       JVM_OPTS: -Xmx3200m
     steps:
       - checkout
-      # - restore_cache:
-      #     key: jars-{{ checksum "code/build.gradle" }}-{{ checksum  "app/build.gradle" }}
-      - run:
-          name: ChmodPermssion
-          command: sudo chmod +x code/gradlew  
       - run:
           name: Javadoc
           command: code/gradlew -q -p code/places-monitor-android javadocPublic       
       - run:
           name: Build
           command: code/gradlew -p code/places-monitor-android assemblePhoneCoreBundleDebug
+  test:
+    working_directory: ~/code
+    docker:
+      - image: circleci/android:api-28-alpha
+    environment:
+      JVM_OPTS: -Xmx3200m
+    steps:
+      - checkout
       - run:
           name: UnitTests
           command: code/gradlew -p code/places-monitor-android platformUnitTestJacocoReport
+  publish:
+    working_directory: ~/code
+    docker:
+      - image: circleci/android:api-28-alpha
+    environment:
+      JVM_OPTS: -Xmx3200m
+    steps:
+      - checkout
+      - run:
+          name: Bintray Upload
+          command: code/gradlew -p code/places-monitor-android bintrayUpload -PapiKey=$bintrayAPIKey    
+workflows:
+  version: 2
+  build-test-approve-and-publish:
+    jobs:
+      - build  
+      - test:
+          requires:
+            - build
+      - hold:
+          filters:
+            branches:
+              only:
+                - testingCI
+          type: approval
+          requires:
+           - test
+      - publish:
+          requires:
+            - hold
