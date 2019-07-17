@@ -137,6 +137,123 @@ task javadocPublish(type: Jar) {
     classifier = 'javadoc'
 }
 
+
+artifactoryPublish.dependsOn('assemblePhone')
+publishing {
+    publications {
+        aar(MavenPublication) {
+            groupId = 'com.adobe.marketing.mobile'
+            artifactId = rootProject.moduleName
+            version = rootProject.moduleVersion
+            artifact("$buildDir/outputs/aar/${moduleAARName}")
+            artifact javadocPublish
+            pom.withXml {
+                asNode().appendNode('name', mavenRepoName)
+                asNode().appendNode('description', mavenRepoDescription)
+                asNode().appendNode('url', 'https://mobilemarketing.adobe.com/')
+                def scmNode = asNode().appendNode('scm')
+                scmNode.appendNode('url', 'https://github.com/Adobe-Marketing-Cloud/mobile-services')
+
+
+                def developersNode = asNode().appendNode('developers')
+                def developerNode = developersNode.appendNode('developer')
+                developerNode.appendNode('id', 'adobe')
+                developerNode.appendNode('name', 'adobe')
+
+                def licensesNode = asNode().appendNode('licenses')
+                def licenseNode = licensesNode.appendNode('license')
+                licenseNode.appendNode('name', 'Adobe Proprietary')
+
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+
+                def dependencyNode = dependenciesNode.appendNode('dependency')
+                dependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
+                dependencyNode.appendNode('artifactId', 'core')
+                dependencyNode.appendNode('version', mavenCoreVersion)
+            }
+        }
+        aarSnapshot(MavenPublication) {
+            groupId = 'com.adobe.marketing.mobile'
+            artifactId = rootProject.moduleName
+            if (project.hasProperty("isMaster")) {
+                version = rootProject.moduleVersion + '-internal'
+            } else {
+                version = rootProject.moduleVersion + '-SNAPSHOT'
+            }
+            artifact("$buildDir/outputs/aar/${moduleAARName}")
+            artifact javadocPublish
+            pom.withXml {
+                asNode().appendNode('name', mavenRepoName)
+                asNode().appendNode('description', mavenRepoDescription)
+                asNode().appendNode('url', 'https://mobilemarketing.adobe.com/')
+                def scmNode = asNode().appendNode('scm')
+                scmNode.appendNode('url', 'https://github.com/Adobe-Marketing-Cloud/mobile-services')
+
+
+                def developersNode = asNode().appendNode('developers')
+                def developerNode = developersNode.appendNode('developer')
+                developerNode.appendNode('id', 'adobe')
+                developerNode.appendNode('name', 'adobe')
+
+                def licensesNode = asNode().appendNode('licenses')
+                def licenseNode = licensesNode.appendNode('license')
+                licenseNode.appendNode('name', 'Adobe Proprietary')
+
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+
+                def dependencyNode = dependenciesNode.appendNode('dependency')
+                dependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
+                dependencyNode.appendNode('artifactId', 'core')
+                dependencyNode.appendNode('version', mavenCoreVersion + '-SNAPSHOT')
+            }
+        }
+    }
+}
+
+
+artifactoryPublish {
+    publications(publishing.publications.aarSnapshot)
+}
+
+bintray {
+    user = 'sdkci'
+    //This apiKey is passed as a gradle parameter to the task
+    //from the Jenkins Pipeline.
+    if (project.hasProperty("apiKey")) {
+        key = "$apiKey"
+    } else {
+        key = "xxxxxxxxxxxxxxx"
+    }
+
+    String gpgpass = "xxxxxxxxxxxxxxx"
+    if (project.hasProperty("gpgPassphrase")) {
+        gpgpass = "$gpgPassphrase"
+}
+    dryRun = false
+    pkg {
+        repo = "mobileservicesdk"
+        name = mavenRepoName
+        userOrg = "eaps"
+        version {
+            name = rootProject.moduleVersion
+            desc = mavenRepoDescription
+            gpg {
+                sign = true
+                passphrase = gpgpass
+            }
+        }
+    }
+
+    publications = ['aar']
+}
+
+bintrayUpload.dependsOn('assemblePhone')
+
+
 configurations.all {
     resolutionStrategy {
         force 'org.codehaus.groovy:groovy-all:2.4.12'

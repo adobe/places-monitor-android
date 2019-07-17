@@ -7,7 +7,48 @@ buildscript {
         classpath 'com.android.tools.build:gradle:3.3.2'
         classpath 'org.codehaus.groovy:groovy-all:2.4.15'
         classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.9.4"
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.+'
+    }
+}
+
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+        maven {
+            url artifactoryUrl
+            credentials {
+                username = artifactoryUserName
+                password = artifactoryPassword
+            }
+        }
+        maven {
+            url artifactorySnapshotUrl
+            credentials {
+                username = artifactoryUserName
+                password = artifactoryPassword
+            }
+        }
+    }
+
+    apply plugin: 'maven-publish'
+    apply plugin: "com.jfrog.artifactory"
+}
+
+artifactory {
+    contextUrl = artifactoryContextUrl
+    publish {
+        repository {
+            repoKey = artifactoryRepoKey
+            username = artifactoryUserName
+            password = artifactoryPassword
+            maven = true
+        }
+        defaults {
+            publishArtifacts = true
+            publishPom = true
+        }
     }
 }
 
