@@ -54,7 +54,6 @@ public class PlacesGeofenceBroadcastReceiverTests {
 
 	@Before
 	public void before() throws Exception {
-
 		receiver = new PlacesGeofenceBroadcastReceiver();
 		when(mockIntent.getAction()).thenReturn(ACTION_GEOFENCE_UPDATE);
 	}

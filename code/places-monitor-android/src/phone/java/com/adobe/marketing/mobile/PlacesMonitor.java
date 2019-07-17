@@ -13,25 +13,23 @@
 // PlacesMonitor.java
 //
 
-
 package com.adobe.marketing.mobile;
 
 public class PlacesMonitor {
 
 	/**
-	 * Returns the current version of the PlacesMonitor Extension
+	 * Returns the current version of the PlacesMonitor extension.
 	 *
-	 * @return A {@link String} representing the Places Monitor Extension version
+	 * @return A {@link String} representing the PlacesMonitor extension version
 	 */
 	public static String extensionVersion() {
 		return PlacesMonitorConstants.EXTENSION_VERSION;
 	}
 
 	/**
-	 * Registers the Places Monitor extension with the {@code MobileCore}
+	 * Registers the PlacesMonitor extension with the {@code MobileCore}.
 	 * <p>
 	 * This will allow the extension to send and receive events to and from the SDK.
-	 *
 	 */
 	public static void registerExtension() {
 		MobileCore.registerExtension(PlacesMonitorInternal.class, new ExtensionErrorCallback<ExtensionError>() {
@@ -43,7 +41,7 @@ public class PlacesMonitor {
 	}
 
 	/**
-	 * Start tracking the device's location and monitoring their nearby Places
+	 * Start tracking the device's location and monitoring corresponding nearby POI's
 	 *
 	 */
 	public static void start() {
@@ -51,7 +49,7 @@ public class PlacesMonitor {
 	}
 
 	/**
-	 * Stop tracking the device's location
+	 * Stop tracking the device's location and nearby POI's
 	 */
 	public static void stop() {
 		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_STOP);
@@ -64,6 +62,15 @@ public class PlacesMonitor {
 		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_UPDATE);
 	}
 
+	/**
+	 * Dispatches an {@link Event} to {@link EventHub} for the places monitor extension to process.
+	 * <ul>
+	 * 		<li> EventType : {@link PlacesMonitorConstants.EventType#MONITOR} </li>
+	 * 		<li> EventSource : {@link PlacesMonitorConstants.EventSource#REQUEST_CONTENT} </li>
+	 * </ul>
+	 *
+	 * @param eventName The name of the {@link Event} being dispatched
+	 */
 	private static void dispatchMonitorEvent(final String eventName) {
 
 		final Event monitorEvent = new Event.Builder(eventName,

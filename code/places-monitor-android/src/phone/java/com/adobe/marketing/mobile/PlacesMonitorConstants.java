@@ -13,17 +13,16 @@
 // PlacesMonitorConstants.java
 //
 
-
 package com.adobe.marketing.mobile;
 
 final class PlacesMonitorConstants {
-	static final private int MONITOR_PERMISSION_MASK = 0xAD00;
+	static final int MONITOR_PERMISSION_MASK = 0xAD00;
 	static final int MONITOR_LOCATION_PERMISSION_REQUEST_CODE = MONITOR_PERMISSION_MASK | 1;
 
 	static final String LOG_TAG = PlacesMonitor.class.getSimpleName();
 	static final String EXTENSION_NAME = "com.adobe.placesMonitor";
 
-	static final String EXTENSION_VERSION = "1.0.1";
+	static final String EXTENSION_VERSION = "1.0.2";
 	static final String CONTINUOUS_MONITORING = "continuousmonitoring";
 
 	// event names for places monitor request content
@@ -94,9 +93,10 @@ final class PlacesMonitorConstants {
 		}
 	}
 
-	static final class SharedPreference {
-		static final String MONITORING_FENCES_KEY = "adb_monitoringFences";
+	static final class  SharedPreference {
+		static final String MASTER_KEY = "com.adobe.placesMonitor";
 		static final String USERWITHIN_GEOFENCES_KEY = "adb_userWithinGeofences";
+		static final String HAS_MONITORING_STARTED_KEY = "adb_hasMonitoringStarted";
 		private SharedPreference() {
 		}
 	}

@@ -13,15 +13,34 @@
 // PlacesMonitorListenerHubSharedState.java
 //
 
-
 package com.adobe.marketing.mobile;
 
+/**
+ * Listens for {@link PlacesMonitorConstants.EventType#HUB}, {@link PlacesMonitorConstants.EventSource#SHARED_STATE} events
+ * and triggers the queued places monitor events waiting for valid configuration shared state
+ * @see PlacesMonitorInternal
+ */
 class PlacesMonitorListenerHubSharedState extends ExtensionListener {
 
-	protected PlacesMonitorListenerHubSharedState(final ExtensionApi extension, final String type, final String source) {
-		super(extension, type, source);
+	/**
+	 * Constructor.
+	 *
+	 * @param extensionApi an instance of  {@link ExtensionApi}
+	 * @param type  {@link EventType} this listener is registered to handle
+	 * @param source {@link EventSource} this listener is registered to handle
+	 */
+	protected PlacesMonitorListenerHubSharedState(final ExtensionApi extensionApi, final String type, final String source) {
+		super(extensionApi, type, source);
 	}
 
+	/**
+	 * Listens to {@code PlacesMonitorConstants.EventType#HUB}, {@code PlacesMonitorConstants.EventSource#SHARED_STATE} event.
+	 * <p>
+	 * Triggers the queued events which are waiting for valid configuration shared state.
+	 *
+	 * @param event the shared state update {@link Event}
+	 * @see PlacesMonitorInternal#processEvents()
+	 */
 	@Override
 	public void hear(final Event event) {
 		if (event.getEventData() == null) {

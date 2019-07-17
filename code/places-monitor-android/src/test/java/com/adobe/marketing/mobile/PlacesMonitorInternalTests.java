@@ -46,6 +46,7 @@ import java.util.concurrent.ExecutorService;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ExtensionApi.class, PlacesLocationManager.class, PlacesGeofenceManager.class, PlacesMonitorInternal.class, App.class, Context.class, Intent.class, LocalBroadcastManager.class, Places.class, Location.class})
@@ -93,6 +94,7 @@ public class PlacesMonitorInternalTests {
 	@Before
 	public void before() throws Exception {
 		PowerMockito.mockStatic(App.class);
+		PowerMockito.mockStatic(Places.class);
 		PowerMockito.mockStatic(LocalBroadcastManager.class);
 		Mockito.when(LocalBroadcastManager.getInstance(context)).thenReturn(localBroadcastManager);
 		PowerMockito.whenNew(PlacesGeofenceManager.class).withNoArguments().thenReturn(geofenceManager);
@@ -543,23 +545,68 @@ public class PlacesMonitorInternalTests {
 		verify(geofenceManager, times(1)).onGeofenceReceived(intent);
 	}
 
-	// TODO - Final
-	//	// ========================================================================================
-	//	// getPOIsForLocation
-	//	// ========================================================================================
-	//
-	//	@Test
-	//	public void test_getPOIsForLocation_successCallback() {
-	//	    // setup
-	//		initWithContext(context);
-	//
-	//	    // test
-	//		monitorInternal.getPOIsForLocation(null);
-	//
-	//	    // verify
-	//		verifyStatic(Places.class, Mockito.times(0));
-	//		Places.getNearbyPointsOfInterest(any(Location.class), anyInt(), any(AdobeCallback.class),any(AdobeCallback.class));
-	//	}
+	// ========================================================================================
+	// getPOIsForLocation
+	// ========================================================================================
+	@Test
+	public void test_getPOIsForLocation_whenLocationNull() {
+		// setup
+		initWithContext(context);
+
+		// test
+		monitorInternal.getPOIsForLocation(null);
+
+		// verify
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.getNearbyPointsOfInterest(any(Location.class), anyInt(), any(AdobeCallback.class), any(AdobeCallback.class));
+	}
+
+	@Test
+	public void test_getPOIsForLocation_when_success() {
+		// setup
+		initWithContext(context);
+		final ArgumentCaptor<AdobeCallback> successCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+		final ArgumentCaptor<AdobeCallback> failurecallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+
+		// test
+		monitorInternal.getPOIsForLocation(location);
+
+		// verify
+		verifyStatic(Places.class, Mockito.times(1));
+		Places.getNearbyPointsOfInterest(any(Location.class), anyInt(), successCallbackCaptor.capture(),
+										 failurecallbackCaptor.capture());
+
+		// call the success callback
+		List<PlacesPOI> nearbyPois = samplePOIList();
+		successCallbackCaptor.getValue().call(nearbyPois);
+
+		// verify
+		verify(geofenceManager, times(1)).startMonitoringFences(nearbyPois);
+	}
+
+
+	@Test
+	public void test_getPOIsForLocation_when_failure() {
+		// setup
+		initWithContext(context);
+		final ArgumentCaptor<AdobeCallback> successCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+		final ArgumentCaptor<AdobeCallback> failureCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+
+		// test
+		monitorInternal.getPOIsForLocation(location);
+
+		// verify
+		verifyStatic(Places.class, Mockito.times(1));
+		Places.getNearbyPointsOfInterest(any(Location.class), anyInt(), successCallbackCaptor.capture(),
+										 failureCallbackCaptor.capture());
+
+		// call the success callback
+		failureCallbackCaptor.getValue().call(PlacesRequestError.CONFIGURATION_ERROR);
+
+		// verify
+		verify(geofenceManager, times(0)).startMonitoringFences(any(List.class));
+	}
+
 
 
 
