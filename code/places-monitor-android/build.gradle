@@ -226,7 +226,7 @@ bintray {
     if (project.hasProperty("apiKey")) {
         key = "$apiKey"
     } else {
-        key = "5d7997918972152a19d8ad401016a54b5eaeca3e"
+        key = "xxxxxxxxxxxxxxx"
     }
 
     dryRun = false
