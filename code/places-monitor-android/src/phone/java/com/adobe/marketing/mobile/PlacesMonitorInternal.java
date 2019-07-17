@@ -13,7 +13,6 @@
 // PlacesMonitorInternal.java
 //
 
-
 package com.adobe.marketing.mobile;
 
 import android.content.BroadcastReceiver;
@@ -31,7 +30,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 class PlacesMonitorInternal extends Extension {
-
 
 	private ConcurrentLinkedQueue<Event> eventQueue;
 	private PlacesLocationManager locationManager;
@@ -53,6 +51,23 @@ class PlacesMonitorInternal extends Extension {
 		}
 	};
 
+	/**
+	 * Constructor.
+	 *
+	 * <p>
+	 * Called during places monitor extension's registration.
+	 * The following listeners are registered during this extension's registration.
+	 * <ul>
+	 *     <li> {@link PlacesMonitorListenerHubSharedState} listening to event with eventType {@link PlacesMonitorConstants.EventType#HUB}
+	 *     and EventSource {@link PlacesMonitorConstants.EventSource#SHARED_STATE}</li>
+	 *     <li> {@link PlacesMonitorListenerMonitorRequestContent} listening to event with eventType {@link PlacesMonitorConstants.EventType#MONITOR}
+	 *     and EventSource {@link PlacesMonitorConstants.EventSource#REQUEST_CONTENT}</li>
+	 * </ul>
+	 *
+	 * The {@link #locationManager}, {@link #geofenceManager} along with internal {@link BroadcastReceiver} {@link #internalLocationReceiver} and {@link #internalGeofenceReceiver} are initialized
+	 *
+	 * @param extensionApi {@link ExtensionApi} instance
+	 */
 	protected PlacesMonitorInternal(final ExtensionApi extensionApi) {
 		super(extensionApi);
 
@@ -106,23 +121,48 @@ class PlacesMonitorInternal extends Extension {
 	}
 
 
+	/**
+	 * Overridden method of {@link Extension} class to provide a valid extension name to register with eventHub.
+	 *
+	 * @return A {@link String} extension name for Places Monitor
+	 */
 	@Override
 	protected String getName() {
 		return PlacesMonitorConstants.EXTENSION_NAME;
 	}
 
+	/**
+	 * Overridden method of {@link Extension} class to provide the extension version.
+	 *
+	 * @return A {@link String} representing the extension version
+	 */
 	@Override
 	protected String getVersion() {
 		return PlacesMonitorConstants.EXTENSION_VERSION;
 	}
 
+	/**
+	 * Overridden method of {@link Extension} class called when extension is unregistered by the core.
+	 *
+	 * <p>
+	 * On unregister of places monitor extension, the shared states are cleared.
+	 */
 	@Override
 	protected void onUnregistered() {
 		super.onUnregistered();
 		getApi().clearSharedEventStates(null);
 	}
 
-
+	/**
+	 * Gets the nearbyPOIs for the given location.
+	 *
+	 * <p>
+	 * This method is called by the {@link #locationManager} with the current device location to fetch the closest
+	 * {@link PlacesMonitorConstants#NEARBY_GEOFENCES_COUNT} nearby points of interest around the given location.
+	 * The obtained POIs are then passed to {@link #geofenceManager} to start monitoring for entry/exit events.
+	 *
+	 * @param location A {@link Location} instance representing device's current location
+	 */
 	void getPOIsForLocation(final Location location) {
 		if (location == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
@@ -148,6 +188,15 @@ class PlacesMonitorInternal extends Extension {
 		});
 	}
 
+	/**
+	 * This method queues the provided event in {@link #eventQueue}.
+	 *
+	 * <p>
+	 * The queued events are then processed in an orderly fashion.
+	 * No action is taken if the provided event's value is null.
+	 *
+	 * @param event The {@link Event} thats needs to be queued
+	 */
 	void queueEvent(final Event event) {
 		if (event == null) {
 			return;
@@ -156,7 +205,13 @@ class PlacesMonitorInternal extends Extension {
 		eventQueue.add(event);
 	}
 
-
+	/**
+	 * Processes the queued event one by one until queue is empty.
+	 *
+	 * <p>
+	 * Suspends processing of the events in the queue if the configuration shared state is not ready.
+	 * Processed events are polled out of the {@link #eventQueue}.
+	 */
 	void processEvents() {
 		while (!eventQueue.isEmpty()) {
 			Event eventToProcess = eventQueue.peek();
@@ -193,6 +248,14 @@ class PlacesMonitorInternal extends Extension {
 	}
 
 
+	/**
+	 * Method to process the places monitor request content {@link Event}'s.
+	 *
+	 * <p>
+	 * Differentiates the event by the given name and processes them accordingly.
+	 *
+	 * @param event MonitorRequestContent {@link Event} to process
+	 */
 	private void processMonitorRequestEvent(final Event event) {
 		final String eventName = event.getName();
 
@@ -211,16 +274,35 @@ class PlacesMonitorInternal extends Extension {
 	// ========================================================================================
 	// Public API handlers
 	// ========================================================================================
-
+	/**
+	 * Handler for places monitor extension's Start public api call.
+	 *
+	 * <p>
+	 * This method requests the {@link #locationManager} to start monitoring for device location.
+	 */
 	private void startMonitoring() {
 		locationManager.startMonitoring();
 	}
 
+
+	/**
+	 * Handler for places monitor extension's Stop public api call.
+	 *
+	 * <p>
+	 * This method requests the {@link #locationManager} to stop monitoring the device current location.
+	 * It also requests the {@link #geofenceManager} to stop monitoring the fences that are currently being monitored.
+	 *
+	 */
 	private void stopMonitoring() {
 		locationManager.stopMonitoring();
 		geofenceManager.stopMonitoringFences();
 	}
 
+	/**
+	 * Handler for places monitor extension's updateLocation public api call.
+	 * <p>
+	 * This method requests the location manager to update the device current location immediately.
+	 */
 	private void updateLocation() {
 		locationManager.updateLocation();
 	}
@@ -231,7 +313,11 @@ class PlacesMonitorInternal extends Extension {
 	// ========================================================================================
 	// Getters for private members
 	// ========================================================================================
-
+	/**
+	 * Getter for the {@link #executorService}. Access to which is mutex protected.
+	 *
+	 * @return A non-null {@link ExecutorService} instance
+	 */
 	ExecutorService getExecutor() {
 		synchronized (executorMutex) {
 			if (executorService == null) {
@@ -242,6 +328,11 @@ class PlacesMonitorInternal extends Extension {
 		}
 	}
 
+	/**
+	 * Getter for the {@link #eventQueue}.
+	 *
+	 * @return A non-null {@link ConcurrentLinkedQueue} instance
+	 */
 	ConcurrentLinkedQueue<Event> getEventQueue() {
 		return eventQueue;
 	}
