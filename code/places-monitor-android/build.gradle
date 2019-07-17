@@ -229,6 +229,11 @@ bintray {
         key = "xxxxxxxxxxxxxxx"
     }
 
+    def gpgPassphrase = "xxxxxxxxxxxxxxx"
+    if (project.hasProperty("gpgPassphrase")) {
+        gpgPassphrase = "$gpgPassphrase"
+    }
+
     dryRun = false
     pkg {
         repo = "mobileservicesdk"
@@ -239,7 +244,7 @@ bintray {
             desc = mavenRepoDescription
             gpg {
                 sign = true
-                passphrase = 'adobe-sonatype'
+                passphrase = gpgPassphrase
             }
         }
     }
