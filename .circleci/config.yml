@@ -35,7 +35,7 @@ jobs:
       - checkout
       - run:
           name: Bintray Upload
-          command: code/gradlew -p code/places-monitor-android bintrayUpload -PapiKey=$bintrayAPIKey    
+          command: code/gradlew -p code/places-monitor-android bintrayUpload -PapiKey=$bintrayAPIKey -PgpgPassphrase=$gpgPassphrase
 workflows:
   version: 2
   build-test-approve-and-publish:
@@ -48,7 +48,7 @@ workflows:
           filters:
             branches:
               only:
-                - testingCI
+                - master
           type: approval
           requires:
            - test

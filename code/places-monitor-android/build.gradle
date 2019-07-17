@@ -226,9 +226,13 @@ bintray {
     if (project.hasProperty("apiKey")) {
         key = "$apiKey"
     } else {
-        key = "5d7997918972152a19d8ad401016a54b5eaeca3e"
+        key = "xxxxxxxxxxxxxxx"
     }
 
+    String gpgpass = "xxxxxxxxxxxxxxx"
+    if (project.hasProperty("gpgPassphrase")) {
+        gpgpass = "$gpgPassphrase"
+}
     dryRun = false
     pkg {
         repo = "mobileservicesdk"
@@ -239,7 +243,7 @@ bintray {
             desc = mavenRepoDescription
             gpg {
                 sign = true
-                passphrase = 'adobe-sonatype'
+                passphrase = gpgpass
             }
         }
     }
