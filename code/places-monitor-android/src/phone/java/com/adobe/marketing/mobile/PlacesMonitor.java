@@ -49,10 +49,19 @@ public class PlacesMonitor {
 	}
 
 	/**
-	 * Stop tracking the device's location and nearby POI's
+	 * Stop tracking the device's location and nearby POI's.
+	 * <p>
+	 * Calling this method will stop tracking the customer's location.  Additionally, it will unregister
+	 * all previously registered regions.  Optionally, you may purge client-side data by passing in YES for the clearData
+	 * parameter.
+	 *
+	 * Calling this method with YES for clearData will purge the data even if the monitor is not actively tracking
+	 * the device's location.
+	 *
+	 * @param clearData pass YES to clear all client-side Places data from the device
 	 */
-	public static void stop() {
-		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_STOP);
+	public static void stop(final boolean clearData) {
+		dispatchStopEvent(clearData);
 	}
 
 	/**
@@ -89,6 +98,36 @@ public class PlacesMonitor {
 		if (MobileCore.dispatchEvent(monitorEvent, extensionErrorCallback)) {
 			Log.debug(PlacesMonitorConstants.LOG_TAG, String.format("Places Monitor dispatched an event '%s'",
 					  monitorEvent.getName()));
+		}
+	}
+
+	/**
+	 * Dispatches an {@link Event} to {@link EventHub} for the places monitor extension to stop processing further location updates.
+	 * <ul>
+	 * 		<li> EventType : {@link PlacesMonitorConstants.EventType#MONITOR} </li>
+	 * 		<li> EventSource : {@link PlacesMonitorConstants.EventSource#REQUEST_CONTENT} </li>
+	 * </ul>
+	 *
+	 * @param clearData a boolean representing whether to clear all client-side Places data from the device
+	 */
+	private static void dispatchStopEvent(final boolean clearData) {
+		EventData data = new EventData();
+		data.putBoolean(PlacesMonitorConstants.EventDataKeys.EVENT_DATA_CLEAR, clearData);
+		final Event stopEvent = new Event.Builder(PlacesMonitorConstants.EVENTNAME_STOP,
+				PlacesMonitorConstants.EventType.MONITOR,
+				PlacesMonitorConstants.EventSource.REQUEST_CONTENT).setData(data).build();
+
+
+		ExtensionErrorCallback<ExtensionError> extensionErrorCallback = new ExtensionErrorCallback<ExtensionError>() {
+			@Override
+			public void error(final ExtensionError extensionError) {
+				Log.error(PlacesMonitorConstants.LOG_TAG, String.format("An error occurred dispatching event '%s', %s",
+						stopEvent.getName(), extensionError.getErrorName()));
+			}
+		};
+
+		if (MobileCore.dispatchEvent(stopEvent, extensionErrorCallback)) {
+			Log.debug(PlacesMonitorConstants.LOG_TAG, "Places Monitor dispatched stop event");
 		}
 	}
 }
