@@ -27,6 +27,10 @@ import static org.mockito.ArgumentMatchers.*;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(PowerMockRunner.class)
@@ -107,7 +111,7 @@ public class PlacesMonitorTests {
 	// ========================================================================================
 
 	@Test
-	public void test_stopAPI() {
+	public void test_stopAPI_withClearData() {
 		// setup
 		Mockito.when(MobileCore.dispatchEvent(any(Event.class), any(ExtensionErrorCallback.class))).thenReturn(true);
 
@@ -116,7 +120,7 @@ public class PlacesMonitorTests {
 		final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
 
 		// test
-		PlacesMonitor.stop();
+		PlacesMonitor.stop(true);
 
 		// The start event should be dispatched
 		verifyStatic(MobileCore.class, Mockito.times(1));
@@ -128,7 +132,39 @@ public class PlacesMonitorTests {
 		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_STOP, event.getName());
 		assertEquals("the event type should be correct", PlacesMonitorTestConstants.EventType.MONITOR, event.getType());
 		assertEquals("the event source should be correct", PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT,
-					 event.getSource());
+				event.getSource());
+		// verify eventData
+		Map<String,Object> data =event.getEventData();
+		assertEquals(true, data.get(PlacesMonitorTestConstants.EventDataKeys.EVENT_DATA_CLEAR));
+	}
+
+
+	@Test
+	public void test_stopAPI_withOutClearData() {
+		// setup
+		Mockito.when(MobileCore.dispatchEvent(any(Event.class), any(ExtensionErrorCallback.class))).thenReturn(true);
+
+		// setup argument captors
+		final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+		final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
+
+		// test
+		PlacesMonitor.stop(false);
+
+		// The start event should be dispatched
+		verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchEvent(eventCaptor.capture(), callbackCaptor.capture());
+
+		// verify dispatched event
+		Event event = eventCaptor.getValue();
+		assertNotNull("The dispatched event should not be null", event);
+		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_STOP, event.getName());
+		assertEquals("the event type should be correct", PlacesMonitorTestConstants.EventType.MONITOR, event.getType());
+		assertEquals("the event source should be correct", PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT,
+				event.getSource());
+		// verify eventData
+		Map<String,Object> data =event.getEventData();
+		assertEquals(false, data.get(PlacesMonitorTestConstants.EventDataKeys.EVENT_DATA_CLEAR));
 	}
 
 
@@ -175,6 +211,31 @@ public class PlacesMonitorTests {
 
 		// test
 		PlacesMonitor.start();
+
+		// The start event should be dispatched
+		verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchEvent(any(Event.class), callbackCaptor.capture());
+
+
+		// verify dispatch event error callback
+		ExtensionErrorCallback extensionErrorCallback = callbackCaptor.getValue();
+		assertNotNull("The dispatch event error callback should not be null", extensionErrorCallback);
+
+		// should not crash or throw exception on calling the callback
+		extensionErrorCallback.error(ExtensionError.BAD_NAME);
+	}
+
+
+	@Test
+	public void test_dispatchStopEvent_When_validError() {
+		// setup
+		Mockito.when(MobileCore.dispatchEvent(any(Event.class), any(ExtensionErrorCallback.class))).thenReturn(true);
+
+		// setup argument captors
+		final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
+
+		// test
+		PlacesMonitor.stop(false);
 
 		// The start event should be dispatched
 		verifyStatic(MobileCore.class, Mockito.times(1));

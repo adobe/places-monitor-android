@@ -53,6 +53,7 @@ final class PlacesMonitorTestConstants {
 
 	static final class EventDataKeys {
 
+		static final String EVENT_DATA_CLEAR	= "clearclientdata";
 		static final String NEAR_BY_PLACES_LIST = "nearbyplaceslist";
 		static final String REQUEST_TYPE = "requesttype";
 		static final String REQUEST_TYPE_GET_NEARBY_PLACES = "requestgetnearbyplaces";
