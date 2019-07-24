@@ -271,9 +271,6 @@ public class PlacesMonitorInternalTests {
 
 		// verify
 		verify(locationManager, times(1)).startMonitoring();
-		verify(locationManager, times(0)).stopMonitoring();
-		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 
@@ -657,11 +654,12 @@ public class PlacesMonitorInternalTests {
 
 
 	@Test
-	public void test_getPOIsForLocation_when_failure() {
+	public void test_getPOIsForLocation_when_failure_with_ConfigurationError() {
 		// setup
 		initWithContext(context);
 		final ArgumentCaptor<AdobeCallback> successCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
 		final ArgumentCaptor<AdobeCallback> failureCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
 
 		// test
 		monitorInternal.getPOIsForLocation(location);
@@ -671,11 +669,82 @@ public class PlacesMonitorInternalTests {
 		Places.getNearbyPointsOfInterest(any(Location.class), anyInt(), successCallbackCaptor.capture(),
 										 failureCallbackCaptor.capture());
 
-		// call the success callback
+		// call the failure callback
 		failureCallbackCaptor.getValue().call(PlacesRequestError.CONFIGURATION_ERROR);
 
 		// verify
-		verify(geofenceManager, times(0)).startMonitoringFences(any(List.class));
+		verifyStatic(Places.class, Mockito.times(1));
+		Places.clear();
+		verify(locationManager, times(1)).stopMonitoring();
+		verify(geofenceManager, times(1)).stopMonitoringFences(true);
+	}
+
+
+	@Test
+	public void test_getPOIsForLocation_when_failure_with_OtherErrors() {
+		// setup
+		initWithContext(context);
+		final ArgumentCaptor<AdobeCallback> successCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+		final ArgumentCaptor<AdobeCallback> failureCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
+
+		// test
+		monitorInternal.getPOIsForLocation(location);
+
+		// verify
+		verifyStatic(Places.class, Mockito.times(1));
+		Places.getNearbyPointsOfInterest(any(Location.class), anyInt(), successCallbackCaptor.capture(),
+				failureCallbackCaptor.capture());
+
+		// call the failure callback with CONNECTIVITY_ERROR
+		failureCallbackCaptor.getValue().call(PlacesRequestError.CONNECTIVITY_ERROR);
+
+		// verify;
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.clear();
+		verify(locationManager, times(0)).stopMonitoring();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
+
+
+		// call the failure callback with INVALID_LATLONG_ERROR
+		failureCallbackCaptor.getValue().call(PlacesRequestError.INVALID_LATLONG_ERROR);
+
+		// verify;
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.clear();
+		verify(locationManager, times(0)).stopMonitoring();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
+
+
+		// call the failure callback with QUERY_SERVICE_UNAVAILABLE
+		failureCallbackCaptor.getValue().call(PlacesRequestError.QUERY_SERVICE_UNAVAILABLE);
+
+		// verify;
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.clear();
+		verify(locationManager, times(0)).stopMonitoring();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
+
+
+		// call the failure callback with SERVER_RESPONSE_ERROR
+		failureCallbackCaptor.getValue().call(PlacesRequestError.SERVER_RESPONSE_ERROR);
+
+		// verify;
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.clear();
+		verify(locationManager, times(0)).stopMonitoring();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
+
+
+		// call the failure callback with UNKNOWN_ERROR
+		failureCallbackCaptor.getValue().call(PlacesRequestError.UNKNOWN_ERROR);
+
+		// verify;
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.clear();
+		verify(locationManager, times(0)).stopMonitoring();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
+		
 	}
 
 
