@@ -250,7 +250,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(0)).stopMonitoring();
 		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(0)).stopMonitoringFences();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 
@@ -273,7 +273,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(1)).startMonitoring();
 		verify(locationManager, times(0)).stopMonitoring();
 		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(0)).stopMonitoringFences();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 
@@ -297,7 +297,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(1)).stopMonitoring();
 		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(1)).stopMonitoringFences();
+		verify(geofenceManager, times(1)).stopMonitoringFences(true);
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 
 		// verify places call
@@ -325,7 +325,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(1)).stopMonitoring();
 		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(1)).stopMonitoringFences();
+		verify(geofenceManager, times(1)).stopMonitoringFences(false);
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 
 		// verify places call
@@ -353,7 +353,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(1)).stopMonitoring();
 		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(1)).stopMonitoringFences();
+		verify(geofenceManager, times(1)).stopMonitoringFences(false);
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 
 		// verify places call
@@ -380,7 +380,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(0)).stopMonitoring();
 		verify(locationManager, times(1)).updateLocation();
-		verify(geofenceManager, times(0)).stopMonitoringFences();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 
@@ -402,7 +402,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(0)).stopMonitoring();
 		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(0)).stopMonitoringFences();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 
@@ -426,7 +426,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(1)).stopMonitoring();
 		verify(locationManager, times(1)).updateLocation();
-		verify(geofenceManager, times(1)).stopMonitoringFences();
+		verify(geofenceManager, times(1)).stopMonitoringFences(false);
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 

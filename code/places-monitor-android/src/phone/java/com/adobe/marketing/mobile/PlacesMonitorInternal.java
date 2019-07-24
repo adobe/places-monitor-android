@@ -307,7 +307,7 @@ class PlacesMonitorInternal extends Extension {
 	 */
 	private void stopMonitoring(final boolean clearData) {
 		locationManager.stopMonitoring();
-		geofenceManager.stopMonitoringFences();
+		geofenceManager.stopMonitoringFences(clearData);
 		if(clearData){
 			Places.clear();
 		}
