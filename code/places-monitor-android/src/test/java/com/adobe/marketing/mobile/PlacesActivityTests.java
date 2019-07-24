@@ -339,7 +339,7 @@ public class PlacesActivityTests {
 
 		// verify stop monitoring is called
 		verifyStatic(PlacesMonitor.class, Mockito.times(1));
-		PlacesMonitor.stop(false);
+		PlacesMonitor.stop(true);
 
 		// verify the activity is removed from UI
 		verify(placesActivity, times(1)).finish();
@@ -353,7 +353,7 @@ public class PlacesActivityTests {
 
 		// verify stop monitoring is not called
 		verifyStatic(PlacesMonitor.class, Mockito.times(0));
-		PlacesMonitor.stop(false);
+		PlacesMonitor.stop(true);
 
 		// verify the activity is removed from UI
 		verify(placesActivity, times(1)).finish();
@@ -365,7 +365,7 @@ public class PlacesActivityTests {
 		verifyStatic(PlacesMonitor.class, Mockito.times(0));
 		PlacesMonitor.start();
 		verifyStatic(PlacesMonitor.class, Mockito.times(0));
-		PlacesMonitor.stop(false);
+		PlacesMonitor.stop(true);
 
 		// verify the activity is removed from UI
 		verify(placesActivity, times(1)).finish();
