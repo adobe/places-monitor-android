@@ -178,12 +178,11 @@ class PlacesMonitorInternal extends Extension {
 			@Override
 			public void call(List<PlacesPOI> placesPOIS) {
 				geofenceManager.startMonitoringFences(placesPOIS);
-
 			}
 		}, new AdobeCallback<PlacesRequestError>() {
 			@Override
 			public void call(PlacesRequestError placesRequestError) {
-				// TODO : Read error and recover if possible
+				handlePlacesRequestError(placesRequestError);
 			}
 		});
 	}
@@ -281,6 +280,35 @@ class PlacesMonitorInternal extends Extension {
 	// ========================================================================================
 	// Public API handlers
 	// ========================================================================================
+
+	private void handlePlacesRequestError(final PlacesRequestError error) {
+		String errorString = "";
+		switch (error) {
+			case CONNECTIVITY_ERROR:
+				errorString = "No network connectivity.";
+				break;
+			case INVALID_LATLONG_ERROR:
+				errorString = "An invalid latitude and/or longitude was provided.  Valid values are -90 to 90 (lat) and -180 to 180 (lon).";
+				break;
+			case QUERY_SERVICE_UNAVAILABLE:
+				errorString = "The Places Query Service is unavailable. Try again later.";
+				break;
+			case SERVER_RESPONSE_ERROR:
+				errorString = "There is an error in the response from the server.";
+				break;
+			case CONFIGURATION_ERROR:
+				errorString = "Missing Places configuration.";
+				stopMonitoring(true);
+				break;
+			default:
+				errorString = "Unknown error.";
+				break;
+		}
+
+		Log.warning(PlacesMonitorConstants.LOG_TAG, "An error occurred while attempting to retrieve nearby points of interest: " + errorString);
+	}
+
+
 	/**
 	 * Handler for places monitor extension's Start public api call.
 	 *
