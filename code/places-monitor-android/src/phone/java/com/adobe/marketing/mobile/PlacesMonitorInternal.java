@@ -277,10 +277,12 @@ class PlacesMonitorInternal extends Extension {
 		}
 	}
 
-	// ========================================================================================
-	// Public API handlers
-	// ========================================================================================
 
+	/**
+	 * Method to handle the error that occurred while getting the nearbyPointOfInterest.
+	 *
+	 * @param error A {@link PlacesRequestError} representing the type of error
+	 */
 	private void handlePlacesRequestError(final PlacesRequestError error) {
 		String errorString = "";
 		switch (error) {
@@ -307,6 +309,10 @@ class PlacesMonitorInternal extends Extension {
 
 		Log.warning(PlacesMonitorConstants.LOG_TAG, "An error occurred while attempting to retrieve nearby points of interest: " + errorString);
 	}
+
+	// ========================================================================================
+	// Public API handlers
+	// ========================================================================================
 
 
 	/**
