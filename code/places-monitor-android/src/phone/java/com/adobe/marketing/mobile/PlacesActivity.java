@@ -201,7 +201,7 @@ public class PlacesActivity extends Activity {
 	 * Permission handler method called when user has denied permission to access fine location.
 	 */
 	private void onPermissionDenied() {
-		PlacesMonitor.stop();
+		PlacesMonitor.stop(true);
 		finish();
 	}
 

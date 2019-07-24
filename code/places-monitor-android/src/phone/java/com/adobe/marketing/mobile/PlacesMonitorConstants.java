@@ -23,7 +23,6 @@ final class PlacesMonitorConstants {
 	static final String EXTENSION_NAME = "com.adobe.placesMonitor";
 
 	static final String EXTENSION_VERSION = "1.0.2";
-	static final String CONTINUOUS_MONITORING = "continuousmonitoring";
 
 	// event names for places monitor request content
 	static final String EVENTNAME_START = "start monitoring";
@@ -44,32 +43,16 @@ final class PlacesMonitorConstants {
 	}
 
 	static final class EventSource {
-		static final String RESPONSE_CONTENT 	= "com.adobe.eventsource.responsecontent";
 		static final String REQUEST_CONTENT = "com.adobe.eventsource.requestcontent";
 		static final String SHARED_STATE = "com.adobe.eventsource.sharedstate";
+
 
 		private EventSource() {
 		}
 	}
 
 	static final class EventDataKeys {
-
-		static final String NEAR_BY_PLACES_LIST = "nearbyplaceslist";
-		static final String REQUEST_TYPE = "requesttype";
-		static final String REQUEST_TYPE_GET_NEARBY_PLACES = "requestgetnearbyplaces";
-		static final String REQUEST_TYPE_PROCESS_REGION_EVENT = "requestprocessregionevent";
-
-		static final String PLACES_COUNT = "count";
-		static final String LATITUDE = "latitude";
-		static final String LONGITUDE = "longitude";
-
-		static final String GEOFENCE_TYPE_NONE  = "none";
-		static final String GEOFENCE_TYPE_ENTRY = "entry";
-		static final String GEOFENCE_TYPE_EXIT  = "exit";
-
-		static final String REGION_ID = "regionid";
-		static final String REGION_EVENT_TYPE = "regioneventtype";
-
+		static final String EVENT_DATA_CLEAR	= "clearclientdata";
 		private EventDataKeys() {
 		}
 	}
@@ -78,7 +61,6 @@ final class PlacesMonitorConstants {
 	static final class EventType {
 		static final String HUB = "com.adobe.eventtype.hub";
 		static final String MONITOR = "com.adobe.eventtype.placesmonitor";
-		static final String PLACES = "com.adobe.eventtype.places";
 
 		private EventType() {
 		}
@@ -87,8 +69,6 @@ final class PlacesMonitorConstants {
 	static final class SharedState {
 		static final String STATEOWNER = "stateowner";
 		static final String CONFIGURATION = "com.adobe.module.configuration";
-		static final String PLACES = "com.adobe.module.places";
-
 		private SharedState() {
 		}
 	}

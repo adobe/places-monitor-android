@@ -61,6 +61,16 @@ public class PlacesMonitorInternalTests {
 			PlacesMonitorTestConstants.EventType.MONITOR,
 			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).build();
 
+	private Event stopMonitoringEventWithClearData = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_STOP,
+			PlacesMonitorTestConstants.EventType.MONITOR,
+			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(new EventData(new HashMap<String,Variant>()
+	{{ put(PlacesMonitorConstants.EventDataKeys.EVENT_DATA_CLEAR, Variant.fromBoolean(true)); }})).build();
+
+	private Event stopMonitoringEventWithOutClearData = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_STOP,
+			PlacesMonitorTestConstants.EventType.MONITOR,
+			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(new EventData(new HashMap<String,Variant>()
+	{{ put(PlacesMonitorConstants.EventDataKeys.EVENT_DATA_CLEAR, Variant.fromBoolean(false)); }})).build();
+
 	private Event updateLocationEvent = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_UPDATE,
 			PlacesMonitorTestConstants.EventType.MONITOR,
 			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).build();
@@ -240,7 +250,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(0)).stopMonitoring();
 		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(0)).stopMonitoringFences();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 
@@ -263,12 +273,12 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(1)).startMonitoring();
 		verify(locationManager, times(0)).stopMonitoring();
 		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(0)).stopMonitoringFences();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 
 	@Test
-	public void test_processEvents_when_stopEvent() {
+	public void test_processEvents_when_stopEventWithClearData() {
 		// setup
 		initWithContext(context);
 
@@ -279,15 +289,76 @@ public class PlacesMonitorInternalTests {
 											  any(ExtensionErrorCallback.class))).thenReturn(configData);
 
 		// test
+		monitorInternal.queueEvent(stopMonitoringEventWithClearData);
+		monitorInternal.processEvents();
+
+		// verify
+		verify(locationManager, times(0)).startMonitoring();
+		verify(locationManager, times(0)).startMonitoring();
+		verify(locationManager, times(1)).stopMonitoring();
+		verify(locationManager, times(0)).updateLocation();
+		verify(geofenceManager, times(1)).stopMonitoringFences(true);
+		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
+
+		// verify places call
+		verifyStatic(Places.class, Mockito.times(1));
+		Places.clear();
+	}
+
+	@Test
+	public void test_processEvents_when_stopEventWithoutEventData() {
+		// setup
+		initWithContext(context);
+
+		// setup configuration
+		Map<String, Object> configData = new HashMap<>();
+		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
+		when(extensionApi.getSharedEventState(anyString(), any(Event.class),
+				any(ExtensionErrorCallback.class))).thenReturn(configData);
+
+		// test
 		monitorInternal.queueEvent(stopMonitoringEvent);
+		monitorInternal.processEvents();
+
+		// verify
+		verify(locationManager, times(0)).startMonitoring();
+		verify(locationManager, times(0)).startMonitoring();
+		verify(locationManager, times(1)).stopMonitoring();
+		verify(locationManager, times(0)).updateLocation();
+		verify(geofenceManager, times(1)).stopMonitoringFences(false);
+		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
+
+		// verify places call
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.clear();
+	}
+
+
+	@Test
+	public void test_processEvents_when_stopEventWithOutClearData() {
+		// setup
+		initWithContext(context);
+
+		// setup configuration
+		Map<String, Object> configData = new HashMap<>();
+		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
+		when(extensionApi.getSharedEventState(anyString(), any(Event.class),
+				any(ExtensionErrorCallback.class))).thenReturn(configData);
+
+		// test
+		monitorInternal.queueEvent(stopMonitoringEventWithOutClearData);
 		monitorInternal.processEvents();
 
 		// verify
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(1)).stopMonitoring();
 		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(1)).stopMonitoringFences();
+		verify(geofenceManager, times(1)).stopMonitoringFences(false);
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
+
+		// verify places call
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.clear();
 	}
 
 	@Test
@@ -309,7 +380,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(0)).stopMonitoring();
 		verify(locationManager, times(1)).updateLocation();
-		verify(geofenceManager, times(0)).stopMonitoringFences();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 
@@ -331,7 +402,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(0)).stopMonitoring();
 		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(0)).stopMonitoringFences();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 
@@ -348,14 +419,14 @@ public class PlacesMonitorInternalTests {
 
 		// test
 		monitorInternal.queueEvent(updateLocationEvent);
-		monitorInternal.queueEvent(stopMonitoringEvent);
+		monitorInternal.queueEvent(stopMonitoringEventWithOutClearData);
 		monitorInternal.processEvents();
 
 		// verify
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(1)).stopMonitoring();
 		verify(locationManager, times(1)).updateLocation();
-		verify(geofenceManager, times(1)).stopMonitoringFences();
+		verify(geofenceManager, times(1)).stopMonitoringFences(false);
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 
@@ -463,7 +534,7 @@ public class PlacesMonitorInternalTests {
 											  any(ExtensionErrorCallback.class))).thenReturn(configData);
 
 		EventData eventData = new EventData();
-		eventData.putTypedList(PlacesMonitorConstants.EventDataKeys.NEAR_BY_PLACES_LIST, null,
+		eventData.putTypedList(PlacesMonitorTestConstants.EventDataKeys.NEAR_BY_PLACES_LIST, null,
 							   new PlacesPOIVariantSerializer());
 
 		// test
@@ -486,7 +557,7 @@ public class PlacesMonitorInternalTests {
 											  any(ExtensionErrorCallback.class))).thenReturn(configData);
 
 		EventData eventData = new EventData();
-		eventData.putTypedList(PlacesMonitorConstants.EventDataKeys.NEAR_BY_PLACES_LIST, null,
+		eventData.putTypedList(PlacesMonitorTestConstants.EventDataKeys.NEAR_BY_PLACES_LIST, null,
 							   new PlacesPOIVariantSerializer());
 
 		// test

@@ -154,8 +154,13 @@ class PlacesGeofenceManager {
 
 	/**
 	 * Stops monitoring for entry and exit event on nearby places of interest.
+     *
+     * Calling this method with YES for clearData will purge the {@link #userWithinGeofences} data in addition to stop monitoring
+     * for further geofence events.
+     *
+     * @param clearData a boolean indicating whether to clear the {@link #userWithinGeofences} from in-memory and persistence
 	 */
-	void stopMonitoringFences() {
+	void stopMonitoringFences(final boolean clearData) {
 		AdobeCallback<Void> onSuccess = new AdobeCallback<Void>() {
 			@Override
 			public void call(Void aVoid) {
@@ -169,6 +174,11 @@ class PlacesGeofenceManager {
 				Log.warning(PlacesMonitorConstants.LOG_TAG, "Unable to stop monitoring all the fences," + message);
 			}
 		};
+
+		if(clearData){
+			userWithinGeofences.clear();
+			saveUserWithinGeofences();
+		}
 
 		unregisterPOIS(onSuccess, onFailiure);
 	}

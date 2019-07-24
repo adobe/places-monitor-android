@@ -319,8 +319,12 @@ public class PlacesGeofenceManagerTests {
 	// ========================================================================================
 
 	@Test
-	public void test_stopMonitoringFences() {
+	public void test_stopMonitoringFences_with_clearData() {
 		// setup
+		HashSet<String> initialUserWithinGeofenceSet = new HashSet<String>();
+		initialUserWithinGeofenceSet.add("id1");
+		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", initialUserWithinGeofenceSet);
+
 		final ArgumentCaptor<OnSuccessListener> onSuccessCallback = ArgumentCaptor.forClass(OnSuccessListener.class);
 		final ArgumentCaptor<OnFailureListener> onFailureCallback = ArgumentCaptor.forClass(OnFailureListener.class);
 		final ArgumentCaptor<Set<String>> persistedPOICaptor = ArgumentCaptor.forClass(Set.class);
@@ -328,7 +332,7 @@ public class PlacesGeofenceManagerTests {
 		Whitebox.setInternalState(geofenceManager, "geofencePendingIntent", geofencePendingIntent);
 
 		// test
-		geofenceManager.stopMonitoringFences();
+		geofenceManager.stopMonitoringFences(true);
 
 		// verify
 		verify(geofencingClient, times(1)).removeGeofences(geofencePendingIntent);
@@ -337,6 +341,48 @@ public class PlacesGeofenceManagerTests {
 
 		// trigger the success callback
 		onSuccessCallback.getValue().onSuccess(mockVoid);
+
+		// verify internal state of userWithGeofence
+		HashSet<String> resultUserWithInGeofences = Whitebox.getInternalState(geofenceManager, "userWithinGeofences");
+		assertEquals(0, resultUserWithInGeofences.size());
+
+		// verify interaction with SharedPreference
+		verify(mockSharedPreference, times(1)).edit();
+		verify(mockSharedPreferenceEditor, times(1)).remove(eq(
+				PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY));
+		verify(mockSharedPreferenceEditor, times(1)).commit();
+	}
+
+	@Test
+	public void test_stopMonitoringFences_without_clearData() {
+		// setup
+		HashSet<String> initialUserWithinGeofenceSet = new HashSet<String>();
+		initialUserWithinGeofenceSet.add("id1");
+		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", initialUserWithinGeofenceSet);
+
+		final ArgumentCaptor<OnSuccessListener> onSuccessCallback = ArgumentCaptor.forClass(OnSuccessListener.class);
+		final ArgumentCaptor<OnFailureListener> onFailureCallback = ArgumentCaptor.forClass(OnFailureListener.class);
+		final ArgumentCaptor<Set<String>> persistedPOICaptor = ArgumentCaptor.forClass(Set.class);
+		Whitebox.setInternalState(geofenceManager, "geofencingClient", geofencingClient);
+		Whitebox.setInternalState(geofenceManager, "geofencePendingIntent", geofencePendingIntent);
+
+		// test
+		geofenceManager.stopMonitoringFences(false);
+
+		// verify
+		verify(geofencingClient, times(1)).removeGeofences(geofencePendingIntent);
+		verify(removeTask, times(1)).addOnSuccessListener(onSuccessCallback.capture());
+		verify(removeTask, times(1)).addOnFailureListener(onFailureCallback.capture());
+
+		// trigger the success callback
+		onSuccessCallback.getValue().onSuccess(mockVoid);
+
+		// verify internal state of userWithGeofence
+		HashSet<String> resultUserWithInGeofences = Whitebox.getInternalState(geofenceManager, "userWithinGeofences");
+		assertEquals(1, resultUserWithInGeofences.size());
+
+		// verify interaction with SharedPreference
+		verify(mockSharedPreference, times(0)).edit();
 	}
 
 
@@ -347,7 +393,7 @@ public class PlacesGeofenceManagerTests {
 		final ArgumentCaptor<OnFailureListener> onFailureCallback = ArgumentCaptor.forClass(OnFailureListener.class);
 
 		// test
-		geofenceManager.stopMonitoringFences();
+		geofenceManager.stopMonitoringFences(true);
 
 		// verify
 		verify(geofencingClient, times(1)).removeGeofences(geofencePendingIntent);
@@ -365,7 +411,7 @@ public class PlacesGeofenceManagerTests {
 		Mockito.when(LocationServices.getGeofencingClient(context)).thenReturn(null);
 
 		// test
-		geofenceManager.stopMonitoringFences();
+		geofenceManager.stopMonitoringFences(true);
 
 		// verify
 		verify(geofencingClient, times(0)).removeGeofences(geofencePendingIntent);
@@ -378,7 +424,7 @@ public class PlacesGeofenceManagerTests {
 												eq(PendingIntent.FLAG_UPDATE_CURRENT))).thenReturn(null);
 
 		// test
-		geofenceManager.stopMonitoringFences();
+		geofenceManager.stopMonitoringFences(true);
 
 		// verify
 		verify(geofencingClient, times(0)).removeGeofences(geofencePendingIntent);
@@ -391,7 +437,7 @@ public class PlacesGeofenceManagerTests {
 		Mockito.when(App.getAppContext()).thenReturn(null);
 
 		// test
-		geofenceManager.stopMonitoringFences();
+		geofenceManager.stopMonitoringFences(true);
 
 		// verify
 		verify(geofencingClient, times(0)).removeGeofences(geofencePendingIntent);

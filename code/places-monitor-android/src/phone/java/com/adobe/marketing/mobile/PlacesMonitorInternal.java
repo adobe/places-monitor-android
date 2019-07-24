@@ -262,7 +262,14 @@ class PlacesMonitorInternal extends Extension {
 		if (PlacesMonitorConstants.EVENTNAME_START.equals(eventName)) {
 			startMonitoring();
 		} else if (PlacesMonitorConstants.EVENTNAME_STOP.equals(eventName)) {
-			stopMonitoring();
+
+			boolean shouldClear = false;
+			EventData data = event.getData();
+			if(data != null && !data.isEmpty()){
+				shouldClear = data.optBoolean(PlacesMonitorConstants.EventDataKeys.EVENT_DATA_CLEAR, false);
+			}
+
+			stopMonitoring(shouldClear);
 		} else if (PlacesMonitorConstants.EVENTNAME_UPDATE.equals(eventName)) {
 			updateLocation();
 		} else {
@@ -292,10 +299,17 @@ class PlacesMonitorInternal extends Extension {
 	 * This method requests the {@link #locationManager} to stop monitoring the device current location.
 	 * It also requests the {@link #geofenceManager} to stop monitoring the fences that are currently being monitored.
 	 *
+	 * Calling this method with YES for clearData will purge the data even if the monitor is not actively tracking
+	 * the device's location.
+	 *
+	 * @param clearData pass YES to clear all client-side Places data from the device.
 	 */
-	private void stopMonitoring() {
+	private void stopMonitoring(final boolean clearData) {
 		locationManager.stopMonitoring();
-		geofenceManager.stopMonitoringFences();
+		geofenceManager.stopMonitoringFences(clearData);
+		if(clearData){
+			Places.clear();
+		}
 	}
 
 	/**
