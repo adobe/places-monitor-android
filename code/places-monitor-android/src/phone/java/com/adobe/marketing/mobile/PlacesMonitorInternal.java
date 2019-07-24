@@ -263,14 +263,13 @@ class PlacesMonitorInternal extends Extension {
 			startMonitoring();
 		} else if (PlacesMonitorConstants.EVENTNAME_STOP.equals(eventName)) {
 
+			boolean shouldClear = false;
 			EventData data = event.getData();
 			if(data != null && !data.isEmpty()){
-				boolean shouldClear = data.optBoolean(PlacesMonitorConstants.EventDataKeys.EVENT_DATA_CLEAR, false);
-				stopMonitoring(shouldClear);
-				return;
+				shouldClear = data.optBoolean(PlacesMonitorConstants.EventDataKeys.EVENT_DATA_CLEAR, false);
 			}
 
-			stopMonitoring(false);
+			stopMonitoring(shouldClear);
 		} else if (PlacesMonitorConstants.EVENTNAME_UPDATE.equals(eventName)) {
 			updateLocation();
 		} else {
