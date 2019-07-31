@@ -13,18 +13,16 @@
 // PlacesMonitorConstants.java
 //
 
-
 package com.adobe.marketing.mobile;
 
 final class PlacesMonitorConstants {
-	static final private int MONITOR_PERMISSION_MASK = 0xAD00;
+	static final int MONITOR_PERMISSION_MASK = 0xAD00;
 	static final int MONITOR_LOCATION_PERMISSION_REQUEST_CODE = MONITOR_PERMISSION_MASK | 1;
 
 	static final String LOG_TAG = PlacesMonitor.class.getSimpleName();
 	static final String EXTENSION_NAME = "com.adobe.placesMonitor";
 
-	static final String EXTENSION_VERSION = "1.0.1";
-	static final String CONTINUOUS_MONITORING = "continuousmonitoring";
+	static final String EXTENSION_VERSION = "1.0.2";
 
 	// event names for places monitor request content
 	static final String EVENTNAME_START = "start monitoring";
@@ -45,32 +43,16 @@ final class PlacesMonitorConstants {
 	}
 
 	static final class EventSource {
-		static final String RESPONSE_CONTENT 	= "com.adobe.eventsource.responsecontent";
 		static final String REQUEST_CONTENT = "com.adobe.eventsource.requestcontent";
 		static final String SHARED_STATE = "com.adobe.eventsource.sharedstate";
+
 
 		private EventSource() {
 		}
 	}
 
 	static final class EventDataKeys {
-
-		static final String NEAR_BY_PLACES_LIST = "nearbyplaceslist";
-		static final String REQUEST_TYPE = "requesttype";
-		static final String REQUEST_TYPE_GET_NEARBY_PLACES = "requestgetnearbyplaces";
-		static final String REQUEST_TYPE_PROCESS_REGION_EVENT = "requestprocessregionevent";
-
-		static final String PLACES_COUNT = "count";
-		static final String LATITUDE = "latitude";
-		static final String LONGITUDE = "longitude";
-
-		static final String GEOFENCE_TYPE_NONE  = "none";
-		static final String GEOFENCE_TYPE_ENTRY = "entry";
-		static final String GEOFENCE_TYPE_EXIT  = "exit";
-
-		static final String REGION_ID = "regionid";
-		static final String REGION_EVENT_TYPE = "regioneventtype";
-
+		static final String EVENT_DATA_CLEAR	= "clearclientdata";
 		private EventDataKeys() {
 		}
 	}
@@ -79,7 +61,6 @@ final class PlacesMonitorConstants {
 	static final class EventType {
 		static final String HUB = "com.adobe.eventtype.hub";
 		static final String MONITOR = "com.adobe.eventtype.placesmonitor";
-		static final String PLACES = "com.adobe.eventtype.places";
 
 		private EventType() {
 		}
@@ -88,15 +69,14 @@ final class PlacesMonitorConstants {
 	static final class SharedState {
 		static final String STATEOWNER = "stateowner";
 		static final String CONFIGURATION = "com.adobe.module.configuration";
-		static final String PLACES = "com.adobe.module.places";
-
 		private SharedState() {
 		}
 	}
 
-	static final class SharedPreference {
-		static final String MONITORING_FENCES_KEY = "adb_monitoringFences";
+	static final class  SharedPreference {
+		static final String MASTER_KEY = "com.adobe.placesMonitor";
 		static final String USERWITHIN_GEOFENCES_KEY = "adb_userWithinGeofences";
+		static final String HAS_MONITORING_STARTED_KEY = "adb_hasMonitoringStarted";
 		private SharedPreference() {
 		}
 	}

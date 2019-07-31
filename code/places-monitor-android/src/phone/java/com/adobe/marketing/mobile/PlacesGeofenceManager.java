@@ -40,24 +40,34 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
+/**
+ * Class to manage and monitor geofences around the given device's current location
+ */
 class PlacesGeofenceManager {
 
-	static private String MONITOR_SHARED_PREFERENCE_KEY = "com.adobe.placesMonitor";
 	private final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
 	private PendingIntent geofencePendingIntent;
-	private Set<String> monitoringFences;
 	private Set<String> userWithinGeofences;
 	private GeofencingClient geofencingClient;
 
 	PlacesGeofenceManager() {
-		monitoringFences = new HashSet<String>();
 		userWithinGeofences = new HashSet<String>();
 	}
 
+	/**
+	 * Starts monitoring the entry/exit events around the given nearByPOIs by registering with the Geofences with the Android OS.
+	 * <p>
+	 * This method is called by {@link PlacesMonitorInternal} when new set of POIs are available for monitoring.
+	 * No action will be performed if the {@link GeofencingClient} required for the monitoring the POIs is null.
+	 *
+	 * @param nearByPOIs A {@link List} of n nearBy {@link PlacesPOI} objects
+	 * @see #getGeofencingClient()
+	 */
 	void startMonitoringFences(List<PlacesPOI> nearByPOIs) {
 		if (nearByPOIs == null || nearByPOIs.isEmpty()) {
 			Log.debug(PlacesMonitorConstants.LOG_TAG,
-					"Places Extension responded with no regions around the current location to be monitored. Removing all the currently monitored geofence.");
+					  "Places Extension responded with no regions around the current location to be monitored. Removing all the currently monitored geofence.");
 			nearByPOIs = new ArrayList<PlacesPOI>();
 		}
 
@@ -65,28 +75,41 @@ class PlacesGeofenceManager {
 
 		if (geofencingClient == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Unable to start monitoring geofences, geofencingClient instance is null");
+						"Unable to start monitoring geofences, geofencingClient instance is null");
 			return;
 		}
 
 
-		addNearbyFences(nearByPOIs);
-		removeNonNearbyFences(nearByPOIs);
+		refreshNearByPOIS(nearByPOIs);
 
 		// identify the newly entered regions and dispatch an entry event
 		List <PlacesPOI> newlyEnteredPois = findNewlyEnteredPOIs(nearByPOIs);
 
 		for (PlacesPOI poi : newlyEnteredPois) {
 			Geofence geofence = new Geofence.Builder()
-					.setRequestId(poi.getIdentifier())
-					.setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
-					.setCircularRegion(poi.getLatitude(), poi.getLongitude(), poi.getRadius())
-					.setExpirationDuration(Geofence.NEVER_EXPIRE)
-					.build();
+			.setRequestId(poi.getIdentifier())
+			.setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT)
+			.setCircularRegion(poi.getLatitude(), poi.getLongitude(), poi.getRadius())
+			.setExpirationDuration(Geofence.NEVER_EXPIRE)
+			.build();
 			Places.processGeofence(geofence, Geofence.GEOFENCE_TRANSITION_ENTER);
 		}
 	}
 
+	/**
+	 * Compares the new set of nearByPOIs with the existing {@link #userWithinGeofences} and creates a list of
+	 * {@link PlacesPOI} whose entry has not been already recorded.
+	 *
+	 * <p>
+	 * This method,
+	 * <ul>
+	 *     <li> Remove's the pois from {@code #userWithinGeofences} which are not a part of nearbypois </li>
+	 *     <li> Check for the newEntryPOI comparing the inmemory {@code #userWithinGeofences} list </li>
+	 * </ul>
+	 *
+	 * @param nearbyPOIs a brand new {@link List} of nearByPOIs
+	 * @return A {@code List} of newly entered POI
+	 */
 	List <PlacesPOI> findNewlyEnteredPOIs(List<PlacesPOI> nearbyPOIs) {
 		// First, remove the userWithinGeofence poi that are not currently nearbypois
 
@@ -129,50 +152,59 @@ class PlacesGeofenceManager {
 		return newlyEnteredPois;
 	}
 
+	/**
+	 * Stops monitoring for entry and exit event on nearby places of interest.
+     *
+     * Calling this method with YES for clearData will purge the {@link #userWithinGeofences} data in addition to stop monitoring
+     * for further geofence events.
+     *
+     * @param clearData a boolean indicating whether to clear the {@link #userWithinGeofences} from in-memory and persistence
+	 */
+	void stopMonitoringFences(final boolean clearData) {
+		AdobeCallback<Void> onSuccess = new AdobeCallback<Void>() {
+			@Override
+			public void call(Void aVoid) {
+				// on successful unregistration of all the pois register the new nearbypois
+				Log.warning(PlacesMonitorConstants.LOG_TAG, "Successfully stopped monitoring all the fences");
+			}
+		};
+		AdobeCallback<String> onFailiure = new AdobeCallback<String>() {
+			@Override
+			public void call(String message) {
+				Log.warning(PlacesMonitorConstants.LOG_TAG, "Unable to stop monitoring all the fences," + message);
+			}
+		};
 
-	void stopMonitoringFences() {
-
-		GeofencingClient geofencingClient = getGeofencingClient();
-
-		if (geofencingClient == null) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Unable to stop monitoring geofences, geofencingClient instance is null");
-			return;
+		if(clearData){
+			userWithinGeofences.clear();
+			saveUserWithinGeofences();
 		}
 
-		PendingIntent geofenceIntent = getGeofencePendingIntent();
-
-		if (geofenceIntent == null) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Unable to stop monitoring geofences, Places Geofence Broadcast Receiver was never initialized");
-			return;
-		}
-
-
-		Task<Void> task = geofencingClient.removeGeofences(geofenceIntent);
-		task.addOnSuccessListener(new OnSuccessListener<Void>() {
-			@Override
-			public void onSuccess(Void aVoid) {
-				monitoringFences.clear();
-				saveMonitoringFences();
-				Log.debug(PlacesMonitorConstants.LOG_TAG, "Successfully stopped monitoring geofences");
-			}
-		});
-		task.addOnFailureListener(new OnFailureListener() {
-			@Override
-			public void onFailure(Exception e) {
-				Log.debug(PlacesMonitorConstants.LOG_TAG, "Failed to stop monitoring geofences");
-			}
-		});
+		unregisterPOIS(onSuccess, onFailiure);
 	}
 
 	// ========================================================================================
 	// Internal Geofence Processor
 	// ========================================================================================
+
+	/**
+	 * Handler for processing the received geofence event.
+	 *
+	 * <p>
+	 * This method is called by the internal BroadcastReceiver on receiving an intent with {@link GeofencingEvent}.
+	 * Calls the {@link PlacesExtension} to process the obtained {@link Geofence} triggers.
+	 *
+	 * No action is performed if the intents actionName is not same as {@link PlacesMonitorConstants#INTERNAL_INTENT_ACTION_GEOFENCE}.
+	 * No action is performed if the received {@code GeofencingEvent} has error.
+	 * No action is performed if the list of obtained {@code Geofences} is empty.
+	 *
+	 * @param intent the broadcasted geofence event message wrapped in an intent
+	 * @see Places#processGeofence(Geofence, int)
+	 */
 	void onGeofenceReceived(final Intent intent) {
 		if (intent == null) {
 			Log.error(PlacesMonitorConstants.LOG_TAG,
-					"Cannot process the geofence trigger, The received intent from the geofence broadcast receiver is null.");
+					  "Cannot process the geofence trigger, The received intent from the geofence broadcast receiver is null.");
 			return;
 		}
 
@@ -180,7 +212,7 @@ class PlacesGeofenceManager {
 
 		if (!PlacesMonitorConstants.INTERNAL_INTENT_ACTION_GEOFENCE.equals(action)) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Cannot process the geofence trigger, Invalid action type received from geofence broadcast receiver.");
+						"Cannot process the geofence trigger, Invalid action type received from geofence broadcast receiver.");
 			return;
 		}
 
@@ -188,7 +220,7 @@ class PlacesGeofenceManager {
 
 		if (geofencingEvent.hasError()) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Cannot process the geofence trigger, Geofencing event has error. Ignoring region event.");
+						"Cannot process the geofence trigger, Geofencing event has error. Ignoring region event.");
 			return;
 		}
 
@@ -196,7 +228,7 @@ class PlacesGeofenceManager {
 
 		if (obtainedGeofences == null || obtainedGeofences.isEmpty()) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Cannot process the geofence trigger, null or empty geofence obtained from the geofence trigger");
+						"Cannot process the geofence trigger, null or empty geofence obtained from the geofence trigger");
 
 			return;
 		}
@@ -211,8 +243,17 @@ class PlacesGeofenceManager {
 	}
 
 	// ================================================================================================================================
-	// getCuratedGeofencesList - Compares with the existing inmemory userWithinGeofences list and get the to be processed geofence list
+	// getCuratedGeofencesList
 	// ================================================================================================================================
+
+	/**
+	 * Compares with the existing in-memory {@code #userWithinGeofences} list and get the to be processed {@link Geofence} list.
+	 *
+	 * @param obtainedGeofences A {@link List} of {@code Geofence} obtained from the {@link GeofencingEvent}
+	 * @param transitionType {@code int} representing the transition type of the provided list of geofences
+	 *
+	 * @return the curated list of {@code Geofence}'s that needs to be processed by {@link Places} extension
+	 */
 	List<Geofence> getCuratedGeofencesList(final List<Geofence> obtainedGeofences, final int transitionType) {
 		List<Geofence> curatedGeofenceList = new ArrayList<Geofence>();
 
@@ -222,9 +263,9 @@ class PlacesGeofenceManager {
 				if (!userWithinGeofences.contains(geofence.getRequestId())) {
 					curatedGeofenceList.add(geofence);
 					userWithinGeofences.add(geofence.getRequestId());
-				}
-				else {
-					Log.debug(PlacesMonitorConstants.LOG_TAG, "Ignoring to process the entry of geofence" + geofence.getRequestId() + ".Because an entry was already recorded");
+				} else {
+					Log.debug(PlacesMonitorConstants.LOG_TAG,
+							  "Ignoring to process the entry of geofence" + geofence.getRequestId() + ".Because an entry was already recorded");
 				}
 			}
 		}
@@ -248,46 +289,38 @@ class PlacesGeofenceManager {
 	// Load/Save Monitored Fences to persistence
 	// ========================================================================================
 
+
+	/**
+	 * Loads the persisted data into the in-memory variables.
+	 * <p>
+	 * This method is called during the boot time of the SDK.
+	 * Loading of persisted data fails if the {@link SharedPreferences} or App's {@link Context} is null.
+	 *
+	 */
 	void loadPersistedData() {
 		SharedPreferences sharedPreferences = getSharedPreference();
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Unable to load monitoring geofences from persistence, sharedPreference is null");
+						"Unable to load monitoring geofences from persistence, sharedPreference is null");
 			return;
 		}
 
-		userWithinGeofences = sharedPreferences.getStringSet(PlacesMonitorConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY, new HashSet<String>());
-		monitoringFences = sharedPreferences.getStringSet(PlacesMonitorConstants.SharedPreference.MONITORING_FENCES_KEY, new HashSet<String>());
+		userWithinGeofences = sharedPreferences.getStringSet(PlacesMonitorConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY,
+							  new HashSet<String>());
+		Log.trace(PlacesMonitorConstants.LOG_TAG,
+				  "PlacesGeoFenceManager.loadPersistedData() userWithinGeofences: " + userWithinGeofences.toString());
 	}
 
-	void saveMonitoringFences() {
-		SharedPreferences sharedPreferences = getSharedPreference();
-
-		if (sharedPreferences == null) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Unable to save monitoring geofences from persistence, sharedPreference is null");
-			return;
-		}
-
-		SharedPreferences.Editor editor = sharedPreferences.edit();
-
-		if (editor == null) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Unable to save monitoring geofences from persistence, shared preference editor is null");
-			return;
-		}
-
-		editor.putStringSet(PlacesMonitorConstants.SharedPreference.MONITORING_FENCES_KEY, monitoringFences);
-		editor.commit();
-	}
-
+	/**
+	 * Saves the in-memory variable {@link #userWithinGeofences} in persistence.
+	 */
 	void saveUserWithinGeofences() {
 		SharedPreferences sharedPreferences = getSharedPreference();
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Unable to save userWithIn geofences from persistence, sharedPreference is null");
+						"Unable to save userWithIn geofences from persistence, sharedPreference is null");
 			return;
 		}
 
@@ -295,25 +328,118 @@ class PlacesGeofenceManager {
 
 		if (editor == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Unable to save userWithIn geofences from persistence, shared preference editor is null");
+						"Unable to save userWithIn geofences from persistence, shared preference editor is null");
 			return;
 		}
 
-		editor.putStringSet(PlacesMonitorConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY, userWithinGeofences);
+		if (userWithinGeofences == null || userWithinGeofences.isEmpty()) {
+			editor.remove(PlacesMonitorConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY);
+		} else {
+			editor.putStringSet(PlacesMonitorConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY, userWithinGeofences);
+		}
+
 		editor.commit();
+	}
+
+	/**
+	 * Unregisters the previously monitoring POIs and registers the new list of nearByPOIs passed
+	 *
+	 * @param nearByPOIs A {@link List} of {@link PlacesPOI} that needs to be registered for monitoring
+	 */
+	void refreshNearByPOIS(final List<PlacesPOI> nearByPOIs) {
+		AdobeCallback<Void> onSuccess = new AdobeCallback<Void>() {
+			@Override
+			public void call(Void aVoid) {
+				// on successful unregistration of all the pois register the new nearbypois
+				Log.warning(PlacesMonitorConstants.LOG_TAG, "Successfully unregistered old nearByPois");
+				registerPOIs(nearByPOIs);
+			}
+		};
+		AdobeCallback<String> onFailiure = new AdobeCallback<String>() {
+			@Override
+			public void call(String message) {
+				Log.warning(PlacesMonitorConstants.LOG_TAG, "Unable to unregister old nearByPois," + message);
+				registerPOIs(nearByPOIs);
+			}
+		};
+
+		unregisterPOIS(onSuccess, onFailiure);
 	}
 
 	// ========================================================================================
 	// private methods
 	// ========================================================================================
 
-	private void addNearbyFences(final List<PlacesPOI> nearByPOIs) {
+	/**
+	 * Unregisters all the pois that are currently being monitored by google's {@link GeofencingClient}.
+	 * <p>
+	 * The pois are registered to be monitored for entry and exit events.
+	 * The registration will fail if,
+	 * <ul>
+	 *     <li> The permission for accessing the fine location is denied.</li>
+	 *     <li> {@link PendingIntent} for receiving Geofencing events is null.</li>
+	 *     <li> If the provided list of nearByPois is null/empty.</li>
+	 * </ul>
+	 *
+	 * @param onSuccess A {@link AdobeCallback} called when the unregistering of all pois is successful
+	 * @param onFailure A {@link AdobeCallback} called when the unregistering of all pois has failed
+	 */
+	private void unregisterPOIS(final AdobeCallback<Void> onSuccess, final AdobeCallback<String> onFailure) {
+		GeofencingClient geofencingClient = getGeofencingClient();
+
+		if (geofencingClient == null) {
+			onFailure.call("geofencingClient instance is null");
+			return;
+		}
+
+		PendingIntent geofenceIntent = getGeofencePendingIntent();
+
+		if (geofenceIntent == null) {
+			onFailure.call("geofence intent is null");
+			return;
+		}
+
+
+		Task<Void> task = geofencingClient.removeGeofences(geofenceIntent);
+		task.addOnSuccessListener(new OnSuccessListener<Void>() {
+			@Override
+			public void onSuccess(Void aVoid) {
+				;
+
+				if (onSuccess != null) {
+					onSuccess.call(null);
+				}
+			}
+		});
+		task.addOnFailureListener(new OnFailureListener() {
+			@Override
+			public void onFailure(Exception e) {
+				if (onFailure != null) {
+					onFailure.call(e.getMessage());
+				}
+			}
+		});
+	}
+
+	/**
+	 * Registers the given list of {@link PlacesPOI} with the google's {@link GeofencingClient}
+	 * <p>
+	 * The pois are registered to be monitored for entry and exit events. The registration will fail if,
+	 * <ul>
+	 *     <li> The permission for accessing the fine location is denied.</li>
+	 *     <li> {@link PendingIntent} for receiving Geofencing events is null.</li>
+	 *     <li> If the provided list of nearByPois is null/empty.</li>
+	 * </ul>
+	 *
+	 * @param nearByPOIs A {@link List} of nearbyPOIs obtained for the devices current location
+	 */
+	private void registerPOIs(final List<PlacesPOI> nearByPOIs) {
 		// List of geofence to be added
 		final List<Geofence> geofences = new ArrayList<>();
 
 		if (!checkPermissions()) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Unable to monitor geofences, App permission to use FINE_LOCATION is not granted.");
+						"Unable to monitor geofences, App permission to use FINE_LOCATION is not granted.");
 			return;
 		}
 
@@ -321,27 +447,31 @@ class PlacesGeofenceManager {
 
 		if (geofenceIntent == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Unable to stop monitoring geofences, Places Geofence Broadcast Receiver was never initialized");
+						"Unable to stop monitoring geofences, Places Geofence Broadcast Receiver was never initialized");
 			return;
 		}
 
 
 		for (PlacesPOI poi : nearByPOIs) {
-			if (monitoringFences.contains(poi.getIdentifier())) {
-				continue;
-			}
 
+			/**
+			 * If a geofence was previously registered, reading them will just replace the old one, which
+			 * in our case is a no-op. We therefore don't really need to keep track which geofence was
+			 * registered before, which can go out of sync anyway with the OS. Furthermore, android
+			 * does not provide any API to query which geofences are currenty monitored, so it's safer
+			 * to re-register previously registered geofences.
+			 */
 			final Geofence fence = new Geofence.Builder()
-					.setRequestId(poi.getIdentifier())
-					.setCircularRegion(poi.getLatitude(), poi.getLongitude(), poi.getRadius())
-					.setExpirationDuration(Geofence.NEVER_EXPIRE)
-					.setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
-							Geofence.GEOFENCE_TRANSITION_EXIT)
-					.build();
-			Log.debug(PlacesMonitorConstants.LOG_TAG, "Monitoring location with id " + poi.getIdentifier() +
-					" name " + poi.getName() +
-					" latitude " + poi.getLatitude() +
-					" longitude " + poi.getLongitude());
+			.setRequestId(poi.getIdentifier())
+			.setCircularRegion(poi.getLatitude(), poi.getLongitude(), poi.getRadius())
+			.setExpirationDuration(Geofence.NEVER_EXPIRE)
+			.setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
+								Geofence.GEOFENCE_TRANSITION_EXIT)
+			.build();
+			Log.debug(PlacesMonitorConstants.LOG_TAG, "Attempting to Monitor location with id " + poi.getIdentifier() +
+					  " name " + poi.getName() +
+					  " latitude " + poi.getLatitude() +
+					  " longitude " + poi.getLongitude());
 			geofences.add(fence);
 		}
 
@@ -350,10 +480,13 @@ class PlacesGeofenceManager {
 			return;
 		}
 
-
-
 		GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
-		builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
+
+		/*	by default initial trigger is set to INITIAL_TRIGGER_ENTER | INITIAL_TRIGGER_DWELL
+		*   This is not what we want since it will result in duplicate triggers if we are already
+		 *   inside POI(s).
+		* */
+		builder.setInitialTrigger(0);
 		builder.addGeofences(geofences);
 
 		try {
@@ -361,11 +494,6 @@ class PlacesGeofenceManager {
 			task.addOnSuccessListener(new OnSuccessListener<Void>() {
 				@Override
 				public void onSuccess(Void aVoid) {
-					for (Geofence eachgeofence : geofences) {
-						monitoringFences.add(eachgeofence.getRequestId());
-					}
-
-					saveMonitoringFences();
 					Log.debug(PlacesMonitorConstants.LOG_TAG, "Successfully added " + geofences.size() + " fences for monitoring");
 				}
 			});
@@ -377,64 +505,19 @@ class PlacesGeofenceManager {
 				}
 			});
 		} catch (SecurityException e) {
-			Log.debug(PlacesMonitorConstants.LOG_TAG, "Add Geofence: SecurityException: " + e.getMessage());
+			Log.debug(PlacesMonitorConstants.LOG_TAG, "Add Geofence : SecurityException: " + e.getMessage());
 		}
 	}
-
-	private void removeNonNearbyFences(final List<PlacesPOI> nearbyPOI) {
-		// List of geofence be removed
-		final List<String> toBeRemoved = new ArrayList<>();
-
-		// convert list into a hashMap for convenience
-		Map<String, PlacesPOI> poisMap = new HashMap<String, PlacesPOI>();
-
-		for (PlacesPOI i : nearbyPOI) {
-			poisMap.put(i.getIdentifier(), i);
-		}
-
-		for (String eachID : monitoringFences) {
-			if (!poisMap.containsKey(eachID)) {
-				toBeRemoved.add(eachID);
-			}
-		}
-
-		if (toBeRemoved.isEmpty()) {
-			Log.debug(PlacesMonitorConstants.LOG_TAG, "There are no geofences that needs to be removed");
-			return;
-		}
-
-		Task<Void> task = geofencingClient.removeGeofences(toBeRemoved);
-		task.addOnSuccessListener(new OnSuccessListener<Void>() {
-			@Override
-			public void onSuccess(Void aVoid) {
-				for (String eachgeofence : toBeRemoved) {
-					monitoringFences.remove(eachgeofence);
-				}
-
-				saveMonitoringFences();
-				Log.debug(PlacesMonitorConstants.LOG_TAG, "Successfully removed " + toBeRemoved.size() + " fences for monitoring");
-			}
-		});
-		task.addOnFailureListener(new OnFailureListener() {
-			@Override
-			public void onFailure(Exception e) {
-				Log.debug(PlacesMonitorConstants.LOG_TAG, "Error in adding fences for monitoring " + e.getMessage());
-
-			}
-		});
-
-	}
-
 
 	// ========================================================================================
-	// Getters for intent and geofencingClient
+	// private methods - Getters
 	// ========================================================================================
 
 	/**
 	 * Returns a {@code PendingIntent} instance for getting the Geofence triggers
 	 * <p>
 	 * Returns the existing {@link #geofencePendingIntent} instance if its not null.
-	 * Else attempts to create a new Pending Intent
+	 * Else attempts to create a new Pending Intent.
 	 * Returns null if the app context is not available.
 	 *
 	 * @return a {@code PendingIntent} instance
@@ -449,7 +532,7 @@ class PlacesGeofenceManager {
 
 		if (context == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Unable to create an intent to receive location updates, App Context not available");
+						"Unable to create an intent to receive location updates, App Context not available");
 			return null;
 		}
 
@@ -484,6 +567,14 @@ class PlacesGeofenceManager {
 		return geofencingClient;
 	}
 
+
+	/**
+	 * Getter for the applications {@link SharedPreferences}
+	 * <p>
+	 * Returns null if the app context is not available
+	 *
+	 * @return a {@code SharedPreferences} instance
+	 */
 	private SharedPreferences getSharedPreference() {
 		Context appContext = App.getAppContext();
 
@@ -491,10 +582,20 @@ class PlacesGeofenceManager {
 			return null;
 		}
 
-		return appContext.getSharedPreferences(MONITOR_SHARED_PREFERENCE_KEY, 0);
+		return appContext.getSharedPreferences(PlacesMonitorConstants.SharedPreference.MASTER_KEY, 0);
 	}
 
 
+	// ========================================================================================
+	// private methods - Permission Handling
+	// ========================================================================================
+	/**
+	 * Helper method to verify if the permission to access FINE_LOCATION is granted for the application.
+	 * <p>
+	 * Returns true if the permission is granted, false otherwise.
+	 *
+	 * @return a {@code boolean} representing the permission for accessing FINE_LOCATION
+	 */
 	private boolean checkPermissions() {
 		Context context = App.getAppContext();
 
@@ -504,7 +605,7 @@ class PlacesGeofenceManager {
 		}
 
 		int permissionState = ActivityCompat.checkSelfPermission(context,
-				FINE_LOCATION);
+							  FINE_LOCATION);
 		return permissionState == PackageManager.PERMISSION_GRANTED;
 	}
 }

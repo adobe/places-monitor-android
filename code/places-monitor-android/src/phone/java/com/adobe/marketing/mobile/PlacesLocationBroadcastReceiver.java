@@ -20,11 +20,25 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
-
+/**
+ * Broadcast receiver for the location updates.
+ * <p>
+ *  Receive broadcast messages from Android OS about the device current location.
+ */
 public class PlacesLocationBroadcastReceiver extends BroadcastReceiver {
 	static final String ACTION_LOCATION_UPDATE =
 		"com.adobe.marketing.mobile.PlacesLocationBroadcastReceiver.locationUpdates";
 
+	/**
+	 * This method is called when the BroadcastReceiver is receiving an intent broadcast with current location.
+	 * <p>
+	 *  Broadcasts the obtained intent to the internal receiver created and listened by {@link PlacesMonitorInternal}
+	 *  No action is taken if the passed intent or context is null.
+	 *  No action is taken if the actionName of the intent is not same as {@link #ACTION_LOCATION_UPDATE}
+	 *
+	 * @param context the application's {@link Context}
+	 * @param intent the broadcasted location message wrapped in an intent
+	 */
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		if (intent == null) {

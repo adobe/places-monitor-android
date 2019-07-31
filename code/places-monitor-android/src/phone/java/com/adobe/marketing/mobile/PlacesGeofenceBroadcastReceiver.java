@@ -20,11 +20,25 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 
-
+/**
+ * Broadcast receiver for the geofence updates.
+ * <p>
+ * Receives broadcast messages from the Android OS about the geofence entry/exit events.
+ */
 public class PlacesGeofenceBroadcastReceiver extends BroadcastReceiver {
 	static final String ACTION_GEOFENCE_UPDATE =
 		"com.adobe.marketing.mobile.PlacesGeofenceBroadcastReceiver.geofenceUpdates";
 
+	/**
+	 * This method is called when the {@link PlacesGeofenceBroadcastReceiver} is receiving an intent with geofence event.
+	 * <p>
+	 *  Broadcasts the obtained intent to the internal receiver created and listened by {@link PlacesMonitorInternal}.
+	 *  No action is taken if received intent or context is null.
+	 *  No action is taken if actionName of the intent is not equal to {@link #ACTION_GEOFENCE_UPDATE}.
+	 *
+	 * @param context the application's {@link Context}
+	 * @param intent the broadcasted geofence event message wrapped in an intent
+	 */
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		if (intent == null) {

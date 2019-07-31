@@ -13,7 +13,6 @@
 // PlacesMonitorListenerHubSharedStateTests.java
 //
 
-
 package com.adobe.marketing.mobile;
 
 import org.junit.Before;

@@ -46,6 +46,7 @@ import java.util.concurrent.ExecutorService;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ExtensionApi.class, PlacesLocationManager.class, PlacesGeofenceManager.class, PlacesMonitorInternal.class, App.class, Context.class, Intent.class, LocalBroadcastManager.class, Places.class, Location.class})
@@ -59,6 +60,16 @@ public class PlacesMonitorInternalTests {
 	private Event stopMonitoringEvent = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_STOP,
 			PlacesMonitorTestConstants.EventType.MONITOR,
 			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).build();
+
+	private Event stopMonitoringEventWithClearData = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_STOP,
+			PlacesMonitorTestConstants.EventType.MONITOR,
+			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(new EventData(new HashMap<String,Variant>()
+	{{ put(PlacesMonitorConstants.EventDataKeys.EVENT_DATA_CLEAR, Variant.fromBoolean(true)); }})).build();
+
+	private Event stopMonitoringEventWithOutClearData = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_STOP,
+			PlacesMonitorTestConstants.EventType.MONITOR,
+			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(new EventData(new HashMap<String,Variant>()
+	{{ put(PlacesMonitorConstants.EventDataKeys.EVENT_DATA_CLEAR, Variant.fromBoolean(false)); }})).build();
 
 	private Event updateLocationEvent = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_UPDATE,
 			PlacesMonitorTestConstants.EventType.MONITOR,
@@ -93,6 +104,7 @@ public class PlacesMonitorInternalTests {
 	@Before
 	public void before() throws Exception {
 		PowerMockito.mockStatic(App.class);
+		PowerMockito.mockStatic(Places.class);
 		PowerMockito.mockStatic(LocalBroadcastManager.class);
 		Mockito.when(LocalBroadcastManager.getInstance(context)).thenReturn(localBroadcastManager);
 		PowerMockito.whenNew(PlacesGeofenceManager.class).withNoArguments().thenReturn(geofenceManager);
@@ -238,7 +250,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(0)).stopMonitoring();
 		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(0)).stopMonitoringFences();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 
@@ -259,14 +271,11 @@ public class PlacesMonitorInternalTests {
 
 		// verify
 		verify(locationManager, times(1)).startMonitoring();
-		verify(locationManager, times(0)).stopMonitoring();
-		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(0)).stopMonitoringFences();
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 
 	@Test
-	public void test_processEvents_when_stopEvent() {
+	public void test_processEvents_when_stopEventWithClearData() {
 		// setup
 		initWithContext(context);
 
@@ -277,15 +286,76 @@ public class PlacesMonitorInternalTests {
 											  any(ExtensionErrorCallback.class))).thenReturn(configData);
 
 		// test
+		monitorInternal.queueEvent(stopMonitoringEventWithClearData);
+		monitorInternal.processEvents();
+
+		// verify
+		verify(locationManager, times(0)).startMonitoring();
+		verify(locationManager, times(0)).startMonitoring();
+		verify(locationManager, times(1)).stopMonitoring();
+		verify(locationManager, times(0)).updateLocation();
+		verify(geofenceManager, times(1)).stopMonitoringFences(true);
+		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
+
+		// verify places call
+		verifyStatic(Places.class, Mockito.times(1));
+		Places.clear();
+	}
+
+	@Test
+	public void test_processEvents_when_stopEventWithoutEventData() {
+		// setup
+		initWithContext(context);
+
+		// setup configuration
+		Map<String, Object> configData = new HashMap<>();
+		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
+		when(extensionApi.getSharedEventState(anyString(), any(Event.class),
+				any(ExtensionErrorCallback.class))).thenReturn(configData);
+
+		// test
 		monitorInternal.queueEvent(stopMonitoringEvent);
+		monitorInternal.processEvents();
+
+		// verify
+		verify(locationManager, times(0)).startMonitoring();
+		verify(locationManager, times(0)).startMonitoring();
+		verify(locationManager, times(1)).stopMonitoring();
+		verify(locationManager, times(0)).updateLocation();
+		verify(geofenceManager, times(1)).stopMonitoringFences(false);
+		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
+
+		// verify places call
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.clear();
+	}
+
+
+	@Test
+	public void test_processEvents_when_stopEventWithOutClearData() {
+		// setup
+		initWithContext(context);
+
+		// setup configuration
+		Map<String, Object> configData = new HashMap<>();
+		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
+		when(extensionApi.getSharedEventState(anyString(), any(Event.class),
+				any(ExtensionErrorCallback.class))).thenReturn(configData);
+
+		// test
+		monitorInternal.queueEvent(stopMonitoringEventWithOutClearData);
 		monitorInternal.processEvents();
 
 		// verify
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(1)).stopMonitoring();
 		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(1)).stopMonitoringFences();
+		verify(geofenceManager, times(1)).stopMonitoringFences(false);
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
+
+		// verify places call
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.clear();
 	}
 
 	@Test
@@ -307,7 +377,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(0)).stopMonitoring();
 		verify(locationManager, times(1)).updateLocation();
-		verify(geofenceManager, times(0)).stopMonitoringFences();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 
@@ -329,7 +399,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(0)).stopMonitoring();
 		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(0)).stopMonitoringFences();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 
@@ -346,14 +416,14 @@ public class PlacesMonitorInternalTests {
 
 		// test
 		monitorInternal.queueEvent(updateLocationEvent);
-		monitorInternal.queueEvent(stopMonitoringEvent);
+		monitorInternal.queueEvent(stopMonitoringEventWithOutClearData);
 		monitorInternal.processEvents();
 
 		// verify
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(1)).stopMonitoring();
 		verify(locationManager, times(1)).updateLocation();
-		verify(geofenceManager, times(1)).stopMonitoringFences();
+		verify(geofenceManager, times(1)).stopMonitoringFences(false);
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 	}
 
@@ -461,7 +531,7 @@ public class PlacesMonitorInternalTests {
 											  any(ExtensionErrorCallback.class))).thenReturn(configData);
 
 		EventData eventData = new EventData();
-		eventData.putTypedList(PlacesMonitorConstants.EventDataKeys.NEAR_BY_PLACES_LIST, null,
+		eventData.putTypedList(PlacesMonitorTestConstants.EventDataKeys.NEAR_BY_PLACES_LIST, null,
 							   new PlacesPOIVariantSerializer());
 
 		// test
@@ -484,7 +554,7 @@ public class PlacesMonitorInternalTests {
 											  any(ExtensionErrorCallback.class))).thenReturn(configData);
 
 		EventData eventData = new EventData();
-		eventData.putTypedList(PlacesMonitorConstants.EventDataKeys.NEAR_BY_PLACES_LIST, null,
+		eventData.putTypedList(PlacesMonitorTestConstants.EventDataKeys.NEAR_BY_PLACES_LIST, null,
 							   new PlacesPOIVariantSerializer());
 
 		// test
@@ -543,23 +613,140 @@ public class PlacesMonitorInternalTests {
 		verify(geofenceManager, times(1)).onGeofenceReceived(intent);
 	}
 
-	// TODO - Final
-	//	// ========================================================================================
-	//	// getPOIsForLocation
-	//	// ========================================================================================
-	//
-	//	@Test
-	//	public void test_getPOIsForLocation_successCallback() {
-	//	    // setup
-	//		initWithContext(context);
-	//
-	//	    // test
-	//		monitorInternal.getPOIsForLocation(null);
-	//
-	//	    // verify
-	//		verifyStatic(Places.class, Mockito.times(0));
-	//		Places.getNearbyPointsOfInterest(any(Location.class), anyInt(), any(AdobeCallback.class),any(AdobeCallback.class));
-	//	}
+	// ========================================================================================
+	// getPOIsForLocation
+	// ========================================================================================
+	@Test
+	public void test_getPOIsForLocation_whenLocationNull() {
+		// setup
+		initWithContext(context);
+
+		// test
+		monitorInternal.getPOIsForLocation(null);
+
+		// verify
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.getNearbyPointsOfInterest(any(Location.class), anyInt(), any(AdobeCallback.class), any(AdobeCallback.class));
+	}
+
+	@Test
+	public void test_getPOIsForLocation_when_success() {
+		// setup
+		initWithContext(context);
+		final ArgumentCaptor<AdobeCallback> successCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+		final ArgumentCaptor<AdobeCallback> failurecallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+
+		// test
+		monitorInternal.getPOIsForLocation(location);
+
+		// verify
+		verifyStatic(Places.class, Mockito.times(1));
+		Places.getNearbyPointsOfInterest(any(Location.class), anyInt(), successCallbackCaptor.capture(),
+										 failurecallbackCaptor.capture());
+
+		// call the success callback
+		List<PlacesPOI> nearbyPois = samplePOIList();
+		successCallbackCaptor.getValue().call(nearbyPois);
+
+		// verify
+		verify(geofenceManager, times(1)).startMonitoringFences(nearbyPois);
+	}
+
+
+	@Test
+	public void test_getPOIsForLocation_when_failure_with_ConfigurationError() {
+		// setup
+		initWithContext(context);
+		final ArgumentCaptor<AdobeCallback> successCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+		final ArgumentCaptor<AdobeCallback> failureCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
+
+		// test
+		monitorInternal.getPOIsForLocation(location);
+
+		// verify
+		verifyStatic(Places.class, Mockito.times(1));
+		Places.getNearbyPointsOfInterest(any(Location.class), anyInt(), successCallbackCaptor.capture(),
+										 failureCallbackCaptor.capture());
+
+		// call the failure callback
+		failureCallbackCaptor.getValue().call(PlacesRequestError.CONFIGURATION_ERROR);
+
+		// verify
+		verifyStatic(Places.class, Mockito.times(1));
+		Places.clear();
+		verify(locationManager, times(1)).stopMonitoring();
+		verify(geofenceManager, times(1)).stopMonitoringFences(true);
+	}
+
+
+	@Test
+	public void test_getPOIsForLocation_when_failure_with_OtherErrors() {
+		// setup
+		initWithContext(context);
+		final ArgumentCaptor<AdobeCallback> successCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+		final ArgumentCaptor<AdobeCallback> failureCallbackCaptor = ArgumentCaptor.forClass(AdobeCallback.class);
+		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
+
+		// test
+		monitorInternal.getPOIsForLocation(location);
+
+		// verify
+		verifyStatic(Places.class, Mockito.times(1));
+		Places.getNearbyPointsOfInterest(any(Location.class), anyInt(), successCallbackCaptor.capture(),
+				failureCallbackCaptor.capture());
+
+		// call the failure callback with CONNECTIVITY_ERROR
+		failureCallbackCaptor.getValue().call(PlacesRequestError.CONNECTIVITY_ERROR);
+
+		// verify;
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.clear();
+		verify(locationManager, times(0)).stopMonitoring();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
+
+
+		// call the failure callback with INVALID_LATLONG_ERROR
+		failureCallbackCaptor.getValue().call(PlacesRequestError.INVALID_LATLONG_ERROR);
+
+		// verify;
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.clear();
+		verify(locationManager, times(0)).stopMonitoring();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
+
+
+		// call the failure callback with QUERY_SERVICE_UNAVAILABLE
+		failureCallbackCaptor.getValue().call(PlacesRequestError.QUERY_SERVICE_UNAVAILABLE);
+
+		// verify;
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.clear();
+		verify(locationManager, times(0)).stopMonitoring();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
+
+
+		// call the failure callback with SERVER_RESPONSE_ERROR
+		failureCallbackCaptor.getValue().call(PlacesRequestError.SERVER_RESPONSE_ERROR);
+
+		// verify;
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.clear();
+		verify(locationManager, times(0)).stopMonitoring();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
+
+
+		// call the failure callback with UNKNOWN_ERROR
+		failureCallbackCaptor.getValue().call(PlacesRequestError.UNKNOWN_ERROR);
+
+		// verify;
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.clear();
+		verify(locationManager, times(0)).stopMonitoring();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
+		
+	}
+
 
 
 

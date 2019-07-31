@@ -69,7 +69,7 @@ android {
 dependencies {
     implementation 'com.android.support:appcompat-v7:28.0.0'
     implementation 'com.adobe.marketing.mobile:sdk-core:1.2.2'
-    implementation 'com.adobe.marketing.mobile:places:1.2.0'
+    implementation 'com.adobe.marketing.mobile:places:1.3.0'
     implementation 'com.google.android.gms:play-services-location:16.0.0'
     testImplementation 'junit:junit:4.12'
     testImplementation "org.mockito:mockito-core:${rootProject.ext.mockitoCoreVersion}"
@@ -97,10 +97,185 @@ task platformUnitTestJacocoReport(type: JacocoReport, dependsOn: "testPhoneCoreB
 
 tasks.withType(Test) {
     jacoco {
+        append = true
+        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         includeNoLocationClasses = false
         includes = ['*/phone/java/com/adobe/marketing/mobile/*.java']
     }
 }
+
+android.libraryVariants.all { variant ->
+    tasks.withType(Javadoc) {
+        source = [android.sourceSets.main.java.sourceFiles, android.sourceSets.phone.java.sourceFiles,
+                  android.sourceSets.coreBundle.java.sourceFiles]
+        ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+
+        doFirst{classpath = files(variant.javaCompile.classpath.files) + files(ext.androidJar)}
+
+
+        exclude "**/BuildConfig.java"
+        exclude "**/R.java"
+        options {
+            links "https://developer.android.com/reference"
+        }
+    }
+
+}
+
+task javadocInternal(type: Javadoc) {
+    destinationDir = reporting.file("javadocInternal")
+    options.memberLevel = JavadocMemberLevel.PRIVATE
+}
+
+task javadocPublic(type: Javadoc) {
+    destinationDir = reporting.file("javadocPublic")
+    options.memberLevel = JavadocMemberLevel.PUBLIC
+}
+
+task javadocPublish(type: Jar) {
+    from javadocPublic
+    classifier = 'javadoc'
+}
+
+
+artifactoryPublish.dependsOn('assemblePhone')
+publishing {
+    publications {
+        aar(MavenPublication) {
+            groupId = 'com.adobe.marketing.mobile'
+            artifactId = rootProject.moduleName
+            version = rootProject.moduleVersion
+            artifact("$buildDir/outputs/aar/${moduleAARName}")
+            artifact javadocPublish
+            pom.withXml {
+                asNode().appendNode('name', mavenRepoName)
+                asNode().appendNode('description', mavenRepoDescription)
+                asNode().appendNode('url', 'https://mobilemarketing.adobe.com/')
+                def scmNode = asNode().appendNode('scm')
+                scmNode.appendNode('url', 'https://github.com/Adobe-Marketing-Cloud/mobile-services')
+
+
+                def developersNode = asNode().appendNode('developers')
+                def developerNode = developersNode.appendNode('developer')
+                developerNode.appendNode('id', 'adobe')
+                developerNode.appendNode('name', 'adobe')
+
+                def licensesNode = asNode().appendNode('licenses')
+                def licenseNode = licensesNode.appendNode('license')
+                licenseNode.appendNode('name', 'Adobe Proprietary')
+
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+
+                def coreDependencyNode = dependenciesNode.appendNode('dependency')
+                coreDependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
+                coreDependencyNode.appendNode('artifactId', 'core')
+                coreDependencyNode.appendNode('version', mavenCoreVersion)
+
+                def placesDependencyNode = dependenciesNode.appendNode('dependency')
+                placesDependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
+                placesDependencyNode.appendNode('artifactId', 'places')
+                placesDependencyNode.appendNode('version', mavenPlacesVersion)
+
+
+                def googleLocationServiceDependencyNode = dependenciesNode.appendNode('dependency')
+                googleLocationServiceDependencyNode.appendNode('groupId', 'com.google.android.gms')
+                googleLocationServiceDependencyNode.appendNode('artifactId', 'play-services-location')
+                googleLocationServiceDependencyNode.appendNode('version', mavenGoogleLocationServiceVersion)
+            }
+        }
+        aarSnapshot(MavenPublication) {
+            groupId = 'com.adobe.marketing.mobile'
+            artifactId = rootProject.moduleName
+            if (project.hasProperty("isMaster")) {
+                version = rootProject.moduleVersion + '-internal'
+            } else {
+                version = rootProject.moduleVersion + '-SNAPSHOT'
+            }
+            artifact("$buildDir/outputs/aar/${moduleAARName}")
+            artifact javadocPublish
+            pom.withXml {
+                asNode().appendNode('name', mavenRepoName)
+                asNode().appendNode('description', mavenRepoDescription)
+                asNode().appendNode('url', 'https://mobilemarketing.adobe.com/')
+                def scmNode = asNode().appendNode('scm')
+                scmNode.appendNode('url', 'https://github.com/Adobe-Marketing-Cloud/mobile-services')
+
+
+                def developersNode = asNode().appendNode('developers')
+                def developerNode = developersNode.appendNode('developer')
+                developerNode.appendNode('id', 'adobe')
+                developerNode.appendNode('name', 'adobe')
+
+                def licensesNode = asNode().appendNode('licenses')
+                def licenseNode = licensesNode.appendNode('license')
+                licenseNode.appendNode('name', 'Adobe Proprietary')
+
+                def dependenciesNode = asNode().appendNode('dependencies')
+
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+
+                def coreDependencyNode = dependenciesNode.appendNode('dependency')
+                coreDependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
+                coreDependencyNode.appendNode('artifactId', 'core')
+                coreDependencyNode.appendNode('version', mavenCoreVersion)
+
+
+                def placesDependencyNode = dependenciesNode.appendNode('dependency')
+                placesDependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
+                placesDependencyNode.appendNode('artifactId', 'places')
+                placesDependencyNode.appendNode('version', mavenPlacesVersion)
+
+
+                def googleLocationServiceDependencyNode = dependenciesNode.appendNode('dependency')
+                googleLocationServiceDependencyNode.appendNode('groupId', 'com.google.android.gms')
+                googleLocationServiceDependencyNode.appendNode('artifactId', 'play-services-location')
+                googleLocationServiceDependencyNode.appendNode('version', mavenGoogleLocationServiceVersion)
+            }
+        }
+    }
+}
+
+
+artifactoryPublish {
+    publications(publishing.publications.aarSnapshot)
+}
+
+bintray {
+    user = 'sdkci'
+    //This apiKey is passed as a gradle parameter to the task
+    //from the Jenkins Pipeline.
+    if (project.hasProperty("apiKey")) {
+        key = "$apiKey"
+    } else {
+        key = "xxxxxxxxxxxxxxx"
+    }
+
+    String gpgpass = "xxxxxxxxxxxxxxx"
+    if (project.hasProperty("gpgPassphrase")) {
+        gpgpass = "$gpgPassphrase"
+}
+    dryRun = false
+    pkg {
+        repo = "mobileservicesdk"
+        name = mavenRepoName
+        userOrg = "eaps"
+        version {
+            name = rootProject.moduleVersion
+            desc = mavenRepoDescription
+            gpg {
+                sign = true
+                passphrase = gpgpass
+            }
+        }
+    }
+
+    publications = ['aar']
+}
+
+bintrayUpload.dependsOn('assemblePhone')
+
 
 configurations.all {
     resolutionStrategy {
