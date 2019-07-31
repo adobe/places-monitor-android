@@ -13,19 +13,15 @@
 // PlacesLocationManager.java
 //
 
-
 package com.adobe.marketing.mobile;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.content.pm.PackageManager;
+import android.content.SharedPreferences;
 import android.location.Location;
-import android.os.Build;
-import android.support.v4.app.ActivityCompat;
 
 
 import com.google.android.gms.common.api.ApiException;
@@ -46,23 +42,47 @@ import com.google.android.gms.tasks.Task;
 import java.util.List;
 
 
+/**
+ * Class to manage location updates from Android OS
+ */
 class PlacesLocationManager {
 
 	// permission constants
-	private final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
 	private FusedLocationProviderClient fusedLocationClient;
-	private Boolean isRequestingLocationUpdates = false;
 	private PendingIntent locationPendingIntent;
+	private boolean hasMonitoringStarted;
 	private PlacesMonitorInternal placesMonitorInternal;
 
+	/**
+	 * Constructor.
+	 */
 	PlacesLocationManager(PlacesMonitorInternal placesMonitorInternal) {
 		this.placesMonitorInternal = placesMonitorInternal;
+		loadHasMonitoringStarted();
 	}
 
+	/**
+	 *  Call this method to start getting location updated from Android OS.
+	 *  <p>
+	 *  If the permission to access fine location is granted, then request is made against {@link FusedLocationProviderClient}
+	 *  to get location for every 2 kilometer of user movement or every 30 mins (whichever happens first).
+	 *  If the permission to access fine location is not provided. A prompt is made to ask for monitoring fine location.
+	 *
+	 *  No action if the applications context is null.
+	 *  No action is taken if permission to access the fine location is denied by user.
+	 */
 	void startMonitoring() {
-		if (!checkPermissions()) {
+		Context context = App.getAppContext();
+
+		if (context == null) {
+			Log.debug(PlacesMonitorConstants.LOG_TAG,
+					  "Unable to start monitoring places, App context is null");
+			return;
+		}
+
+		if (!PlacesActivity.isFineLocationPermissionGranted()) {
 			Log.debug(PlacesMonitorConstants.LOG_TAG, "Requesting permission to monitor fine location");
-			requestPermissions();
+			PlacesActivity.askPermission();
 			return;
 		}
 
@@ -70,7 +90,7 @@ class PlacesLocationManager {
 				  "Location permission is already granted. Starting to monitor location updates");
 
 		// Begin by checking if the device has the necessary location settings.
-		Context context = App.getAppContext();
+
 		final LocationRequest locationRequest = getLocationRequest();
 		LocationSettingsRequest settingsRequest = new LocationSettingsRequest.Builder()
 		.addLocationRequest(locationRequest).build();
@@ -97,7 +117,7 @@ class PlacesLocationManager {
 				}
 
 
-				isRequestingLocationUpdates = true;
+				setHasMonitoringStarted(true);
 				Log.debug(PlacesMonitorConstants.LOG_TAG, "All location settings are satisfied to monitor location");
 				fusedLocationProviderClient.requestLocationUpdates(locationRequest,
 						locationIntent);
@@ -108,22 +128,24 @@ class PlacesLocationManager {
 			@Override
 			public void onFailure(Exception e) {
 				int statusCode = ((ApiException) e).getStatusCode();
-				isRequestingLocationUpdates = false;
+				setHasMonitoringStarted(false);
 
 				switch (statusCode) {
 					case LocationSettingsStatusCodes.RESOLUTION_REQUIRED: {
-						Log.debug(PlacesMonitorConstants.LOG_TAG, "Failed to start location updates, status code : RESOLUTION_REQUIRED.  Attempting to get permission.");
+						Log.debug(PlacesMonitorConstants.LOG_TAG,
+								  "Failed to start location updates, status code : RESOLUTION_REQUIRED.  Attempting to get permission.");
 
 						// Location settings are not satisfied. But could be fixed by showing the
 						// user a dialog.
 						try {
 							final Activity currentActivity = App.getCurrentActivity();
+
 							if (currentActivity == null) {
 								break;
 							}
 
 							final ResolvableApiException resolvable = (ResolvableApiException) e;
-							resolvable.startResolutionForResult(App.getCurrentActivity(), LocationSettingsStatusCodes.RESOLUTION_REQUIRED);
+							resolvable.startResolutionForResult(currentActivity, LocationSettingsStatusCodes.RESOLUTION_REQUIRED);
 						} catch (IntentSender.SendIntentException ex) {
 							// Ignore the error.
 						} catch (ClassCastException ex) {
@@ -132,11 +154,13 @@ class PlacesLocationManager {
 
 						break;
 					}
+
 					case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE: {
 						Log.error(PlacesMonitorConstants.LOG_TAG,
-								"Failed to start location updates, status code : SETTINGS_CHANGE_UNAVAILABLE");
+								  "Failed to start location updates, status code : SETTINGS_CHANGE_UNAVAILABLE");
 						break;
 					}
+
 					default: {
 						break;
 					}
@@ -146,14 +170,22 @@ class PlacesLocationManager {
 		});
 	}
 
-
+	/**
+	 *  Call this method to stop getting any further location updates from Android OS.
+	 */
 	void stopMonitoring() {
 		stopLocationUpdates();
 	}
 
 
+	/**
+	 *  Requests a immediate location update.
+	 *  <p>
+	 *  Once the location updates are received, {@link Places} extension is called to grab nearbyPOIs around the obtained location.
+	 *  No action is taken if the {@link FusedLocationProviderClient} instance is null.
+	 */
 	void updateLocation() {
-		if (!isRequestingLocationUpdates) {
+		if (!hasMonitoringStarted) {
 			Log.debug(PlacesMonitorConstants.LOG_TAG,
 					  "Location updates are stopped or never started. Please start monitoring to get the location update");
 			return;
@@ -186,6 +218,20 @@ class PlacesLocationManager {
 	// Internal Location Processor
 	// ========================================================================================
 
+	/**
+	 * Handler for processing the received location event.
+	 *
+	 * <p>
+	 * This method is called by the internal {@link android.content.BroadcastReceiver} on receiving an intent with {@link Location}.
+	 * Calls the {@link PlacesExtension} to get the closest POIs around the given location.
+	 *
+	 * No action is performed if the intents action is not same as {@link PlacesMonitorConstants#INTERNAL_INTENT_ACTION_LOCATION}.
+	 * No action is performed if the received {@code LocationResult} is null.
+	 * No action is performed if the location array or the location is null.
+	 *
+	 * @param intent broadcasted geofence event message wrapped in an intent
+	 * @see Places#getNearbyPointsOfInterest(Location, int, AdobeCallback)
+	 */
 	void onLocationReceived(final Intent intent) {
 
 		if (intent == null) {
@@ -198,14 +244,13 @@ class PlacesLocationManager {
 
 		if (!PlacesMonitorConstants.INTERNAL_INTENT_ACTION_LOCATION.equals(action)) {
 			Log.trace(PlacesMonitorConstants.LOG_TAG,
-						"Cannot process the location update, Invalid action type received from location broadcast receiver");
+					  "Cannot process the location update, Invalid action type received from location broadcast receiver");
 			return;
 		}
 
 		LocationResult result = LocationResult.extractResult(intent);
 
 		if (result == null) {
-			Log.trace(PlacesMonitorConstants.LOG_TAG, "Cannot process the location update, Received location result is null");
 			return;
 		}
 
@@ -230,69 +275,16 @@ class PlacesLocationManager {
 		placesMonitorInternal.getPOIsForLocation(location);
 	}
 
-
 	/**
-	 * Checks the current location permission state of the device.
+	 * Call to stop getting location updates from Android OS.
 	 * <p>
-	 * Returns true if the permission for using fine location is granted.
-	 * Returns false if the permission for using fine location is not granted or if the app context is null.
+	 * On successful execution, will stop getting any further location updates from the {@link FusedLocationProviderClient}.
 	 *
-	 * @return Returns {@code boolean} representing the permission to monitor fine location
+	 * No action is performed if the FusedLocationProviderClient instance is null.
+	 * No action is performed if the PendingIntent for getting location update is null.
+	 *
+	 * @see FusedLocationProviderClient
 	 */
-	private boolean checkPermissions() {
-		Context context = App.getAppContext();
-
-		if (context == null) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "Unable to check location permission, App context is not available");
-			return false;
-		}
-
-		int permissionState = ActivityCompat.checkSelfPermission(context,
-							  FINE_LOCATION);
-		return permissionState == PackageManager.PERMISSION_GRANTED;
-	}
-
-
-	/**
-	 * Request the permission to monitor fine location.
-	 */
-
-	private void requestPermissions() {
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-			return;
-		}
-
-		Context context = App.getAppContext();
-
-		if (context == null) {
-			return;
-		}
-
-		Activity activity = App.getCurrentActivity();
-
-		if (activity == null) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "Unable to request permission, current activity is null");
-			return;
-		}
-
-		boolean shouldProvideRationale =
-			ActivityCompat.shouldShowRequestPermissionRationale(activity,
-					FINE_LOCATION);
-
-		// Show the pop-up to the user. This would happen if the user denied the
-		// request previously, but didn't check the "Don't ask again" checkbox.
-		if (shouldProvideRationale) {
-			Log.debug(PlacesMonitorConstants.LOG_TAG, "Permission not granted to provide location");
-		} else {
-			// Request permission. It's possible this can be auto answered if device policy
-			// sets the permission in a given state or the user denied the permission
-			// previously and checked "Never ask again".
-			ActivityCompat.requestPermissions(activity,
-											  new String[] {FINE_LOCATION},
-											  PlacesMonitorConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE);
-		}
-	}
-
 	private void stopLocationUpdates() {
 
 		FusedLocationProviderClient fusedLocationProviderClient = getFusedLocationClient();
@@ -316,7 +308,7 @@ class PlacesLocationManager {
 		task.addOnCompleteListener(new OnCompleteListener<Void>() {
 			@Override
 			public void onComplete(Task<Void> task) {
-				isRequestingLocationUpdates = false;
+				setHasMonitoringStarted(false);
 				Log.debug(PlacesMonitorConstants.LOG_TAG, "Places Monitor has successfully stopped further location updates");
 			}
 		});
@@ -330,7 +322,7 @@ class PlacesLocationManager {
 	/**
 	 * Returns a {@code PendingIntent} instance for getting the location updates
 	 * <p>
-	 * Returns the existing {@link #locationPendingIntent} instance if its not null.
+	 * Returns existing {@link #locationPendingIntent} instance if its not null.
 	 * Else attempts to create a new instance of {@link FusedLocationProviderClient}.
 	 * Returns null if the app context is not available.
 	 *
@@ -357,9 +349,9 @@ class PlacesLocationManager {
 	}
 
 	/**
-	 * Returns the {@code FusedLocationProviderClient} instance
+	 * Returns {@code FusedLocationProviderClient} instance
 	 * <p>
-	 * Returns the existing {@link #fusedLocationClient} instance if it's not null.
+	 * Returns existing {@link #fusedLocationClient} instance if it's not null.
 	 * Else attempts to create a new instance of {@link FusedLocationProviderClient}.
 	 * Returns null if the app context is not available or the google's getFusedLocationProviderClient API return null.
 	 *
@@ -382,7 +374,7 @@ class PlacesLocationManager {
 	}
 
 	/**
-	 * Return the {@code LocationRequest} instance with indicating the distance and time frequency of the
+	 * Returns {@code LocationRequest} instance with distance and time frequency of the
 	 * location request.
 	 *
 	 * @return A valid {@link LocationRequest} instance
@@ -394,6 +386,68 @@ class PlacesLocationManager {
 		locationRequest.setSmallestDisplacement(PlacesMonitorConstants.Location.REQUEST_SMALLEST_DISPLACEMENT);
 		locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 		return locationRequest;
+	}
+
+
+	void setHasMonitoringStarted(final boolean hasMonitoringStarted) {
+		this.hasMonitoringStarted = hasMonitoringStarted;
+		SharedPreferences sharedPreferences = getSharedPreference();
+
+		if (sharedPreferences == null) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"Unable to save monitoring geofences from persistence, sharedPreference is null");
+			return;
+		}
+
+		SharedPreferences.Editor editor = sharedPreferences.edit();
+
+		if (editor == null) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"Unable to save monitoring geofences from persistence, shared preference editor is null");
+			return;
+		}
+
+		editor.putBoolean(PlacesMonitorConstants.SharedPreference.HAS_MONITORING_STARTED_KEY, hasMonitoringStarted);
+		editor.commit();
+	}
+
+
+	/**
+	 * Loads previously persisted data for {@link #hasMonitoringStarted} into memory.
+	 * <p>
+	 * This method is called during the boot time of SDK.
+	 * Loading of persisted data fails if the {@link SharedPreferences} or App's {@link Context} is null.
+	 */
+	void loadHasMonitoringStarted() {
+		SharedPreferences sharedPreferences = getSharedPreference();
+
+		if (sharedPreferences == null) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"Unable to load hasMonitoringStarted from persistence, sharedPreference is null");
+			return;
+		}
+
+		hasMonitoringStarted = sharedPreferences.getBoolean(PlacesMonitorConstants.SharedPreference.HAS_MONITORING_STARTED_KEY,
+							   false);
+		Log.trace(PlacesMonitorConstants.LOG_TAG,
+				  "PlacesLocationManager has loaded " + hasMonitoringStarted +  " for hasMonitoringStarted from persistence");
+	}
+
+	/**
+	 * Getter for applications {@link SharedPreferences}
+	 * <p>
+	 * Returns null if app context is not available
+	 *
+	 * @return a {@code SharedPreferences} instance
+	 */
+	private SharedPreferences getSharedPreference() {
+		Context appContext = App.getAppContext();
+
+		if (appContext == null) {
+			return null;
+		}
+
+		return appContext.getSharedPreferences(PlacesMonitorConstants.SharedPreference.MASTER_KEY, 0);
 	}
 
 }
