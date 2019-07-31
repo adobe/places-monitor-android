@@ -168,10 +168,21 @@ publishing {
 
                 //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
 
-                def dependencyNode = dependenciesNode.appendNode('dependency')
-                dependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
-                dependencyNode.appendNode('artifactId', 'core')
-                dependencyNode.appendNode('version', mavenCoreVersion)
+                def coreDependencyNode = dependenciesNode.appendNode('dependency')
+                coreDependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
+                coreDependencyNode.appendNode('artifactId', 'core')
+                coreDependencyNode.appendNode('version', mavenCoreVersion)
+
+                def placesDependencyNode = dependenciesNode.appendNode('dependency')
+                placesDependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
+                placesDependencyNode.appendNode('artifactId', 'places')
+                placesDependencyNode.appendNode('version', mavenPlacesVersion)
+
+
+                def googleLocationServiceDependencyNode = dependenciesNode.appendNode('dependency')
+                googleLocationServiceDependencyNode.appendNode('groupId', 'com.google.android.gms')
+                googleLocationServiceDependencyNode.appendNode('artifactId', 'play-services-location')
+                googleLocationServiceDependencyNode.appendNode('version', mavenGoogleLocationServiceVersion)
             }
         }
         aarSnapshot(MavenPublication) {
@@ -205,10 +216,22 @@ publishing {
 
                 //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
 
-                def dependencyNode = dependenciesNode.appendNode('dependency')
-                dependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
-                dependencyNode.appendNode('artifactId', 'core')
-                dependencyNode.appendNode('version', mavenCoreVersion + '-SNAPSHOT')
+                def coreDependencyNode = dependenciesNode.appendNode('dependency')
+                coreDependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
+                coreDependencyNode.appendNode('artifactId', 'core')
+                coreDependencyNode.appendNode('version', mavenCoreVersion)
+
+
+                def placesDependencyNode = dependenciesNode.appendNode('dependency')
+                placesDependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
+                placesDependencyNode.appendNode('artifactId', 'places')
+                placesDependencyNode.appendNode('version', mavenPlacesVersion)
+
+
+                def googleLocationServiceDependencyNode = dependenciesNode.appendNode('dependency')
+                googleLocationServiceDependencyNode.appendNode('groupId', 'com.google.android.gms')
+                googleLocationServiceDependencyNode.appendNode('artifactId', 'play-services-location')
+                googleLocationServiceDependencyNode.appendNode('version', mavenGoogleLocationServiceVersion)
             }
         }
     }
