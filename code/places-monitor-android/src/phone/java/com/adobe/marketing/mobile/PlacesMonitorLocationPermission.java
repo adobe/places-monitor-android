@@ -1,21 +1,17 @@
 /*
- * ***********************************************************************
- * ADOBE CONFIDENTIAL
- * ___________________
- *
- * Copyright 2018 Adobe Systems Incorporated
- * All Rights Reserved.
- *
- * NOTICE:  All information contained herein is, and remains
- * the property of Adobe Systems Incorporated and its suppliers,
- * if any.  The intellectual and technical concepts contained
- * herein are proprietary to Adobe Systems Incorporated and its
- * suppliers and are protected by trade secret or copyright law.
- * Dissemination of this information or reproduction of this material
- * is strictly forbidden unless prior written permission is obtained
- * from Adobe Systems Incorporated.
- *************************************************************************
- */
+ Copyright 2019 Adobe. All rights reserved.
+ This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License. You may obtain a copy
+ of the License at http://www.apache.org/licenses/LICENSE-2.0
+ Unless required by applicable law or agreed to in writing, software distributed under
+ the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ OF ANY KIND, either express or implied. See the License for the specific language
+ governing permissions and limitations under the License.
+*/
+
+//
+// PlacesMonitorLocationPermission.java
+//
 
 package com.adobe.marketing.mobile;
 
@@ -25,10 +21,6 @@ package com.adobe.marketing.mobile;
  * Apps that use location services must request location permissions. On a device that runs Android 10 (API level 29) or higher
  * users see the dialog to indicate that your app is requesting a location permission.  Android Q have added the ability for users to control which apps can access their device location when they're not using the app.
  * A new permission "Allow only while using the app" is added.
- *
- *
- * <p>
- *
  */
 public enum PlacesMonitorLocationPermission {
     /**

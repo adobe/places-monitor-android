@@ -27,11 +27,14 @@ final class PlacesMonitorTestConstants {
 	// event names for places monitor request content
 	static final String EVENTNAME_START = "start monitoring";
 	static final String EVENTNAME_STOP = "stop monitoring";
-	static final String EVENTNAME_UPDATE = "update location";
+	static final String EVENTNAME_UPDATE = "update location now";
+	static final String EVENTNAME_SET_LOCATION_PERMISSION = "set location permission";
 	static final int NEARBY_GEOFENCES_COUNT = 20;
 
 	static final String INTERNAL_INTENT_ACTION_LOCATION = "intentactionlocation";
 	static final String INTERNAL_INTENT_ACTION_GEOFENCE = "intentactiongeofence";
+	static final String INTENT_ACTION_PERMISSION_GRANTED = "permissionreceived";
+	static final String INTENT_ACTION_PERMISSION_DENIED = "permissiondenied";
 
 	static final class Location {
 		static final int REQUEST_INTERVAL = 3600;				// 1 hour
@@ -55,6 +58,7 @@ final class PlacesMonitorTestConstants {
 
 		static final String EVENT_DATA_CLEAR	= "clearclientdata";
 		static final String NEAR_BY_PLACES_LIST = "nearbyplaceslist";
+		static final String EVENT_DATA_LOCATION_PERMISSION = "locationpermission";
 		static final String REQUEST_TYPE = "requesttype";
 		static final String REQUEST_TYPE_GET_NEARBY_PLACES = "requestgetnearbyplaces";
 		static final String REQUEST_TYPE_PROCESS_REGION_EVENT = "requestprocessregionevent";
@@ -96,6 +100,8 @@ final class PlacesMonitorTestConstants {
 	static final class SharedPreference {
 		static final String MASTER_KEY = "com.adobe.placesMonitor";
 		static final String USERWITHIN_GEOFENCES_KEY = "adb_userWithinGeofences";
+		static final String HAS_MONITORING_STARTED_KEY = "adb_hasMonitoringStarted";
+		static final String LOCATION_PERMISSION_KEY = "adb_hasMonitoringStarted";
 		private SharedPreference() {
 		}
 	}
