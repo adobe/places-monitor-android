@@ -41,11 +41,21 @@ public class PlacesMonitor {
 	}
 
 	/**
+	 * TODO : document me
+	 */
+	public static void setLocationPermission(final PlacesMonitorLocationPermission placesMonitorLocationPermission) {
+		EventData data = new EventData();
+		String locationPermissionString = placesMonitorLocationPermission == null ? null : placesMonitorLocationPermission.getValue();
+		data.putString(PlacesMonitorConstants.EventDataKeys.EVENT_DATA_LOCATION_PERMISSION, locationPermissionString);
+		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_SET_LOCATION_PERMISSION, data);
+	}
+
+	/**
 	 * Start tracking the device's location and monitoring corresponding nearby POI's
 	 *
 	 */
 	public static void start() {
-		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_START);
+		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_START, new EventData());
 	}
 
 	/**
@@ -68,7 +78,7 @@ public class PlacesMonitor {
 	 * Immediately gets an update for the device's location
 	 */
 	public static void updateLocation() {
-		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_UPDATE);
+		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_UPDATE, new EventData());
 	}
 
 	/**
@@ -80,11 +90,11 @@ public class PlacesMonitor {
 	 *
 	 * @param eventName The name of the {@link Event} being dispatched
 	 */
-	private static void dispatchMonitorEvent(final String eventName) {
+	private static void dispatchMonitorEvent(final String eventName, final EventData eventData) {
 
 		final Event monitorEvent = new Event.Builder(eventName,
 				PlacesMonitorConstants.EventType.MONITOR,
-				PlacesMonitorConstants.EventSource.REQUEST_CONTENT).build();
+				PlacesMonitorConstants.EventSource.REQUEST_CONTENT).setData(eventData).build();
 
 
 		ExtensionErrorCallback<ExtensionError> extensionErrorCallback = new ExtensionErrorCallback<ExtensionError>() {
