@@ -233,7 +233,12 @@ class PlacesLocationManager {
 
 
 	/**
-	 *  TODO: Docme
+	 * Handler for setting the location permission value to the location manager.
+	 * <p>
+	 *  This method saves the location permission value to persistence.
+	 *  If the monitoring has already been started, calling this method will then attempt to prompt the upgraded permission level to the user.
+	 *
+	 * @param placesMonitorLocationPermission the location permission level
 	 */
 	void setLocationPermission(PlacesMonitorLocationPermission placesMonitorLocationPermission) {
 		saveRequestedLocationPermission(placesMonitorLocationPermission);
@@ -419,7 +424,11 @@ class PlacesLocationManager {
 
 
 	/**
-	 * // TODO : DocMe
+	 * Persists the {@link #hasMonitoringStarted} in-memory variable to persistence
+	 * <p>
+	 * Saving of data will fail if the {@link SharedPreferences} or App's {@link Context} is null.
+	 *
+	 * @param hasMonitoringStarted value to be persisted
 	 */
 	void setHasMonitoringStarted(final boolean hasMonitoringStarted) {
 		this.hasMonitoringStarted = hasMonitoringStarted;
@@ -445,7 +454,11 @@ class PlacesLocationManager {
 
 
 	/**
-	 * // TODO : DocMe
+	 * Persists the {@link #requestedLocationPermission} in-memory variable to persistence
+	 * <p>
+	 * Saving of data will fail if the {@link SharedPreferences} or App's {@link Context} is null.
+	 *
+	 * @param locationPermission value to be persisted
 	 */
 	void saveRequestedLocationPermission(final PlacesMonitorLocationPermission locationPermission) {
 		this.requestedLocationPermission = locationPermission;

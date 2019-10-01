@@ -17,14 +17,23 @@ package com.adobe.marketing.mobile;
 
 /**
  * Represents the possible location permission settings for Android.
- *<p>
+ * <p>
  * Apps that use location services must request location permissions. On a device that runs Android 10 (API level 29) or higher
- * users see the dialog to indicate that your app is requesting a location permission.  Android Q have added the ability for users to control which apps can access their device location when they're not using the app.
+ * users see the dialog to indicate that your app is requesting a location permission.
+ * <p>
+ * Before Android 10 location permission was a binary choice, either allow or deny access to their device location. If the user has provided the access location,
+ * the app could get location information both in foreground as well as background.
+ * <p>
+ * Android 10 have added the ability for users to control which apps can access their device location when they're not using the app.
  * A new permission "Allow only while using the app" is added.
  */
 public enum PlacesMonitorLocationPermission {
     /**
      * Permission for Places Monitor to access location while using application.
+     * An app is considered to be in use when the user is looking at the app on their device screen (i.e) an activity is running in the foreground.
+     * <p>
+     * Important:  Geofences will not get registered with the Operating system if the user has provided "While using the app" permission.
+     * "Allow all the time" permission is mandatory for registering and getting the entry/exit triggers on the geofence from the OS.
      */
     WHILE_USING_APP("whileusingapp"),
 
