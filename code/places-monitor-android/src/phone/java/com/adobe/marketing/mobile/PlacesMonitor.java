@@ -55,12 +55,13 @@ public class PlacesMonitor {
 	 *     Make sure ACCESS_FINE_LOCATION permission is set in the App's Manifest file.
 	 *     Important : Geofences will not be registered when the user has just provided the "While using app" permission to device location.
 	 *     Hence, entry and exit events happening in the background will not be tracked by Places Monitor Extension
-	 *     </>
+	 *
 	 *     <li>{@link PlacesMonitorLocationPermission#ALLOW_ALL_TIME}:
 	 *     Setting this value will prompt user to access device location even when the application is backgrounded.
 	 *     Make sure ACCESS_BACKGROUND_LOCATION permission is set in the App's Manifest file.
-	 *     </>
+	 *
 	 * </ul>
+	 * @param placesMonitorLocationPermission the location permission value
 	 */
 	public static void setLocationPermission(final PlacesMonitorLocationPermission placesMonitorLocationPermission) {
 		EventData data = new EventData();

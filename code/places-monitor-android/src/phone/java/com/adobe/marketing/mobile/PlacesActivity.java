@@ -102,6 +102,7 @@ public class PlacesActivity extends Activity {
 	 *   <li> Does not invoke the permission dialog if the app context is null</li>
 	 * </ol>
 	 *
+	 * @param locationPermission The location permission setting that the user will be prompted for, could be {@link PlacesMonitorLocationPermission#WHILE_USING_APP} or {@link PlacesMonitorLocationPermission#ALLOW_ALL_TIME}
 	 */
 	public static void askPermission(PlacesMonitorLocationPermission locationPermission) {
 		// for version below API 23, need not ask permission
