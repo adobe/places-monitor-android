@@ -37,7 +37,7 @@ public class PlacesActivity extends Activity {
 	private static final String INTENT_PERMISSION_KEY = "intent permission key";
 
 	/**
-	 * Checks if the permission to access fine location during app in use is granted.
+	 * Checks if permission to access fine location while app is in use has been granted.
 	 * <ol>
 	 *   <li> Returns true for the devices running on versions below Android M, Since Runtime permission not required.</li>
 	 *   <li> Returns true if the permission for using fine location is already granted. </li>
@@ -66,7 +66,7 @@ public class PlacesActivity extends Activity {
 	}
 
 	/**
-	 * Checks if the permission to access fine location in background is granted.
+	 * Checks if permission to access fine location while the app is in background has been granted.
 	 * <ol>
 	 *   <li> Returns true for the devices running on versions below Android M, Since Runtime permission not required.</li>
 	 *   <li> Returns true if the permission for using fine location in background is already granted. </li>
@@ -104,7 +104,7 @@ public class PlacesActivity extends Activity {
 	 *
 	 * @param locationPermission The location permission setting that the user will be prompted for, could be {@link PlacesMonitorLocationPermission#WHILE_USING_APP} or {@link PlacesMonitorLocationPermission#ALLOW_ALL_TIME}
 	 */
-	public static void askPermission(PlacesMonitorLocationPermission locationPermission) {
+	public static void askPermission(final PlacesMonitorLocationPermission locationPermission) {
 		// for version below API 23, need not ask permission
 		if (!isRuntimePermissionRequired()) {
 			return;

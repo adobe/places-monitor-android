@@ -83,7 +83,7 @@ class PlacesLocationManager {
 			}
 		} else if (requestedLocationPermission == PlacesMonitorLocationPermission.ALLOW_ALL_TIME) {
 			if (!PlacesActivity.isBackgroundPermissionGranted()) {
-				Log.debug(PlacesMonitorConstants.LOG_TAG, "Requesting while in use location permission");
+				Log.debug(PlacesMonitorConstants.LOG_TAG, "Requesting allow all time location permission");
 				PlacesActivity.askPermission(requestedLocationPermission);
 				return;
 			}
@@ -174,7 +174,8 @@ class PlacesLocationManager {
 
 					case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE: {
 						Log.error(PlacesMonitorConstants.LOG_TAG,
-								"Failed to start location updates, status code : SETTINGS_CHANGE_UNAVAILABLE");
+								"Failed to start location updates, status code : SETTINGS_CHANGE_UNAVAILABLE. " +
+                                        "Location settings can't be changed to meet the requirements, no dialog pops up");
 						break;
 					}
 

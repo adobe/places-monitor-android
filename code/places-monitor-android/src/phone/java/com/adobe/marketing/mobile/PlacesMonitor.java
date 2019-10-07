@@ -41,25 +41,30 @@ public class PlacesMonitor {
 	}
 
 	/**
-	 * Use this API to set the type of location permission request, which user will be prompted during Places Monitor start.
+	 * This API sets the type of location permission request, for which user will be prompted for PlacesMonitor.start().
 	 * <p>
-	 * This API is applicable only Android 10+ devices. Call this method before the Places Monitor start, to set the appropriate authorization prompt to be shown to the user.
-	 * Calling this method while actively monitoring will upgrade the location permission level to the requested permission value.
-	 * This method has no effect if the requested authorization level is either already provided or denied by the application user.
+     * Tip: This API is effective only for devices that are on Android 10 and above.
+     *
+     * To set the appropriate authorization prompt to be shown to the user, call this API before the PlacesMonitor.start()
+	 * Calling this method, while actively monitoring will upgrade the location permission level to the requested permission value.
+     * If the requested authorization level is either already provided or denied by the application user,
+     * or if you attempt to downgrade permission from ALLOW_ALL_TIME to WHILE_USING_APP, this method has no effect.
+     *
 	 * {@link PlacesMonitorLocationPermission#ALLOW_ALL_TIME} is the default location permission value.
 	 *
-	 * Following are the two different values of location permission that can be set by the API
+	 * Location permission can be set to one of the following values:
 	 * <ul>
 	 *     <li>{@link PlacesMonitorLocationPermission#WHILE_USING_APP}:
-	 *     Setting this value will prompt user to access device location only while using the application.
+	 *     This value prompts the user to access device location only while using the application.
+     *     An app is considered to be in use when the user is looking at the app on their device screen, for example an activity is running in the foreground.
 	 *     Make sure ACCESS_FINE_LOCATION permission is set in the App's Manifest file.
-	 *     Important : Geofences will not be registered when the user has just provided the "While using app" permission to device location.
-	 *     Hence, entry and exit events happening in the background will not be tracked by Places Monitor Extension
+	 *
+     *     Important: Geofences will not be registered with the operating system if the app user has granted the {@link PlacesMonitorLocationPermission#WHILE_USING_APP} permission.
+     *     As a result, the Places Monitor extension will not trigger entry/exit events on regions that are happening in the background.
 	 *
 	 *     <li>{@link PlacesMonitorLocationPermission#ALLOW_ALL_TIME}:
-	 *     Setting this value will prompt user to access device location even when the application is backgrounded.
-	 *     Make sure ACCESS_BACKGROUND_LOCATION permission is set in the App's Manifest file.
-	 *
+	 *     This value prompts the user to access device location even when the application is backgrounded.
+	 *     Make sure ACCESS_BACKGROUND_LOCATION and ACCESS_FINE_LOCATION permission is set in the App's Manifest file.
 	 * </ul>
 	 * @param placesMonitorLocationPermission the location permission value
 	 */

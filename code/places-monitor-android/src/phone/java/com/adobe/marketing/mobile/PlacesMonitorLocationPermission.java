@@ -32,8 +32,8 @@ public enum PlacesMonitorLocationPermission {
      * Permission for Places Monitor to access location while using application.
      * An app is considered to be in use when the user is looking at the app on their device screen (i.e) an activity is running in the foreground.
      * <p>
-     * Important:  Geofences will not get registered with the Operating system if the user has provided "While using the app" permission.
-     * "Allow all the time" permission is mandatory for registering and getting the entry/exit triggers on the geofence from the OS.
+     * Important:  Geofences will not get registered with the Operating system if the app user has granted "While using app" permission.
+     * "Allow all time" permission is mandatory for registering and getting the entry/exit triggers on the geofence from the OS.
      */
     WHILE_USING_APP("whileusingapp"),
 
