@@ -101,7 +101,7 @@ final class PlacesMonitorTestConstants {
 		static final String MASTER_KEY = "com.adobe.placesMonitor";
 		static final String USERWITHIN_GEOFENCES_KEY = "adb_userWithinGeofences";
 		static final String HAS_MONITORING_STARTED_KEY = "adb_hasMonitoringStarted";
-		static final String LOCATION_PERMISSION_KEY = "adb_hasMonitoringStarted";
+		static final String LOCATION_PERMISSION_KEY = "adb_locationPermission";
 		private SharedPreference() {
 		}
 	}
