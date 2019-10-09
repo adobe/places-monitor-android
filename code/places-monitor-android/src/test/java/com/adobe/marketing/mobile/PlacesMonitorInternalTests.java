@@ -75,6 +75,15 @@ public class PlacesMonitorInternalTests {
 			PlacesMonitorTestConstants.EventType.MONITOR,
 			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).build();
 
+	private Event setLocationPermissionEvent = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_SET_LOCATION_PERMISSION,
+			PlacesMonitorTestConstants.EventType.MONITOR,
+			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(new EventData(new HashMap<String,Variant>()
+	{{ put(PlacesMonitorConstants.EventDataKeys.EVENT_DATA_LOCATION_PERMISSION, Variant.fromString(PlacesMonitorLocationPermission.WHILE_USING_APP.getValue())); }})).build();
+
+	private Event setLocationPermissionEventNoEventData = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_SET_LOCATION_PERMISSION,
+			PlacesMonitorTestConstants.EventType.MONITOR,
+			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).build();
+
 	private Event invalidMonitorRequestEvent = new Event.Builder("Invalid API",
 			PlacesMonitorTestConstants.EventType.MONITOR,
 			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).build();
@@ -137,7 +146,7 @@ public class PlacesMonitorInternalTests {
 		assertNotNull("The register listener error callback should not be null", callbackCaptor2.getValue());
 
 		// verify that the internal receivers are registered
-		verify(localBroadcastManager, times(2)).registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class));
+		verify(localBroadcastManager, times(4)).registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class));
 
 		// calling the callback should not crash
 		callbackCaptor1.getValue().error(ExtensionError.UNEXPECTED_ERROR);
@@ -296,6 +305,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).updateLocation();
 		verify(geofenceManager, times(1)).stopMonitoringFences(true);
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
+		verify(locationManager, times(0)).setLocationPermission(any(PlacesMonitorLocationPermission.class));
 
 		// verify places call
 		verifyStatic(Places.class, Mockito.times(1));
@@ -324,6 +334,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).updateLocation();
 		verify(geofenceManager, times(1)).stopMonitoringFences(false);
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
+		verify(locationManager, times(0)).setLocationPermission(any(PlacesMonitorLocationPermission.class));
 
 		// verify places call
 		verifyStatic(Places.class, Mockito.times(0));
@@ -352,6 +363,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).updateLocation();
 		verify(geofenceManager, times(1)).stopMonitoringFences(false);
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
+		verify(locationManager, times(0)).setLocationPermission(any(PlacesMonitorLocationPermission.class));
 
 		// verify places call
 		verifyStatic(Places.class, Mockito.times(0));
@@ -379,6 +391,7 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(1)).updateLocation();
 		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
+		verify(locationManager, times(0)).setLocationPermission(any(PlacesMonitorLocationPermission.class));
 	}
 
 	@Test
@@ -387,6 +400,7 @@ public class PlacesMonitorInternalTests {
 		initWithContext(context);
 
 		// setup configuration
+		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
 		Map<String, Object> configData = new HashMap<>();
 		when(extensionApi.getSharedEventState(anyString(), any(Event.class),
 											  any(ExtensionErrorCallback.class))).thenReturn(configData);
@@ -401,6 +415,56 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(0)).updateLocation();
 		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
+		verify(locationManager, times(0)).setLocationPermission(any(PlacesMonitorLocationPermission.class));
+	}
+
+	@Test
+	public void test_processEvents_when_SetLocationPermissionEvent() {
+		// setup
+		initWithContext(context);
+
+		// setup configuration
+		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
+		Map<String, Object> configData = new HashMap<>();
+		when(extensionApi.getSharedEventState(anyString(), any(Event.class),
+				any(ExtensionErrorCallback.class))).thenReturn(configData);
+
+		// test
+		monitorInternal.queueEvent(setLocationPermissionEvent);
+		monitorInternal.processEvents();
+
+		// verify
+		verify(locationManager, times(0)).startMonitoring();
+		verify(locationManager, times(0)).stopMonitoring();
+		verify(locationManager, times(0)).updateLocation();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
+		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
+		verify(locationManager, times(1)).setLocationPermission(PlacesMonitorLocationPermission.WHILE_USING_APP);
+	}
+
+
+	@Test
+	public void test_processEvents_when_SetLocationPermissionEventWithNoEventData() {
+		// setup
+		initWithContext(context);
+
+		// setup configuration
+		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
+		Map<String, Object> configData = new HashMap<>();
+		when(extensionApi.getSharedEventState(anyString(), any(Event.class),
+				any(ExtensionErrorCallback.class))).thenReturn(configData);
+
+		// test
+		monitorInternal.queueEvent(setLocationPermissionEventNoEventData);
+		monitorInternal.processEvents();
+
+		// verify
+		verify(locationManager, times(0)).startMonitoring();
+		verify(locationManager, times(0)).stopMonitoring();
+		verify(locationManager, times(0)).updateLocation();
+		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
+		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
+		verify(locationManager, times(0)).setLocationPermission(any(PlacesMonitorLocationPermission.class));
 	}
 
 	@Test

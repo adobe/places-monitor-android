@@ -22,16 +22,20 @@ final class PlacesMonitorConstants {
 	static final String LOG_TAG = PlacesMonitor.class.getSimpleName();
 	static final String EXTENSION_NAME = "com.adobe.placesMonitor";
 
-	static final String EXTENSION_VERSION = "1.0.2";
+	static final String EXTENSION_VERSION = "2.1.0";
 
 	// event names for places monitor request content
 	static final String EVENTNAME_START = "start monitoring";
 	static final String EVENTNAME_STOP = "stop monitoring";
-	static final String EVENTNAME_UPDATE = "update location";
+	static final String EVENTNAME_UPDATE = "update location now";
+	static final String EVENTNAME_SET_LOCATION_PERMISSION = "set location permission";
+
 	static final int NEARBY_GEOFENCES_COUNT = 20;
 
 	static final String INTERNAL_INTENT_ACTION_LOCATION = "intentactionlocation";
 	static final String INTERNAL_INTENT_ACTION_GEOFENCE = "intentactiongeofence";
+	static final String INTENT_ACTION_PERMISSION_GRANTED = "permissionreceived";
+	static final String INTENT_ACTION_PERMISSION_DENIED = "permissiondenied";
 
 	static final class Location {
 		static final int REQUEST_INTERVAL = 3600;				// 1 hour
@@ -53,6 +57,7 @@ final class PlacesMonitorConstants {
 
 	static final class EventDataKeys {
 		static final String EVENT_DATA_CLEAR	= "clearclientdata";
+		static final String EVENT_DATA_LOCATION_PERMISSION = "locationpermission";
 		private EventDataKeys() {
 		}
 	}
@@ -77,6 +82,7 @@ final class PlacesMonitorConstants {
 		static final String MASTER_KEY = "com.adobe.placesMonitor";
 		static final String USERWITHIN_GEOFENCES_KEY = "adb_userWithinGeofences";
 		static final String HAS_MONITORING_STARTED_KEY = "adb_hasMonitoringStarted";
+		static final String LOCATION_PERMISSION_KEY = "adb_locationPermission";
 		private SharedPreference() {
 		}
 	}

@@ -23,27 +23,32 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.WindowManager;
-
 import com.google.android.gms.location.LocationSettingsStates;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.google.android.gms.common.ConnectionResult.RESOLUTION_REQUIRED;
 
 public class PlacesActivity extends Activity {
 
 	private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
+	private static final String BACKGROUND_LOCATION = Manifest.permission.ACCESS_BACKGROUND_LOCATION;
+	private static final String INTENT_PERMISSION_KEY = "intent permission key";
 
 	/**
-	 * Checks if the permission to access fine location is granted.
+	 * Checks if permission to access fine location while app is in use has been granted.
 	 * <ol>
 	 *   <li> Returns true for the devices running on versions below Android M, Since Runtime permission not required.</li>
 	 *   <li> Returns true if the permission for using fine location is already granted. </li>
 	 *   <li> Returns false if the permission for using fine location is not granted or if the app context is null.</li>
 	 * </ol>
 	 *
-	 * @return Returns {@code boolean} representing the permission to monitor fine location
+	 * @return Returns {@code boolean} representing the permission to monitor fine location when app is in use
 	 */
-	public static boolean isFineLocationPermissionGranted() {
+	public static boolean isWhileInUsePermissionGranted() {
 		// for version below API 23, need not check permissions
 		if (!isRuntimePermissionRequired()) {
 			return true;
@@ -62,6 +67,35 @@ public class PlacesActivity extends Activity {
 		return permissionState == PackageManager.PERMISSION_GRANTED;
 	}
 
+	/**
+	 * Checks if permission to access fine location while the app is in background has been granted.
+	 * <ol>
+	 *   <li> Returns true for the devices running on versions below Android M, Since Runtime permission not required.</li>
+	 *   <li> Returns true if the permission for using fine location in background is already granted. </li>
+	 *   <li> Returns false if the permission for using fine location in background is not granted or if the app context is null.</li>
+	 * </ol>
+	 *
+	 * @return Returns {@code boolean} representing the permission to monitor fine location in background
+	 */
+	public static boolean isBackgroundPermissionGranted() {
+		// for version below API 23, need not check permissions
+		if (!isRuntimePermissionRequired()) {
+			return true;
+		}
+
+		// get hold of the app context. bail out if null
+		Context context = App.getAppContext();
+
+		if (context == null) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG, "Unable to check location permission, App context is not available");
+			return false;
+		}
+
+		// verify the permission for fine location
+		int permissionState = ActivityCompat.checkSelfPermission(context, BACKGROUND_LOCATION);
+		return permissionState == PackageManager.PERMISSION_GRANTED;
+	}
+
 
 	/**
 	 * Request permission to access fine location from the user.
@@ -70,8 +104,9 @@ public class PlacesActivity extends Activity {
 	 *   <li> Does not invoke the permission dialog if the app context is null</li>
 	 * </ol>
 	 *
+	 * @param locationPermission The location permission setting that the user will be prompted for, could be {@link PlacesMonitorLocationPermission#WHILE_USING_APP} or {@link PlacesMonitorLocationPermission#ALWAYS_ALLOW}
 	 */
-	public static void askPermission() {
+	public static void askPermission(final PlacesMonitorLocationPermission locationPermission) {
 		// for version below API 23, need not ask permission
 		if (!isRuntimePermissionRequired()) {
 			return;
@@ -88,6 +123,7 @@ public class PlacesActivity extends Activity {
 		// start a new task activity
 		Intent intent = new Intent(context, PlacesActivity.class);
 		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		intent.putExtra(INTENT_PERMISSION_KEY, locationPermission);
 		context.startActivity(intent);
 	}
 
@@ -104,19 +140,21 @@ public class PlacesActivity extends Activity {
 		// make the activity not interactable
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
 
+		if(getIntent() == null || getIntent().getExtras() == null){
+			Log.debug(PlacesMonitorConstants.LOG_TAG, "Cannot request permission. PlacesActivity Intent is null");
+		}
+		PlacesMonitorLocationPermission locationPermission = (PlacesMonitorLocationPermission) getIntent().getExtras().get(INTENT_PERMISSION_KEY);
 
 		boolean shouldProvideRationale =
 			ActivityCompat.shouldShowRequestPermissionRationale(this,
 					FINE_LOCATION);
 
 		if (shouldProvideRationale) {
-			onShowRationale();
+			onShowRationale(locationPermission);
 		} else {
-			ActivityCompat.requestPermissions(this,
-											  new String[] {FINE_LOCATION},
+			ActivityCompat.requestPermissions(this, getPermissionArray(locationPermission),
 											  PlacesMonitorConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE);
 		}
-
 	}
 
 	/**
@@ -185,6 +223,15 @@ public class PlacesActivity extends Activity {
 		return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M);
 	}
 
+	private static String[] getPermissionArray(PlacesMonitorLocationPermission placesMonitorLocationPermission) {
+		List<String> permissionList = new ArrayList<String>();
+		permissionList.add(FINE_LOCATION);
+		if (PlacesMonitorLocationPermission.ALWAYS_ALLOW == placesMonitorLocationPermission) {
+			permissionList.add(BACKGROUND_LOCATION);
+		}
+		return permissionList.toArray(new String[permissionList.size()]);
+	}
+
 	// ========================================================================================
 	// Permission Result Handlers
 	// ========================================================================================
@@ -193,7 +240,10 @@ public class PlacesActivity extends Activity {
 	 * Permission handler method called when user has given permission to access fine location.
 	 */
 	private void onPermissionGranted() {
-		PlacesMonitor.start();
+	    Intent intent = new Intent();
+	    intent.setAction(PlacesMonitorConstants.INTENT_ACTION_PERMISSION_GRANTED);
+		LocalBroadcastManager manager = LocalBroadcastManager.getInstance(getApplicationContext());
+		manager.sendBroadcast(intent);
 		finish();
 	}
 
@@ -201,7 +251,9 @@ public class PlacesActivity extends Activity {
 	 * Permission handler method called when user has denied permission to access fine location.
 	 */
 	private void onPermissionDenied() {
-		PlacesMonitor.stop(true);
+        Intent intent = new Intent(PlacesMonitorConstants.INTENT_ACTION_PERMISSION_DENIED);
+        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(getApplicationContext());
+        manager.sendBroadcast(intent);
 		finish();
 	}
 
@@ -220,11 +272,11 @@ public class PlacesActivity extends Activity {
 	 * This method is called when {@link ActivityCompat#shouldShowRequestPermissionRationale(Activity, String)} returns "true",
 	 * which mean when the application was launched earlier and user had "denied" the permission in last launch WITHOUT checking "never show again".
 	 */
-	private void onShowRationale() {
+	private void onShowRationale(PlacesMonitorLocationPermission locationPermission) {
 		Log.debug(PlacesMonitorConstants.LOG_TAG, "Permission not granted on the first attempt. PlacesMonitor extension " +
 				  "doesn't support showing rationale. Requesting permission again");
 		ActivityCompat.requestPermissions(this,
-										  new String[] {FINE_LOCATION},
+				  						  getPermissionArray(locationPermission),
 										  PlacesMonitorConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE);
 	}
 
