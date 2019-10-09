@@ -259,7 +259,7 @@ public class PlacesActivityTests {
 	// onCreate - OverriddenMethod
 	// ========================================================================================
 	@Test
-	public void test_onCreate_willRequestPermission_AllowAllTime() {
+	public void test_onCreate_willRequestPermission_AlwaysAllow() {
 		// setup
 		Mockito.when(mockExtra.get(INTENT_PERMISSION_KEY)).thenReturn(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 

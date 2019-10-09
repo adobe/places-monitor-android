@@ -340,7 +340,7 @@ public class PlacesLocationManagerTests {
 	}
 
     @Test
-    public void test_startMonitoring_when_AllowAllTime_Requested_WhileInUsePermissionGranted() {
+    public void test_startMonitoring_when_AlwaysAllow_Requested_WhileInUsePermissionGranted() {
         // setup
         Mockito.when(PlacesActivity.isWhileInUsePermissionGranted()).thenReturn(true);
 		Mockito.when(PlacesActivity.isBackgroundPermissionGranted()).thenReturn(false);
@@ -358,7 +358,7 @@ public class PlacesLocationManagerTests {
     }
 
 	@Test
-	public void test_startMonitoring_when_AllowAllTimeRequested_BackgroundPermissionGranted() {
+	public void test_startMonitoring_when_AlwaysAllow_Requested_BackgroundPermissionGranted() {
 		// setup
 		Mockito.when(PlacesActivity.isWhileInUsePermissionGranted()).thenReturn(true);
 		Mockito.when(PlacesActivity.isBackgroundPermissionGranted()).thenReturn(true);
