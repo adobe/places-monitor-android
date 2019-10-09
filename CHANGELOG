@@ -1,2 +1,17 @@
-0.0.1 (XX Apr, 2019)
-- Initial release of Places Monitor for Android
+### 2.0.1 (9 Oct, 2019)
+- Added a new API `setLocationPermission` to set the type of location permission request for which the user will be prompted.
+- Support for Android 10.
+
+### 2.0.0 (6 Aug, 2019)
+- Monitoring status is now persisted between launches.
+- Handling of the callback resulting from a location permission request no longer requires you to extend PlacesActivity.
+- Changed an existing API, allowing developers to clear all Places data from the device
+    - Old API: public static void stop();
+    - New API: public static void stop(final boolean clearData);
+- Updated the use of the Places getNearbyPointsOfInterest API to handle error scenarios more effectively.
+
+### 1.0.1 (30 May, 2019)
+- Fixed an issue that prevented an entry event for POIs when the Places monitoring is started.
+
+### 1.0.0 (17 May, 2019)
+- Initial release of Places Monitor for Android.

@@ -41,7 +41,7 @@ public class PlacesMonitor {
 	}
 
 	/**
-	 * This API sets the type of location permission request, for which user will be prompted for PlacesMonitor.start().
+	 * This API sets the type of location permission request for which user will be prompted for PlacesMonitor.start().
 	 * <p>
      * Tip: This API is effective only for devices that are on Android 10 and above.
      *
