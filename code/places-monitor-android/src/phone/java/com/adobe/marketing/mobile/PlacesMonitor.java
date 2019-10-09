@@ -41,11 +41,46 @@ public class PlacesMonitor {
 	}
 
 	/**
+	 * This API sets the type of location permission request, for which user will be prompted for PlacesMonitor.start().
+	 * <p>
+     * Tip: This API is effective only for devices that are on Android 10 and above.
+     *
+     * To set the appropriate authorization prompt to be shown to the user, call this API before the PlacesMonitor.start()
+	 * Calling this method, while actively monitoring will upgrade the location permission level to the requested permission value.
+     * If the requested authorization level is either already provided or denied by the application user,
+     * or if you attempt to downgrade permission from ALWAYS_ALLOW to WHILE_USING_APP, this method has no effect.
+     *
+	 * {@link PlacesMonitorLocationPermission#ALWAYS_ALLOW} is the default location permission value.
+	 *
+	 * Location permission can be set to one of the following values:
+	 * <ul>
+	 *     <li>{@link PlacesMonitorLocationPermission#WHILE_USING_APP}:
+	 *     This value prompts the user to access device location only while using the application.
+     *     An app is considered to be in use when the user is looking at the app on their device screen, for example an activity is running in the foreground.
+	 *     Make sure ACCESS_FINE_LOCATION permission is set in the App's Manifest file.
+	 *
+     *     Important: Geofences will not be registered with the operating system if the app user has granted the {@link PlacesMonitorLocationPermission#WHILE_USING_APP} permission.
+     *     As a result, the Places Monitor extension will not trigger entry/exit events on regions that are happening in the background.
+	 *
+	 *     <li>{@link PlacesMonitorLocationPermission#ALWAYS_ALLOW}:
+	 *     This value prompts the user to access device location even when the application is backgrounded.
+	 *     Make sure ACCESS_BACKGROUND_LOCATION and ACCESS_FINE_LOCATION permission is set in the App's Manifest file.
+	 * </ul>
+	 * @param placesMonitorLocationPermission the location permission value
+	 */
+	public static void setLocationPermission(final PlacesMonitorLocationPermission placesMonitorLocationPermission) {
+		EventData data = new EventData();
+		String locationPermissionString = placesMonitorLocationPermission == null ? null : placesMonitorLocationPermission.getValue();
+		data.putString(PlacesMonitorConstants.EventDataKeys.EVENT_DATA_LOCATION_PERMISSION, locationPermissionString);
+		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_SET_LOCATION_PERMISSION, data);
+	}
+
+	/**
 	 * Start tracking the device's location and monitoring corresponding nearby POI's
 	 *
 	 */
 	public static void start() {
-		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_START);
+		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_START, new EventData());
 	}
 
 	/**
@@ -68,7 +103,7 @@ public class PlacesMonitor {
 	 * Immediately gets an update for the device's location
 	 */
 	public static void updateLocation() {
-		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_UPDATE);
+		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_UPDATE, new EventData());
 	}
 
 	/**
@@ -80,11 +115,11 @@ public class PlacesMonitor {
 	 *
 	 * @param eventName The name of the {@link Event} being dispatched
 	 */
-	private static void dispatchMonitorEvent(final String eventName) {
+	private static void dispatchMonitorEvent(final String eventName, final EventData eventData) {
 
 		final Event monitorEvent = new Event.Builder(eventName,
 				PlacesMonitorConstants.EventType.MONITOR,
-				PlacesMonitorConstants.EventSource.REQUEST_CONTENT).build();
+				PlacesMonitorConstants.EventSource.REQUEST_CONTENT).setData(eventData).build();
 
 
 		ExtensionErrorCallback<ExtensionError> extensionErrorCallback = new ExtensionErrorCallback<ExtensionError>() {

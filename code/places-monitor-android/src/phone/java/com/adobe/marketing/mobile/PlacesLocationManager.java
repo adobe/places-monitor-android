@@ -52,13 +52,15 @@ class PlacesLocationManager {
 	private PendingIntent locationPendingIntent;
 	private boolean hasMonitoringStarted;
 	private PlacesMonitorInternal placesMonitorInternal;
+	private PlacesMonitorLocationPermission requestedLocationPermission;
+
 
 	/**
 	 * Constructor.
 	 */
 	PlacesLocationManager(PlacesMonitorInternal placesMonitorInternal) {
 		this.placesMonitorInternal = placesMonitorInternal;
-		loadHasMonitoringStarted();
+		loadPersistedData();
 	}
 
 	/**
@@ -72,28 +74,42 @@ class PlacesLocationManager {
 	 *  No action is taken if permission to access the fine location is denied by user.
 	 */
 	void startMonitoring() {
+		if (requestedLocationPermission == PlacesMonitorLocationPermission.WHILE_USING_APP) {
+			if (!PlacesActivity.isWhileInUsePermissionGranted()) {
+				Log.debug(PlacesMonitorConstants.LOG_TAG, "Requesting while in use location permission");
+				PlacesActivity.askPermission(requestedLocationPermission);
+				return;
+			}
+		} else if (requestedLocationPermission == PlacesMonitorLocationPermission.ALWAYS_ALLOW) {
+			if (!PlacesActivity.isBackgroundPermissionGranted()) {
+				Log.debug(PlacesMonitorConstants.LOG_TAG, "Requesting allow always location permission");
+				PlacesActivity.askPermission(requestedLocationPermission);
+				return;
+			}
+		}
+
+		beginLocationTracking();
+	}
+
+
+	void beginLocationTracking() {
+
 		Context context = App.getAppContext();
 
 		if (context == null) {
 			Log.debug(PlacesMonitorConstants.LOG_TAG,
-					  "Unable to start monitoring places, App context is null");
-			return;
-		}
-
-		if (!PlacesActivity.isFineLocationPermissionGranted()) {
-			Log.debug(PlacesMonitorConstants.LOG_TAG, "Requesting permission to monitor fine location");
-			PlacesActivity.askPermission();
+					"Unable to start monitoring places, App context is null");
 			return;
 		}
 
 		Log.debug(PlacesMonitorConstants.LOG_TAG,
-				  "Location permission is already granted. Starting to monitor location updates");
+				"Location permission is granted. Starting to monitor location updates");
+
 
 		// Begin by checking if the device has the necessary location settings.
-
 		final LocationRequest locationRequest = getLocationRequest();
 		LocationSettingsRequest settingsRequest = new LocationSettingsRequest.Builder()
-		.addLocationRequest(locationRequest).build();
+				.addLocationRequest(locationRequest).build();
 		SettingsClient settingsClient = LocationServices.getSettingsClient(context);
 		Task<LocationSettingsResponse> task = settingsClient.checkLocationSettings(settingsRequest);
 		task.addOnSuccessListener(new OnSuccessListener<LocationSettingsResponse>() {
@@ -104,7 +120,7 @@ class PlacesLocationManager {
 
 				if (fusedLocationProviderClient == null) {
 					Log.warning(PlacesMonitorConstants.LOG_TAG,
-								"Unable to start monitoring location, fusedLocationProviderClient instance is null");
+							"Unable to start monitoring location, fusedLocationProviderClient instance is null");
 					return;
 				}
 
@@ -112,7 +128,7 @@ class PlacesLocationManager {
 
 				if (locationIntent == null) {
 					Log.warning(PlacesMonitorConstants.LOG_TAG,
-								"Unable to start monitoring location, Places Location Broadcast Receiver cannot be initialized");
+							"Unable to start monitoring location, Places Location Broadcast Receiver cannot be initialized");
 					return;
 				}
 
@@ -133,7 +149,7 @@ class PlacesLocationManager {
 				switch (statusCode) {
 					case LocationSettingsStatusCodes.RESOLUTION_REQUIRED: {
 						Log.debug(PlacesMonitorConstants.LOG_TAG,
-								  "Failed to start location updates, status code : RESOLUTION_REQUIRED.  Attempting to get permission.");
+								"Failed to start location updates, status code : RESOLUTION_REQUIRED.  Attempting to get permission.");
 
 						// Location settings are not satisfied. But could be fixed by showing the
 						// user a dialog.
@@ -157,7 +173,8 @@ class PlacesLocationManager {
 
 					case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE: {
 						Log.error(PlacesMonitorConstants.LOG_TAG,
-								  "Failed to start location updates, status code : SETTINGS_CHANGE_UNAVAILABLE");
+								"Failed to start location updates, status code : SETTINGS_CHANGE_UNAVAILABLE. " +
+                                        "Location settings can't be changed to meet the requirements, no dialog pops up");
 						break;
 					}
 
@@ -212,6 +229,23 @@ class PlacesLocationManager {
 				placesMonitorInternal.getPOIsForLocation(location);
 			}
 		});
+	}
+
+
+	/**
+	 * Handler for setting the location permission value to the location manager.
+	 * <p>
+	 *  This method saves the location permission value to persistence.
+	 *  If the monitoring has already been started, calling this method will then attempt to prompt the upgraded permission level to the user.
+	 *
+	 * @param placesMonitorLocationPermission the location permission level
+	 */
+	void setLocationPermission(PlacesMonitorLocationPermission placesMonitorLocationPermission) {
+		saveRequestedLocationPermission(placesMonitorLocationPermission);
+
+		if (hasMonitoringStarted) {
+			startMonitoring();
+		}
 	}
 
 	// ========================================================================================
@@ -389,6 +423,13 @@ class PlacesLocationManager {
 	}
 
 
+	/**
+	 * Persists the {@link #hasMonitoringStarted} in-memory variable to persistence
+	 * <p>
+	 * Saving of data will fail if the {@link SharedPreferences} or App's {@link Context} is null.
+	 *
+	 * @param hasMonitoringStarted value to be persisted
+	 */
 	void setHasMonitoringStarted(final boolean hasMonitoringStarted) {
 		this.hasMonitoringStarted = hasMonitoringStarted;
 		SharedPreferences sharedPreferences = getSharedPreference();
@@ -413,12 +454,41 @@ class PlacesLocationManager {
 
 
 	/**
-	 * Loads previously persisted data for {@link #hasMonitoringStarted} into memory.
+	 * Persists the {@link #requestedLocationPermission} in-memory variable to persistence
 	 * <p>
-	 * This method is called during the boot time of SDK.
+	 * Saving of data will fail if the {@link SharedPreferences} or App's {@link Context} is null.
+	 *
+	 * @param locationPermission value to be persisted
+	 */
+	void saveRequestedLocationPermission(final PlacesMonitorLocationPermission locationPermission) {
+		this.requestedLocationPermission = locationPermission;
+		SharedPreferences sharedPreferences = getSharedPreference();
+
+		if (sharedPreferences == null) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+					"Unable to save location permission value to persistence, sharedPreference is null");
+			return;
+		}
+
+		SharedPreferences.Editor editor = sharedPreferences.edit();
+
+		if (editor == null) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+					"Unable to save location permission value to persistence, shared preference editor is null");
+			return;
+		}
+
+		editor.putString(PlacesMonitorConstants.SharedPreference.LOCATION_PERMISSION_KEY, locationPermission.getValue());
+		editor.commit();
+	}
+
+	/**
+	 * Loads the persisted data into the in-memory variables.
+	 * <p>
+	 * This method is called during the boot time of the SDK.
 	 * Loading of persisted data fails if the {@link SharedPreferences} or App's {@link Context} is null.
 	 */
-	void loadHasMonitoringStarted() {
+	void loadPersistedData() {
 		SharedPreferences sharedPreferences = getSharedPreference();
 
 		if (sharedPreferences == null) {
@@ -431,6 +501,9 @@ class PlacesLocationManager {
 							   false);
 		Log.trace(PlacesMonitorConstants.LOG_TAG,
 				  "PlacesLocationManager has loaded " + hasMonitoringStarted +  " for hasMonitoringStarted from persistence");
+
+		String locationPermissionString = sharedPreferences.getString(PlacesMonitorConstants.SharedPreference.LOCATION_PERMISSION_KEY, "");
+		this.requestedLocationPermission = PlacesMonitorLocationPermission.fromString(locationPermissionString);
 	}
 
 	/**
