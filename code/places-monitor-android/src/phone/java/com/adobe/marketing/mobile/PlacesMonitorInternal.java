@@ -139,6 +139,8 @@ class PlacesMonitorInternal extends Extension {
 
 		LocalBroadcastManager.getInstance(context).registerReceiver(permissionDeniedReceiver,
 				new IntentFilter(PlacesMonitorConstants.INTENT_ACTION_PERMISSION_DENIED));
+
+		Log.debug("Places Monitor extension successfully initialized. Version  %s", PlacesMonitorConstants.EXTENSION_VERSION);
 	}
 
 
