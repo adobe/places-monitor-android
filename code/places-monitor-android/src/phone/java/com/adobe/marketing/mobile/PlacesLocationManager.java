@@ -17,7 +17,6 @@ package com.adobe.marketing.mobile;
 
 import android.app.Activity;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -81,9 +80,9 @@ class PlacesLocationManager {
 				PlacesActivity.askPermission(requestedLocationPermission);
 				return;
 			}
-		} else if (requestedLocationPermission == PlacesMonitorLocationPermission.ALLOW_ALL_TIME) {
+		} else if (requestedLocationPermission == PlacesMonitorLocationPermission.ALWAYS_ALLOW) {
 			if (!PlacesActivity.isBackgroundPermissionGranted()) {
-				Log.debug(PlacesMonitorConstants.LOG_TAG, "Requesting allow all time location permission");
+				Log.debug(PlacesMonitorConstants.LOG_TAG, "Requesting allow always location permission");
 				PlacesActivity.askPermission(requestedLocationPermission);
 				return;
 			}

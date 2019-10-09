@@ -20,7 +20,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -224,7 +223,7 @@ public class PlacesActivityTests {
 		// setup
 		final ArgumentCaptor<Intent> intentArgumentCaptor = ArgumentCaptor.forClass(Intent.class);
 		// test
-		PlacesActivity.askPermission(PlacesMonitorLocationPermission.ALLOW_ALL_TIME);
+		PlacesActivity.askPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify
 		verify(context, times(1)).startActivity(intentArgumentCaptor.capture());
@@ -238,7 +237,7 @@ public class PlacesActivityTests {
 		setFinalStatic(Build.VERSION.class.getField("SDK_INT"), 22);
 
 		// test
-		PlacesActivity.askPermission(PlacesMonitorLocationPermission.ALLOW_ALL_TIME);
+		PlacesActivity.askPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify
 		verify(context, times(0)).startActivity(any(Intent.class));
@@ -250,7 +249,7 @@ public class PlacesActivityTests {
 		Mockito.when(App.getAppContext()).thenReturn(null);
 
 		// test
-		PlacesActivity.askPermission(PlacesMonitorLocationPermission.ALLOW_ALL_TIME);
+		PlacesActivity.askPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify
 		verify(context, times(0)).startActivity(any(Intent.class));
@@ -262,7 +261,7 @@ public class PlacesActivityTests {
 	@Test
 	public void test_onCreate_willRequestPermission_AllowAllTime() {
 		// setup
-		Mockito.when(mockExtra.get(INTENT_PERMISSION_KEY)).thenReturn(PlacesMonitorLocationPermission.ALLOW_ALL_TIME);
+		Mockito.when(mockExtra.get(INTENT_PERMISSION_KEY)).thenReturn(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// test
 		Mockito.doCallRealMethod().when(placesActivity).onCreate(mockBundle);

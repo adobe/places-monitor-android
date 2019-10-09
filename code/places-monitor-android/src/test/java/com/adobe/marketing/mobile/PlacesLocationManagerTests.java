@@ -344,14 +344,14 @@ public class PlacesLocationManagerTests {
         // setup
         Mockito.when(PlacesActivity.isWhileInUsePermissionGranted()).thenReturn(true);
 		Mockito.when(PlacesActivity.isBackgroundPermissionGranted()).thenReturn(false);
-        Whitebox.setInternalState(locationManager, "requestedLocationPermission", PlacesMonitorLocationPermission.ALLOW_ALL_TIME);
+        Whitebox.setInternalState(locationManager, "requestedLocationPermission", PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
         // test
         locationManager.startMonitoring();
 
         // verify the SDK asks from background permission
         verifyStatic(PlacesActivity.class, Mockito.times(1));
-        PlacesActivity.askPermission(PlacesMonitorLocationPermission.ALLOW_ALL_TIME);
+        PlacesActivity.askPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify if location updates are not requested
 		verify(locationManager, times(0)).beginLocationTracking();
@@ -362,14 +362,14 @@ public class PlacesLocationManagerTests {
 		// setup
 		Mockito.when(PlacesActivity.isWhileInUsePermissionGranted()).thenReturn(true);
 		Mockito.when(PlacesActivity.isBackgroundPermissionGranted()).thenReturn(true);
-		Whitebox.setInternalState(locationManager, "requestedLocationPermission", PlacesMonitorLocationPermission.ALLOW_ALL_TIME);
+		Whitebox.setInternalState(locationManager, "requestedLocationPermission", PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// test
 		locationManager.startMonitoring();
 
 		// verify the SDK does not ask anymore permissions
 		verifyStatic(PlacesActivity.class, Mockito.times(0));
-		PlacesActivity.askPermission(PlacesMonitorLocationPermission.ALLOW_ALL_TIME);
+		PlacesActivity.askPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify if location updates are requested
 		verify(locationManager, times(1)).beginLocationTracking();
@@ -571,10 +571,10 @@ public class PlacesLocationManagerTests {
 		Whitebox.setInternalState(locationManager, "hasMonitoringStarted", false);
 
 		// test
-		locationManager.setLocationPermission(PlacesMonitorLocationPermission.ALLOW_ALL_TIME);
+		locationManager.setLocationPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify
-		verify(locationManager, times(1)).saveRequestedLocationPermission(PlacesMonitorLocationPermission.ALLOW_ALL_TIME);
+		verify(locationManager, times(1)).saveRequestedLocationPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 		verify(locationManager, times(0)).startMonitoring();
 	}
 
@@ -584,10 +584,10 @@ public class PlacesLocationManagerTests {
 		Whitebox.setInternalState(locationManager, "hasMonitoringStarted", true);
 
 		// test
-		locationManager.setLocationPermission(PlacesMonitorLocationPermission.ALLOW_ALL_TIME);
+		locationManager.setLocationPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify
-		verify(locationManager, times(1)).saveRequestedLocationPermission(PlacesMonitorLocationPermission.ALLOW_ALL_TIME);
+		verify(locationManager, times(1)).saveRequestedLocationPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 		verify(locationManager, times(1)).startMonitoring();
 	}
 
@@ -658,12 +658,12 @@ public class PlacesLocationManagerTests {
 	@Test
 	public void test_saveRequestedLocationPermission() {
 		// test
-		locationManager.saveRequestedLocationPermission(PlacesMonitorLocationPermission.ALLOW_ALL_TIME);
+		locationManager.saveRequestedLocationPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify
-		verify(mockSharedPreferenceEditor, times(1)).putString(PlacesMonitorTestConstants.SharedPreference.LOCATION_PERMISSION_KEY, PlacesMonitorLocationPermission.ALLOW_ALL_TIME.getValue());
+		verify(mockSharedPreferenceEditor, times(1)).putString(PlacesMonitorTestConstants.SharedPreference.LOCATION_PERMISSION_KEY, PlacesMonitorLocationPermission.ALWAYS_ALLOW.getValue());
 		PlacesMonitorLocationPermission locationPermission = Whitebox.getInternalState(locationManager, "requestedLocationPermission");
-		assertEquals(PlacesMonitorLocationPermission.ALLOW_ALL_TIME,locationPermission);
+		assertEquals(PlacesMonitorLocationPermission.ALWAYS_ALLOW,locationPermission);
 	}
 
 	@Test
@@ -672,12 +672,12 @@ public class PlacesLocationManagerTests {
 		Mockito.when(context.getSharedPreferences(PlacesMonitorTestConstants.SharedPreference.MASTER_KEY,
 				0)).thenReturn(null);
 		// test
-		locationManager.saveRequestedLocationPermission(PlacesMonitorLocationPermission.ALLOW_ALL_TIME);
+		locationManager.saveRequestedLocationPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify
-		verify(mockSharedPreferenceEditor, times(0)).putString(PlacesMonitorTestConstants.SharedPreference.LOCATION_PERMISSION_KEY, PlacesMonitorLocationPermission.ALLOW_ALL_TIME.getValue());
+		verify(mockSharedPreferenceEditor, times(0)).putString(PlacesMonitorTestConstants.SharedPreference.LOCATION_PERMISSION_KEY, PlacesMonitorLocationPermission.ALWAYS_ALLOW.getValue());
 		PlacesMonitorLocationPermission locationPermission = Whitebox.getInternalState(locationManager, "requestedLocationPermission");
-		assertEquals(PlacesMonitorLocationPermission.ALLOW_ALL_TIME,locationPermission);
+		assertEquals(PlacesMonitorLocationPermission.ALWAYS_ALLOW,locationPermission);
 	}
 
 
@@ -687,12 +687,12 @@ public class PlacesLocationManagerTests {
 		Mockito.when(mockSharedPreference.edit()).thenReturn(null);
 
 		// test
-		locationManager.saveRequestedLocationPermission(PlacesMonitorLocationPermission.ALLOW_ALL_TIME);
+		locationManager.saveRequestedLocationPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify
-		verify(mockSharedPreferenceEditor, times(0)).putString(PlacesMonitorTestConstants.SharedPreference.LOCATION_PERMISSION_KEY, PlacesMonitorLocationPermission.ALLOW_ALL_TIME.getValue());
+		verify(mockSharedPreferenceEditor, times(0)).putString(PlacesMonitorTestConstants.SharedPreference.LOCATION_PERMISSION_KEY, PlacesMonitorLocationPermission.ALWAYS_ALLOW.getValue());
 		PlacesMonitorLocationPermission locationPermission = Whitebox.getInternalState(locationManager, "requestedLocationPermission");
-		assertEquals(PlacesMonitorLocationPermission.ALLOW_ALL_TIME,locationPermission);
+		assertEquals(PlacesMonitorLocationPermission.ALWAYS_ALLOW,locationPermission);
 	}
 
 	// ========================================================================================

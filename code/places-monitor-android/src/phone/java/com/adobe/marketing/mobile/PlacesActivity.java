@@ -25,8 +25,10 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.WindowManager;
-
 import com.google.android.gms.location.LocationSettingsStates;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.google.android.gms.common.ConnectionResult.RESOLUTION_REQUIRED;
 
@@ -102,7 +104,7 @@ public class PlacesActivity extends Activity {
 	 *   <li> Does not invoke the permission dialog if the app context is null</li>
 	 * </ol>
 	 *
-	 * @param locationPermission The location permission setting that the user will be prompted for, could be {@link PlacesMonitorLocationPermission#WHILE_USING_APP} or {@link PlacesMonitorLocationPermission#ALLOW_ALL_TIME}
+	 * @param locationPermission The location permission setting that the user will be prompted for, could be {@link PlacesMonitorLocationPermission#WHILE_USING_APP} or {@link PlacesMonitorLocationPermission#ALWAYS_ALLOW}
 	 */
 	public static void askPermission(final PlacesMonitorLocationPermission locationPermission) {
 		// for version below API 23, need not ask permission
@@ -221,13 +223,13 @@ public class PlacesActivity extends Activity {
 		return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M);
 	}
 
-
 	private static String[] getPermissionArray(PlacesMonitorLocationPermission placesMonitorLocationPermission) {
-		String[] permissions = new String[]{FINE_LOCATION};
-		if (PlacesMonitorLocationPermission.ALLOW_ALL_TIME == placesMonitorLocationPermission) {
-			permissions = new String[]{FINE_LOCATION, BACKGROUND_LOCATION};
+		List<String> permissionList = new ArrayList<String>();
+		permissionList.add(FINE_LOCATION);
+		if (PlacesMonitorLocationPermission.ALWAYS_ALLOW == placesMonitorLocationPermission) {
+			permissionList.add(BACKGROUND_LOCATION);
 		}
-		return permissions;
+		return permissionList.toArray(new String[permissionList.size()]);
 	}
 
 	// ========================================================================================
