@@ -197,6 +197,38 @@ public class PlacesMonitorTests {
 					 event.getSource());
 	}
 
+
+	// ========================================================================================
+	// setLocationPermission
+	// ========================================================================================
+
+	@Test
+	public void test_setLocationPermission() {
+		// setup
+		Mockito.when(MobileCore.dispatchEvent(any(Event.class), any(ExtensionErrorCallback.class))).thenReturn(true);
+
+		// setup argument captors
+		final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+		final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
+
+		// test
+		PlacesMonitor.setLocationPermission(PlacesMonitorLocationPermission.WHILE_USING_APP);
+
+		// The start event should be dispatched
+		verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchEvent(eventCaptor.capture(), callbackCaptor.capture());
+
+		// verify dispatched event
+		Event event = eventCaptor.getValue();
+		assertNotNull("The dispatched event should not be null", event);
+		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_SET_LOCATION_PERMISSION, event.getName());
+		assertEquals("the event type should be correct", PlacesMonitorTestConstants.EventType.MONITOR, event.getType());
+		assertEquals("the event source should be correct", PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT,
+				event.getSource());
+		assertEquals("the event data size should be correct",1, event.getEventData().size());
+		assertEquals("the event data should be correct",PlacesMonitorLocationPermission.WHILE_USING_APP.getValue(), event.getEventData().get(PlacesMonitorTestConstants.EventDataKeys.EVENT_DATA_LOCATION_PERMISSION));
+	}
+
 	// ========================================================================================
 	// dispatchEventCallback
 	// ========================================================================================

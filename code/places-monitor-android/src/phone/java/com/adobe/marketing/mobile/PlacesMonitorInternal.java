@@ -51,6 +51,21 @@ class PlacesMonitorInternal extends Extension {
 		}
 	};
 
+	private BroadcastReceiver permissionGrantedReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			locationManager.beginLocationTracking();
+		}
+	};
+
+	private BroadcastReceiver permissionDeniedReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			locationManager.stopMonitoring();
+			geofenceManager.stopMonitoringFences(true);
+		}
+	};
+
 	/**
 	 * Constructor.
 	 *
@@ -118,6 +133,14 @@ class PlacesMonitorInternal extends Extension {
 
 		LocalBroadcastManager.getInstance(context).registerReceiver(internalGeofenceReceiver,
 				new IntentFilter(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_GEOFENCE));
+
+		LocalBroadcastManager.getInstance(context).registerReceiver(permissionGrantedReceiver,
+				new IntentFilter(PlacesMonitorConstants.INTENT_ACTION_PERMISSION_GRANTED));
+
+		LocalBroadcastManager.getInstance(context).registerReceiver(permissionDeniedReceiver,
+				new IntentFilter(PlacesMonitorConstants.INTENT_ACTION_PERMISSION_DENIED));
+
+		Log.debug(PlacesMonitorConstants.LOG_TAG,"Registering Places Monitoring extension - version %s", PlacesMonitorConstants.EXTENSION_VERSION);
 	}
 
 
@@ -271,7 +294,10 @@ class PlacesMonitorInternal extends Extension {
 			stopMonitoring(shouldClear);
 		} else if (PlacesMonitorConstants.EVENTNAME_UPDATE.equals(eventName)) {
 			updateLocation();
-		} else {
+		} else if (PlacesMonitorConstants.EVENTNAME_SET_LOCATION_PERMISSION.equals(eventName)) {
+			setLocationPermission(event.getEventData());
+		}
+		else {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
 						"PlacesMonitorInternal : Could not process places monitor request event, Invalid/Unknown event name");
 		}
@@ -355,6 +381,16 @@ class PlacesMonitorInternal extends Extension {
 		locationManager.updateLocation();
 	}
 
+	private void setLocationPermission(final Map<String,Object> eventData) {
+		if(eventData == null || eventData.isEmpty()) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG, "Invalid location permission value set. Ignoring setLocationPermission API call");
+			return;
+		}
+
+		String locationPermissionString = (String)eventData.get(PlacesMonitorConstants.EventDataKeys.EVENT_DATA_LOCATION_PERMISSION);
+		PlacesMonitorLocationPermission placesMonitorLocationPermission = PlacesMonitorLocationPermission.fromString(locationPermissionString);
+		locationManager.setLocationPermission(placesMonitorLocationPermission);
+	}
 
 
 

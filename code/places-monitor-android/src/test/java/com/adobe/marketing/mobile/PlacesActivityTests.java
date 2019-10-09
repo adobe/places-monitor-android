@@ -23,6 +23,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -53,15 +54,17 @@ import static org.mockito.ArgumentMatchers.*;
 
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Context.class, App.class, ActivityCompat.class, Build.class, PlacesMonitor.class, LocationSettingsStates.class})
+@PrepareForTest({Context.class, App.class, ActivityCompat.class, Build.class, PlacesMonitor.class, LocationSettingsStates.class, LocalBroadcastManager.class, Intent.class})
 public class PlacesActivityTests {
 	private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
+	private static final String BACKGROUND_LOCATION = Manifest.permission.ACCESS_BACKGROUND_LOCATION;
+	private static final String INTENT_PERMISSION_KEY = "intent permission key";
 
 	@Mock
 	Context context;
 
 	@Mock
-	Bundle mockBundle;
+	Bundle mockBundle, mockExtra;
 
 	@Mock
 	Window window;
@@ -73,8 +76,10 @@ public class PlacesActivityTests {
 	Intent mockIntent;
 
 	@Mock
-	LocationSettingsStates locationSettingsStates;
+	LocalBroadcastManager localBroadcastManager;
 
+	@Mock
+	LocationSettingsStates locationSettingsStates;
 
 	@Before
 	public void before() throws Exception {
@@ -93,6 +98,11 @@ public class PlacesActivityTests {
 
 		// mock other methods
 		Mockito.when(placesActivity.getWindow()).thenReturn(window);
+		Mockito.when(placesActivity.getIntent()).thenReturn(mockIntent);
+		Mockito.when(mockIntent.getExtras()).thenReturn(mockExtra);
+
+		PowerMockito.mockStatic(LocalBroadcastManager.class);
+		PowerMockito.when(LocalBroadcastManager.class, "getInstance", any()).thenReturn(localBroadcastManager);
 	}
 
 
@@ -101,12 +111,12 @@ public class PlacesActivityTests {
 	// ========================================================================================
 
 	@Test
-	public void test_isFineLocationPermissionGranted_for_OSLessThanAndroidM() throws Exception {
+	public void test_isWhileInUsePermissionGranted_for_OSLessThanAndroidM() throws Exception {
 		// setup
 		setFinalStatic(Build.VERSION.class.getField("SDK_INT"), 22);
 
 		// test
-		boolean isGranted = PlacesActivity.isFineLocationPermissionGranted();
+		boolean isGranted = PlacesActivity.isWhileInUsePermissionGranted();
 
 		// verify
 		assertTrue(isGranted);
@@ -114,12 +124,12 @@ public class PlacesActivityTests {
 
 
 	@Test
-	public void test_isFineLocationPermissionGranted_when_AppContextNull() throws Exception {
+	public void test_isWhileInUsePermissionGranted_when_AppContextNull() throws Exception {
 		// setup
 		Mockito.when(App.getAppContext()).thenReturn(null);
 
 		// test
-		boolean isGranted = PlacesActivity.isFineLocationPermissionGranted();
+		boolean isGranted = PlacesActivity.isWhileInUsePermissionGranted();
 
 		// verify
 		assertFalse(isGranted);
@@ -127,24 +137,78 @@ public class PlacesActivityTests {
 
 
 	@Test
-	public void test_isFineLocationPermissionGranted_when_PermissionGranted() throws Exception {
+	public void test_isWhileInUsePermissionGranted_when_PermissionGranted() throws Exception {
 		// setup
 		Mockito.when(ActivityCompat.checkSelfPermission(context, FINE_LOCATION)).thenReturn(PackageManager.PERMISSION_GRANTED);
 
 		// test
-		boolean isGranted = PlacesActivity.isFineLocationPermissionGranted();
+		boolean isGranted = PlacesActivity.isWhileInUsePermissionGranted();
 
 		// verify
 		assertTrue(isGranted);
 	}
 
 	@Test
-	public void test_isFineLocationPermissionGranted_when_PermissionDenied() throws Exception {
+	public void test_isWhileInUsePermissionGranted_when_PermissionDenied() throws Exception {
 		// setup
 		Mockito.when(ActivityCompat.checkSelfPermission(context, FINE_LOCATION)).thenReturn(PackageManager.PERMISSION_DENIED);
 
 		// test
-		boolean isGranted = PlacesActivity.isFineLocationPermissionGranted();
+		boolean isGranted = PlacesActivity.isWhileInUsePermissionGranted();
+
+		// verify
+		assertFalse(isGranted);
+	}
+
+	// ========================================================================================
+	// isBackgroundPermissionGranted
+	// ========================================================================================
+
+	@Test
+	public void test_isBackgroundPermissionGranted_for_OSLessThanAndroidM() throws Exception {
+		// setup
+		setFinalStatic(Build.VERSION.class.getField("SDK_INT"), 22);
+
+		// test
+		boolean isGranted = PlacesActivity.isBackgroundPermissionGranted();
+
+		// verify
+		assertTrue(isGranted);
+	}
+
+
+	@Test
+	public void test_isBackgroundPermissionGranted_when_AppContextNull() throws Exception {
+		// setup
+		Mockito.when(App.getAppContext()).thenReturn(null);
+
+		// test
+		boolean isGranted = PlacesActivity.isBackgroundPermissionGranted();
+
+		// verify
+		assertFalse(isGranted);
+	}
+
+
+	@Test
+	public void test_isBackgroundPermissionGranted_when_PermissionGranted() throws Exception {
+		// setup
+		Mockito.when(ActivityCompat.checkSelfPermission(context, BACKGROUND_LOCATION)).thenReturn(PackageManager.PERMISSION_GRANTED);
+
+		// test
+		boolean isGranted = PlacesActivity.isBackgroundPermissionGranted();
+
+		// verify
+		assertTrue(isGranted);
+	}
+
+	@Test
+	public void test_isBackgroundPermissionGranted_when_PermissionDenied() throws Exception {
+		// setup
+		Mockito.when(ActivityCompat.checkSelfPermission(context, BACKGROUND_LOCATION)).thenReturn(PackageManager.PERMISSION_DENIED);
+
+		// test
+		boolean isGranted = PlacesActivity.isBackgroundPermissionGranted();
 
 		// verify
 		assertFalse(isGranted);
@@ -159,7 +223,7 @@ public class PlacesActivityTests {
 		// setup
 		final ArgumentCaptor<Intent> intentArgumentCaptor = ArgumentCaptor.forClass(Intent.class);
 		// test
-		PlacesActivity.askPermission();
+		PlacesActivity.askPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify
 		verify(context, times(1)).startActivity(intentArgumentCaptor.capture());
@@ -173,7 +237,7 @@ public class PlacesActivityTests {
 		setFinalStatic(Build.VERSION.class.getField("SDK_INT"), 22);
 
 		// test
-		PlacesActivity.askPermission();
+		PlacesActivity.askPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify
 		verify(context, times(0)).startActivity(any(Intent.class));
@@ -185,7 +249,7 @@ public class PlacesActivityTests {
 		Mockito.when(App.getAppContext()).thenReturn(null);
 
 		// test
-		PlacesActivity.askPermission();
+		PlacesActivity.askPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify
 		verify(context, times(0)).startActivity(any(Intent.class));
@@ -195,7 +259,10 @@ public class PlacesActivityTests {
 	// onCreate - OverriddenMethod
 	// ========================================================================================
 	@Test
-	public void test_onCreate_willRequestPermission() {
+	public void test_onCreate_willRequestPermission_AlwaysAllow() {
+		// setup
+		Mockito.when(mockExtra.get(INTENT_PERMISSION_KEY)).thenReturn(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
+
 		// test
 		Mockito.doCallRealMethod().when(placesActivity).onCreate(mockBundle);
 		placesActivity.onCreate(mockBundle);
@@ -203,7 +270,22 @@ public class PlacesActivityTests {
 		// verify
 		verify(window, times(1)).addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
 		verifyStatic(ActivityCompat.class, Mockito.times(1));
-		ActivityCompat.requestPermissions(eq(placesActivity), any(String[].class), anyInt());
+		ActivityCompat.requestPermissions(eq(placesActivity), eq(new String[]{FINE_LOCATION, BACKGROUND_LOCATION}), eq(PlacesMonitorTestConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE));
+	}
+
+	@Test
+	public void test_onCreate_willRequestPermission_WhenInUse() {
+		// setup
+		Mockito.when(mockExtra.get(INTENT_PERMISSION_KEY)).thenReturn(PlacesMonitorLocationPermission.WHILE_USING_APP);
+
+		// test
+		Mockito.doCallRealMethod().when(placesActivity).onCreate(mockBundle);
+		placesActivity.onCreate(mockBundle);
+
+		// verify
+		verify(window, times(1)).addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+		verifyStatic(ActivityCompat.class, Mockito.times(1));
+		ActivityCompat.requestPermissions(eq(placesActivity), eq(new String[]{FINE_LOCATION}), eq(PlacesMonitorTestConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE));
 	}
 
 	@Test
@@ -238,7 +320,7 @@ public class PlacesActivityTests {
 	}
 
 	@Test
-	public void test_onRequestPermissionsResult_when_PermissionGranted() {
+	public void test_onRequestPermissionsResult_when_PermissionGranted() throws Exception{
 		// test
 		Mockito.doCallRealMethod().when(placesActivity).onRequestPermissionsResult(anyInt(),  any(String[].class),
 				any(int[].class));
@@ -333,13 +415,7 @@ public class PlacesActivityTests {
 	}
 
 	private void verifyOnPermissionDenied() {
-		// verify start is not called
-		verifyStatic(PlacesMonitor.class, Mockito.times(0));
-		PlacesMonitor.start();
-
-		// verify stop monitoring is called
-		verifyStatic(PlacesMonitor.class, Mockito.times(1));
-		PlacesMonitor.stop(true);
+		verify(localBroadcastManager,times(1)).sendBroadcast(any(Intent.class));
 
 		// verify the activity is removed from UI
 		verify(placesActivity, times(1)).finish();
@@ -347,13 +423,7 @@ public class PlacesActivityTests {
 
 
 	private void verifyOnPermissionGranted() {
-		// verify start is called
-		verifyStatic(PlacesMonitor.class, Mockito.times(1));
-		PlacesMonitor.start();
-
-		// verify stop monitoring is not called
-		verifyStatic(PlacesMonitor.class, Mockito.times(0));
-		PlacesMonitor.stop(true);
+		verify(localBroadcastManager,times(1)).sendBroadcast(any(Intent.class));
 
 		// verify the activity is removed from UI
 		verify(placesActivity, times(1)).finish();
