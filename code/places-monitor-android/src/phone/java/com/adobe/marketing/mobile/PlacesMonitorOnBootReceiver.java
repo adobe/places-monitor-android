@@ -24,7 +24,7 @@ import android.content.Intent;
 public class PlacesMonitorOnBootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.debug(PlacesMonitorConstants.LOG_TAG, "PlacesOnBootReceiver#onReceive -> Calling updateLocation");
+        Log.debug(PlacesMonitorConstants.LOG_TAG, "Places monitor received OS boot event attempting to update location.");
         PlacesMonitor.updateLocation();
     }
 }
