@@ -67,7 +67,7 @@ public class PlacesGeofenceBroadcastReceiver extends BroadcastReceiver {
 
 		if (geofencingEvent.hasError()) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Cannot process the geofence trigger, Geofencing event has error. Ignoring region event.");
+					"PlacesGeofenceBroadcastReceiver : Cannot process the geofence trigger, Geofencing event has error. Ignoring region event.");
 			return;
 		}
 
@@ -75,7 +75,7 @@ public class PlacesGeofenceBroadcastReceiver extends BroadcastReceiver {
 
 		if (obtainedGeofences == null || obtainedGeofences.isEmpty()) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Cannot process the geofence trigger, null or empty geofence obtained from the geofence trigger");
+					"PlacesGeofenceBroadcastReceiver : Cannot process the geofence trigger, null or empty geofence obtained from the geofence trigger");
 
 			return;
 		}
@@ -103,8 +103,14 @@ public class PlacesGeofenceBroadcastReceiver extends BroadcastReceiver {
 		// dispatch OS event
 		Event event = new Event.Builder(PlacesMonitorConstants.EVENTNAME_OS_GEOFENCE_TRIGGER,PlacesMonitorConstants.EventType.OS, PlacesMonitorConstants.EventSource.RESPONSE_CONTENT).
 				setEventData(eventData).build();
-		MobileCore.dispatchEvent(event, null);
-
+		if (MobileCore.dispatchEvent(event, null)) {
+			Log.debug(PlacesMonitorConstants.LOG_TAG,
+					"PlacesGeofenceBroadcastReceiver : Successfully dispatched OS Response event with geofence transitions");
+		}
+		else {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+					"PlacesGeofenceBroadcastReceiver : Unable to dispatch the OS Response event with geofence transitions");
+		}
 	}
 
 

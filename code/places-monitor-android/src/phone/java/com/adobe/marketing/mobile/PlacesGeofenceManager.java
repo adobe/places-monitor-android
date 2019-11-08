@@ -46,6 +46,9 @@ import java.util.Set;
  */
 class PlacesGeofenceManager {
 
+	private final double INCONSEQUENTIAL_LATITUDE = 0.0;
+	private final double INCONSEQUENTIAL_LONGITUDE =  0.0;
+	private final float INCONSEQUENTIAL_RADIUS = 100.0f;
 	private final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
 	private PendingIntent geofencePendingIntent;
 	private Set<String> userWithinGeofences;
@@ -191,54 +194,48 @@ class PlacesGeofenceManager {
 	 * Handler for processing the received geofence event.
 	 *
 	 * <p>
-	 * This method is called by the internal BroadcastReceiver on receiving an intent with {@link GeofencingEvent}.
-	 * Calls the {@link PlacesExtension} to process the obtained {@link Geofence} triggers.
+	 * This method will be called when the OS event for Geofence transitions is received.
+	 * This method curates the list of geofence transitions received to prevent duplicate entry/exits and then
+	 * calls the {@link PlacesExtension} to process the obtained {@link Geofence} triggers.
 	 *
-	 * No action is performed if the intents actionName is not same as {@link PlacesMonitorConstants#INTERNAL_INTENT_ACTION_GEOFENCE}.
-	 * No action is performed if the received {@code GeofencingEvent} has error.
-	 * No action is performed if the list of obtained {@code Geofences} is empty.
-	 *
-	 * @param intent the broadcasted geofence event message wrapped in an intent
+	 * @param eventData the {@link EventData} from the OS Event containing geofence transition information.
 	 * @see Places#processGeofence(Geofence, int)
 	 */
-	void onGeofenceReceived(final Intent intent) {
-		if (intent == null) {
-			Log.error(PlacesMonitorConstants.LOG_TAG,
-					  "Cannot process the geofence trigger, The received intent from the geofence broadcast receiver is null.");
+	void onGeofenceTriggerReceived(final EventData eventData) {
+
+		List<String> geofenceIDs;
+		int transitionType;
+		try {
+
+			geofenceIDs = eventData.getStringList(PlacesMonitorConstants.EventDataKey.GEOFENCE_IDS);
+			transitionType = eventData.getInteger(PlacesMonitorConstants.EventDataKey.GEOFENCE_TRANSITION_TYPE);
+		} catch (VariantException exp) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG, "Exception occured while reading the geofenceIds from the OS event. " + exp.getMessage() + "Ignoring the OS event.");
 			return;
 		}
 
-		final String action = intent.getAction();
-
-		if (!PlacesMonitorConstants.INTERNAL_INTENT_ACTION_GEOFENCE.equals(action)) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Cannot process the geofence trigger, Invalid action type received from geofence broadcast receiver.");
-			return;
-		}
-
-		GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
-
-		if (geofencingEvent.hasError()) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Cannot process the geofence trigger, Geofencing event has error. Ignoring region event.");
-			return;
-		}
-
-		List<Geofence> obtainedGeofences = geofencingEvent.getTriggeringGeofences();
-
-		if (obtainedGeofences == null || obtainedGeofences.isEmpty()) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Cannot process the geofence trigger, null or empty geofence obtained from the geofence trigger");
-
+		if(geofenceIDs == null || geofenceIDs.size() <=0) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG, "no geofenceId's are obtained from OS geofence event. Ignoring the OS event.");
 			return;
 		}
 
 		// curate the obtained geofence list
-		List<Geofence> curatedGeofences  = getCuratedGeofencesList(obtainedGeofences, geofencingEvent.getGeofenceTransition());
+		List<String> curatedGeofences  = getCuratedGeofencesList(geofenceIDs, transitionType);
 
 		// dispatch a region event for the places list
-		for (Geofence geofence : curatedGeofences) {
-			Places.processGeofence(geofence, geofencingEvent.getGeofenceTransition());
+		for (String geofenceID : curatedGeofences) {
+			// Creating a geofence object.
+			// To successfully create a geofence object, setting of latitude, longitude, radius, transition type and expiry duration are required.
+			// Note : This geofence object is created with inconsequential latitude, longitude and radius.
+			// Places API method processGeofence only reads the geofenceId of the triggered fences. Moreover latitude, longitude and radius cannot be extracted
+			// from the geofence object. Unless its passed to android for monitoring.
+			Geofence geofence = new Geofence.Builder()
+					.setRequestId(geofenceID)
+					.setExpirationDuration(Geofence.NEVER_EXPIRE)
+					.setTransitionTypes(transitionType)
+					.setCircularRegion(INCONSEQUENTIAL_LATITUDE,INCONSEQUENTIAL_LONGITUDE,INCONSEQUENTIAL_RADIUS)
+					.build();
+			Places.processGeofence(geofence, transitionType);
 		}
 	}
 
@@ -247,37 +244,40 @@ class PlacesGeofenceManager {
 	// ================================================================================================================================
 
 	/**
-	 * Compares with the existing in-memory {@code #userWithinGeofences} list and get the to be processed {@link Geofence} list.
+	 * Compares with the existing in-memory {@code #userWithinGeofences} list, ignores the duplicate entry event,
+	 * updates the in-memory {@code #userWithinGeofences} variable with the obtained geofences and finally returns the curated list
+	 * of GeofenceIDs that needs to be processed
 	 *
-	 * @param obtainedGeofences A {@link List} of {@code Geofence} obtained from the {@link GeofencingEvent}
+	 *
+	 * @param obtainedGeofenceIds A {@link List} of {@code String} representing geofenceIDs obtained from the OS event
 	 * @param transitionType {@code int} representing the transition type of the provided list of geofences
 	 *
 	 * @return the curated list of {@code Geofence}'s that needs to be processed by {@link Places} extension
 	 */
-	List<Geofence> getCuratedGeofencesList(final List<Geofence> obtainedGeofences, final int transitionType) {
-		List<Geofence> curatedGeofenceList = new ArrayList<Geofence>();
+	List<String> getCuratedGeofencesList(final List<String> obtainedGeofenceIds, final int transitionType) {
+		List<String> curatedGeofenceList = new ArrayList<String>();
 
 		// if entry event, add geofence to the userWithinGeofence
 		if (transitionType == Geofence.GEOFENCE_TRANSITION_ENTER) {
-			for (Geofence geofence : obtainedGeofences) {
-				if (!userWithinGeofences.contains(geofence.getRequestId())) {
-					curatedGeofenceList.add(geofence);
-					userWithinGeofences.add(geofence.getRequestId());
+			for (String geofenceID : obtainedGeofenceIds) {
+				if (!userWithinGeofences.contains(geofenceID)) {
+					curatedGeofenceList.add(geofenceID);
+					userWithinGeofences.add(geofenceID);
 				} else {
 					Log.debug(PlacesMonitorConstants.LOG_TAG,
-							  "Ignoring to process the entry of geofence" + geofence.getRequestId() + ".Because an entry was already recorded");
+							  "Ignoring to process the entry of geofence" + geofenceID + ".Because an entry was already recorded");
 				}
 			}
 		}
 
 		// if exit event, remove from the userWithinGeofence
 		else if (transitionType == Geofence.GEOFENCE_TRANSITION_EXIT) {
-			for (Geofence geofence : obtainedGeofences) {
-				if (userWithinGeofences.contains(geofence.getRequestId())) {
-					userWithinGeofences.remove(geofence.getRequestId());
+			for (String geofenceID : obtainedGeofenceIds) {
+				if (userWithinGeofences.contains(geofenceID)) {
+					userWithinGeofences.remove(geofenceID);
 				}
 
-				curatedGeofenceList.add(geofence);
+				curatedGeofenceList.add(geofenceID);
 			}
 		}
 
@@ -439,7 +439,7 @@ class PlacesGeofenceManager {
 
 		if (!checkPermissions()) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Unable to monitor geofences, App permission to use FINE_LOCATION is not granted.");
+						"Unable to register new geofences, App permission to use FINE_LOCATION is not granted.");
 			return;
 		}
 
@@ -447,7 +447,7 @@ class PlacesGeofenceManager {
 
 		if (geofenceIntent == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Unable to stop monitoring geofences, Places Geofence Broadcast Receiver was never initialized");
+						"Unable to register new geofences, Places Geofence Broadcast Receiver was never initialized");
 			return;
 		}
 
@@ -468,7 +468,7 @@ class PlacesGeofenceManager {
 			.setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
 								Geofence.GEOFENCE_TRANSITION_EXIT)
 			.build();
-			Log.debug(PlacesMonitorConstants.LOG_TAG, "Attempting to Monitor location with id " + poi.getIdentifier() +
+			Log.debug(PlacesMonitorConstants.LOG_TAG, "Attempting to Monitor POI with id " + poi.getIdentifier() +
 					  " name " + poi.getName() +
 					  " latitude " + poi.getLatitude() +
 					  " longitude " + poi.getLongitude());

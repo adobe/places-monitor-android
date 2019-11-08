@@ -29,13 +29,11 @@ final class PlacesMonitorConstants {
 	static final String EVENTNAME_STOP = "stop monitoring";
 	static final String EVENTNAME_UPDATE = "update location now";
 	static final String EVENTNAME_SET_LOCATION_PERMISSION = "set location permission";
+	static final String EVENTNAME_OS_PERMISSION_CHANGE = "OS Permission change";
+	static final String EVENTNAME_OS_GEOFENCE_TRIGGER = "OS Geofence Trigger";
+	static final String EVENTNAME_OS_LOCATION_UPDATE = "OS Location update";
 
 	static final int NEARBY_GEOFENCES_COUNT = 20;
-
-	static final String INTERNAL_INTENT_ACTION_LOCATION = "intentactionlocation";
-	static final String INTERNAL_INTENT_ACTION_GEOFENCE = "intentactiongeofence";
-	static final String INTENT_ACTION_PERMISSION_GRANTED = "permissionreceived";
-	static final String INTENT_ACTION_PERMISSION_DENIED = "permissiondenied";
 
 	static final class Location {
 		static final int REQUEST_INTERVAL = 3600;				// 1 hour
@@ -47,6 +45,7 @@ final class PlacesMonitorConstants {
 	}
 
 	static final class EventSource {
+		static final String RESPONSE_CONTENT = "com.adobe.eventsource.responsecontent";
 		static final String REQUEST_CONTENT = "com.adobe.eventsource.requestcontent";
 		static final String SHARED_STATE = "com.adobe.eventsource.sharedstate";
 
@@ -55,16 +54,35 @@ final class PlacesMonitorConstants {
 		}
 	}
 
-	static final class EventDataKeys {
-		static final String EVENT_DATA_CLEAR	= "clearclientdata";
-		static final String EVENT_DATA_LOCATION_PERMISSION = "locationpermission";
-		private EventDataKeys() {
+	static final class EventDataKey {
+		static final String CLEAR = "clearclientdata";
+		static final String LOCATION_PERMISSION = "locationpermission";
+
+		static final String OS_EVENT_TYPE = "oseventtype";
+		static final String LATITUDE = "latitude";
+		static final String LONGITUDE = "longitude";
+		static final String GEOFENCE_IDS = "geofenceIds";
+		static final String GEOFENCE_TRANSITION_TYPE = "transitiontype";
+		static final String LOCATION_PERMISSION_STATUS = "locationpermissionstatus";
+		private EventDataKey() {
+		}
+	}
+
+
+	static final class EventDataValue {
+		static final String OS_EVENT_TYPE_LOCATION_UPDATE = "locationupdate";
+		static final String OS_EVENT_TYPE_GEOFENCE_TRIGGER = "geofencetrigger";
+		static final String OS_EVENT_TYPE_LOCATION_PERMISSION_CHANGE = "locationpermissionchange";
+		static final String OS_LOCATION_PERMISSION_STATUS_GRANTED = "granted";
+		static final String OS_LOCATION_PERMISSION_STATUS_DENIED = "denied";
+		private EventDataValue() {
 		}
 	}
 
 
 	static final class EventType {
 		static final String HUB = "com.adobe.eventtype.hub";
+		static final String OS = "com.adobe.eventtype.os";
 		static final String MONITOR = "com.adobe.eventtype.placesmonitor";
 
 		private EventType() {

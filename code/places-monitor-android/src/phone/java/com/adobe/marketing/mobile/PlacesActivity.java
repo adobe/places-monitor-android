@@ -23,11 +23,11 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.view.WindowManager;
 import com.google.android.gms.location.LocationSettingsStates;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static com.google.android.gms.common.ConnectionResult.RESOLUTION_REQUIRED;
@@ -240,10 +240,7 @@ public class PlacesActivity extends Activity {
 	 * Permission handler method called when user has given permission to access fine location.
 	 */
 	private void onPermissionGranted() {
-	    Intent intent = new Intent();
-	    intent.setAction(PlacesMonitorConstants.INTENT_ACTION_PERMISSION_GRANTED);
-		LocalBroadcastManager manager = LocalBroadcastManager.getInstance(getApplicationContext());
-		manager.sendBroadcast(intent);
+		dispatchPermissionChangeOSEvent(PlacesMonitorConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_GRANTED);
 		finish();
 	}
 
@@ -251,9 +248,7 @@ public class PlacesActivity extends Activity {
 	 * Permission handler method called when user has denied permission to access fine location.
 	 */
 	private void onPermissionDenied() {
-        Intent intent = new Intent(PlacesMonitorConstants.INTENT_ACTION_PERMISSION_DENIED);
-        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(getApplicationContext());
-        manager.sendBroadcast(intent);
+		dispatchPermissionChangeOSEvent(PlacesMonitorConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_DENIED);
 		finish();
 	}
 
@@ -278,6 +273,23 @@ public class PlacesActivity extends Activity {
 		ActivityCompat.requestPermissions(this,
 				  						  getPermissionArray(locationPermission),
 										  PlacesMonitorConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE);
+	}
+
+	/**
+	 * Dispatch an OS event to eventHub, indicating the change in location permission
+	 *
+	 * @param status A {@link String} value representing the status of the changed permission.
+	 */
+	private void dispatchPermissionChangeOSEvent(final String status) {
+		// create eventData
+		HashMap<String,Object> eventData = new HashMap<>();
+		eventData.put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE, PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_PERMISSION_CHANGE);
+		eventData.put(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION_STATUS, status);
+
+		// dispatch OS event
+		Event event = new Event.Builder(PlacesMonitorConstants.EVENTNAME_OS_PERMISSION_CHANGE,PlacesMonitorConstants.EventType.OS, PlacesMonitorConstants.EventSource.RESPONSE_CONTENT).
+				setEventData(eventData).build();
+		MobileCore.dispatchEvent(event, null);
 	}
 
 }
