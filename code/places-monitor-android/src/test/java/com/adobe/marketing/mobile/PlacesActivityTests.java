@@ -54,11 +54,16 @@ import static org.mockito.ArgumentMatchers.*;
 
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Context.class, App.class, ActivityCompat.class, Build.class, PlacesMonitor.class, LocationSettingsStates.class, LocalBroadcastManager.class, Intent.class})
+@PrepareForTest({Context.class, App.class, ActivityCompat.class, Build.class, PlacesMonitor.class, LocationSettingsStates.class, Intent.class, MobileCore.class})
 public class PlacesActivityTests {
 	private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
 	private static final String BACKGROUND_LOCATION = Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 	private static final String INTENT_PERMISSION_KEY = "intent permission key";
+
+
+	// argument captors
+	final ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+	final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
 
 	@Mock
 	Context context;
@@ -76,9 +81,6 @@ public class PlacesActivityTests {
 	Intent mockIntent;
 
 	@Mock
-	LocalBroadcastManager localBroadcastManager;
-
-	@Mock
 	LocationSettingsStates locationSettingsStates;
 
 	@Before
@@ -88,6 +90,7 @@ public class PlacesActivityTests {
 		PowerMockito.mockStatic(App.class);
 		PowerMockito.mockStatic(ActivityCompat.class);
 		PowerMockito.mockStatic(LocationSettingsStates.class);
+		PowerMockito.mockStatic(MobileCore.class);
 
 		// set static variables
 		setFinalStatic(Build.VERSION.class.getField("SDK_INT"), 25);
@@ -100,9 +103,6 @@ public class PlacesActivityTests {
 		Mockito.when(placesActivity.getWindow()).thenReturn(window);
 		Mockito.when(placesActivity.getIntent()).thenReturn(mockIntent);
 		Mockito.when(mockIntent.getExtras()).thenReturn(mockExtra);
-
-		PowerMockito.mockStatic(LocalBroadcastManager.class);
-		PowerMockito.when(LocalBroadcastManager.class, "getInstance", any()).thenReturn(localBroadcastManager);
 	}
 
 
@@ -320,8 +320,10 @@ public class PlacesActivityTests {
 	}
 
 	@Test
-	public void test_onRequestPermissionsResult_when_PermissionGranted() throws Exception{
+	public void test_onRequestPermissionsResult_when_PermissionGranted() throws Exception {
 		// test
+		Mockito.when(MobileCore.dispatchEvent(any(Event.class), any(ExtensionErrorCallback.class))).thenReturn(true);
+
 		Mockito.doCallRealMethod().when(placesActivity).onRequestPermissionsResult(anyInt(),  any(String[].class),
 				any(int[].class));
 		placesActivity.onRequestPermissionsResult(PlacesMonitorTestConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE,
@@ -330,10 +332,13 @@ public class PlacesActivityTests {
 
 		// verify
 		verifyOnPermissionGranted();
+
+		// verify the activity is removed from UI
+		verify(placesActivity, times(1)).finish();
 	}
 
 	@Test
-	public void test_onRequestPermissionsResult_when_PermissionDenied() {
+	public void test_onRequestPermissionsResult_when_PermissionDenied() throws Exception {
 		Mockito.doCallRealMethod().when(placesActivity).onRequestPermissionsResult(anyInt(),  any(String[].class),
 				any(int[].class));
 		placesActivity.onRequestPermissionsResult(PlacesMonitorTestConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE,
@@ -414,16 +419,44 @@ public class PlacesActivityTests {
 		field.set(null, newValue);
 	}
 
-	private void verifyOnPermissionDenied() {
-		verify(localBroadcastManager,times(1)).sendBroadcast(any(Intent.class));
+	private void verifyOnPermissionDenied() throws Exception {
+		// The OS permission change event should be dispatched
+		verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchEvent(eventCaptor.capture(), callbackCaptor.capture());
+
+		// verify dispatched event
+		Event event = eventCaptor.getValue();
+		assertNotNull("The dispatched event should not be null", event);
+		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_OS_PERMISSION_CHANGE, event.getName());
+		assertEquals("the event type should be correct", PlacesMonitorTestConstants.EventType.OS, event.getType());
+		assertEquals("the event source should be correct", PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT,
+				event.getSource());
+		EventData eventData = event.getData();
+		assertEquals("the event data should contain two element", 2, eventData.size());
+		assertEquals("the event data should contain the right event type", PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_PERMISSION_CHANGE, eventData.getString2(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE));
+		assertEquals("the event data should contain the right permission status", PlacesMonitorConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_DENIED , eventData.getString2(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION_STATUS));
 
 		// verify the activity is removed from UI
 		verify(placesActivity, times(1)).finish();
 	}
 
 
-	private void verifyOnPermissionGranted() {
-		verify(localBroadcastManager,times(1)).sendBroadcast(any(Intent.class));
+	private void verifyOnPermissionGranted() throws Exception {
+		// The OS permission change event should be dispatched
+		verifyStatic(MobileCore.class, Mockito.times(1));
+		MobileCore.dispatchEvent(eventCaptor.capture(), callbackCaptor.capture());
+
+		// verify dispatched event
+		Event event = eventCaptor.getValue();
+		assertNotNull("The dispatched event should not be null", event);
+		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_OS_PERMISSION_CHANGE, event.getName());
+		assertEquals("the event type should be correct", PlacesMonitorTestConstants.EventType.OS, event.getType());
+		assertEquals("the event source should be correct", PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT,
+				event.getSource());
+		EventData eventData = event.getData();
+		assertEquals("the event data should contain two element", 2, eventData.size());
+		assertEquals("the event data should contain the right event type", PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_PERMISSION_CHANGE, eventData.getString2(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE));
+		assertEquals("the event data should contain the right permission status", PlacesMonitorConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_GRANTED , eventData.getString2(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION_STATUS));
 
 		// verify the activity is removed from UI
 		verify(placesActivity, times(1)).finish();
