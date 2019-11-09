@@ -279,6 +279,7 @@ class PlacesLocationManager {
 
 		if(!isValidLat(latitude) || !isValidLon(longitude)){
 			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesLocationManager : Invalid Latitude: ("+latitude+") or Longitude (" + longitude + ") obtained from the OS event. Ignoring location update event.");
+			return;
 		}
 
 

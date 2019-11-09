@@ -24,7 +24,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Build;
-import java.lang.reflect.Modifier;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Status;
@@ -53,11 +52,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.mockito.Mockito.when;
+import java.util.HashMap;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -68,13 +63,9 @@ import static org.junit.Assert.*;
 @PrepareForTest({Context.class, App.class, LocationServices.class, PendingIntent.class, LocationResult.class, Build.class, PlacesActivity.class})
 public class PlacesLocationManagerTests {
 	private PlacesLocationManager locationManager;
-	private LocationResult locationResult;
 
 	@Mock
 	Context context;
-
-	@Mock
-	Intent intent;
 
 	@Mock
 	FusedLocationProviderClient locationProviderClient;
@@ -104,9 +95,6 @@ public class PlacesLocationManagerTests {
 	Location mockLocation;
 
 	@Mock
-	Location location1, location2;
-
-	@Mock
 	PlacesMonitorInternal mockPlacesMonitorInternal;
 
 	@Mock
@@ -116,7 +104,7 @@ public class PlacesLocationManagerTests {
 	SharedPreferences.Editor mockSharedPreferenceEditor;
 
 	@Before
-	public void before() throws Exception {
+	public void before() {
 		PowerMockito.mockStatic(App.class);
 		PowerMockito.mockStatic(Build.class);
 		PowerMockito.mockStatic(LocationServices.class);
@@ -700,115 +688,62 @@ public class PlacesLocationManagerTests {
 	// ========================================================================================
 
 	@Test
-	public void test_onLocationReceived() throws Exception {
-		// setup
-		List<Location> locationList = new ArrayList<>();
-		locationList.add(location1);
-		locationList.add(location2);
-		locationResult = LocationResult.create(locationList);
-		initiateLocationMocking();
+    public void test_onLocationReceived() {
+        // setup
+        final ArgumentCaptor<Location> locationCaptor = ArgumentCaptor.forClass(Location.class);
 
-		// test
-		locationManager.onLocationReceived(intent);
+        // test
+        locationManager.onLocationReceived(locationUpdateEventData(22.22,33.33));
 
-		// verify
-		verify(mockPlacesMonitorInternal, times(1)).getPOIsForLocation(location1);
-	}
+        // verify
+        verify(mockPlacesMonitorInternal, times(1)).getPOIsForLocation(locationCaptor.capture());
+        assertNotNull(locationCaptor.getValue());
+    }
 
-	@Test
-	public void test_onLocationReceived_whenNullIntent() throws Exception {
-		// setup
-		initiateLocationMocking();
+    @Test
+    public void test_onLocationReceived_InvalidLatitude() throws Exception {
+        // test
+        locationManager.onLocationReceived(locationUpdateEventData(222.22,33.33));
 
-		// test
-		locationManager.onLocationReceived(null);
+        // verify
+        verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(any(Location.class));
+    }
 
-		// verify
-		verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(location1);
-	}
+    @Test
+    public void test_onLocationReceived_InvalidLongitude() throws Exception {
+        // test
+        locationManager.onLocationReceived(locationUpdateEventData(22.22,333.33));
 
-	@Test
-	public void test_onLocationReceived_when_unknownAction() throws Exception {
-		// setup
-		initiateLocationMocking();
-		when(intent.getAction()).thenReturn("unknownAction");
+        // verify
+        verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(any(Location.class));
+    }
 
-		// test
-		locationManager.onLocationReceived(intent);
+    @Test
+    public void test_onLocationReceived_EventDataWithInvalidLatitudeDataType() throws Exception {
+	    // setup
+        EventData eventData = new EventData(new HashMap<String,Variant>()
+        {{put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE, Variant.fromString(PlacesMonitorTestConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_UPDATE));
+            put(PlacesMonitorConstants.EventDataKey.LATITUDE, Variant.fromString("invalidTypeInLatitudeKey"));
+            put(PlacesMonitorConstants.EventDataKey.LONGITUDE, Variant.fromDouble(22.3));}});
 
-		// verify
-		verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(location1);
-	}
+        // test
+        locationManager.onLocationReceived(eventData);
 
-
-	@Test
-	public void test_onLocationReceived_when_intentLocationResultIsNull() throws Exception {
-		// setup
-		locationResult = null;
-		PowerMockito.mockStatic(LocationResult.class);
-		PowerMockito.when(LocationResult.class, "extractResult", any(Intent.class)).thenReturn(locationResult);
-		when(intent.getAction()).thenReturn(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_LOCATION);
-		Mockito.when(LocationResult.extractResult(any(Intent.class))).thenReturn(null);
-
-		// test
-		locationManager.onLocationReceived(intent);
-
-		// verify
-		verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(location1);
-	}
-
-	@Test
-	public void test_onLocationReceived_when_intentWithNoLocation() throws Exception {
-		// setup
-		List<Location> locationList = new ArrayList<>();
-		locationResult = LocationResult.create(locationList);
-		PowerMockito.mockStatic(LocationResult.class);
-		when(intent.getAction()).thenReturn(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_LOCATION);
-		Mockito.when(LocationResult.extractResult(any(Intent.class))).thenReturn(locationResult);
-
-		// test
-		locationManager.onLocationReceived(intent);
-
-		// verify
-		verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(location1);
-	}
+        // verify
+        verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(any(Location.class));
+    }
 
 
-	@Test
-	public void test_OnReceive_when_intentWithEmptyFirstLocations() throws Exception {
-		// setup
-		List<Location> locations = new ArrayList<Location>();
-		locations.add(null);
-		locations.add(location2);
-		locationResult = LocationResult.create(locations);
-		PowerMockito.mockStatic(LocationResult.class);
-		Mockito.when(LocationResult.extractResult(any(Intent.class))).thenReturn(locationResult);
-		when(intent.getAction()).thenReturn(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_LOCATION);
+    // ========================================================================================
+    // private helper methods
+    // ========================================================================================
 
-		// test
-		locationManager.onLocationReceived(intent);
+    private EventData locationUpdateEventData(final double latitude, final double longitude) {
+        return new EventData(new HashMap<String,Variant>()
+        {{put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE, Variant.fromString(PlacesMonitorTestConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_UPDATE));
+            put(PlacesMonitorConstants.EventDataKey.LATITUDE, Variant.fromDouble(latitude));
+            put(PlacesMonitorConstants.EventDataKey.LONGITUDE, Variant.fromDouble(longitude));}});
+    }
 
-		// verify
-		verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(location1);
-	}
-
-	private void initiateLocationMocking() throws Exception {
-		// static mocks
-		List<Location> locationList = new ArrayList<>();
-		locationList.add(location1);
-		locationList.add(location2);
-		locationResult = LocationResult.create(locationList);
-		PowerMockito.mockStatic(LocationResult.class);
-		PowerMockito.when(LocationResult.class, "extractResult", any(Intent.class)).thenReturn(locationResult);
-		when(intent.getAction()).thenReturn(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_LOCATION);
-	}
-
-	static void setFinalStatic(Field field, Object newValue) throws Exception {
-		field.setAccessible(true);
-		Field modifiersField = Field.class.getDeclaredField("modifiers");
-		modifiersField.setAccessible(true);
-		modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-		field.set(null, newValue);
-	}
 
 }
