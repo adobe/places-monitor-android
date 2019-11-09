@@ -17,8 +17,6 @@ package com.adobe.marketing.mobile;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.content.LocalBroadcastManager;
-
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
@@ -43,7 +41,7 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({GeofencingEvent.class, LocalBroadcastManager.class, MobileCore.class, GeofencingEvent.class})
+@PrepareForTest({GeofencingEvent.class, MobileCore.class, GeofencingEvent.class})
 public class PlacesGeofenceBroadcastReceiverTests {
 
 	static final String ACTION_GEOFENCE_UPDATE =
@@ -63,8 +61,6 @@ public class PlacesGeofenceBroadcastReceiverTests {
 	@Mock
 	GeofencingEvent mockGeofencingEvent;
 
-	@Mock
-	LocalBroadcastManager mockBroadcastManager;
 
 	@Before
 	public void before() throws Exception {
@@ -72,6 +68,7 @@ public class PlacesGeofenceBroadcastReceiverTests {
 		PowerMockito.mockStatic(MobileCore.class);
 		PowerMockito.mockStatic(GeofencingEvent.class);
 
+		when(mockIntent.getAction()).thenReturn(ACTION_GEOFENCE_UPDATE);
 
 		receiver = new PlacesGeofenceBroadcastReceiver();
 
@@ -86,7 +83,6 @@ public class PlacesGeofenceBroadcastReceiverTests {
 	@Test
 	public void test_OnReceive_sendOSEvent() throws Exception {
 		// setup
-		initiateMocking();
 		mockGeofenceWithCount(2);
 
 		// test
@@ -120,7 +116,6 @@ public class PlacesGeofenceBroadcastReceiverTests {
 	@Test
 	public void test_OnReceive_when_GeofenceEventHasError() throws Exception {
 		// setup
-		initiateMocking();
 		Mockito.when(mockGeofencingEvent.hasError()).thenReturn(true);
 		PowerMockito.when(GeofencingEvent.class, "fromIntent", any(Intent.class)).thenReturn(mockGeofencingEvent);
 
@@ -136,7 +131,6 @@ public class PlacesGeofenceBroadcastReceiverTests {
 	@Test
 	public void test_OnReceive_when_noObtainedGeofence() throws Exception {
 		// setup
-		initiateMocking();
 		mockGeofenceWithCount(0);
 
 		// test
@@ -150,7 +144,6 @@ public class PlacesGeofenceBroadcastReceiverTests {
 	@Test
 	public void test_OnReceive_when_intentIsNull() throws Exception {
 		// setup
-		initiateMocking();
 
 		// test
 		receiver.onReceive(mockContext, null);
@@ -163,7 +156,6 @@ public class PlacesGeofenceBroadcastReceiverTests {
 	@Test
 	public void test_OnReceive_when_intentHasDifferentAction() throws Exception {
 		// setup
-		initiateMocking();
 		when(mockIntent.getAction()).thenReturn("unknownAction");
 
 		// test
@@ -172,14 +164,6 @@ public class PlacesGeofenceBroadcastReceiverTests {
 		// verify no event is dispatched
 		verifyStatic(MobileCore.class, Mockito.times(0));
 		MobileCore.dispatchEvent(eventCaptor.capture(), callbackCaptor.capture());
-	}
-
-
-	private void initiateMocking() throws Exception {
-		// static mocks
-		PowerMockito.mockStatic(LocalBroadcastManager.class);
-		PowerMockito.when(LocalBroadcastManager.class, "getInstance", any(Context.class)).thenReturn(mockBroadcastManager);
-		when(mockIntent.getAction()).thenReturn(ACTION_GEOFENCE_UPDATE);
 	}
 
 

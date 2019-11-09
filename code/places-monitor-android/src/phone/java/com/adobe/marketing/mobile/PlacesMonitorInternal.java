@@ -338,15 +338,18 @@ class PlacesMonitorInternal extends Extension {
 
 		if(StringUtils.isNullOrEmpty(permissionStatus)){
 			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Null/empty permission status value from the OS responseContent event. Ignoring Permission status change event.");
+			return;
 		}
 
 		switch (permissionStatus){
 			case PlacesMonitorConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_GRANTED: {
 				locationManager.beginLocationTracking();
+				break;
 			}
 			case PlacesMonitorConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_DENIED: {
 				locationManager.stopMonitoring();
 				geofenceManager.stopMonitoringFences(true);
+				break;
 			}
 			default: {
 				Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Invalid permission status value from the OS responseContent event. Ignoring Permission status change event.");
