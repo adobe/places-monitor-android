@@ -292,6 +292,10 @@ class PlacesMonitorInternal extends Extension {
 
 	private void processOSResponseEvent(final Event event) {
 		EventData eventData = event.getData();
+		if(eventData == null || eventData.isEmpty()){
+			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Received empty eventData , Ignoring event OS event.");
+			return;
+		}
 		String eventType;
 		try {
 			eventType = eventData.getString2(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE);

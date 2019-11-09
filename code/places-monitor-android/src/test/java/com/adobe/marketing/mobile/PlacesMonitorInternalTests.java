@@ -334,6 +334,34 @@ public class PlacesMonitorInternalTests {
 	}
 
 	@Test
+	public void test_processEvents_when_stopEventWithOutClearData() {
+		// setup
+		initWithContext(context);
+
+		// setup configuration
+		Map<String, Object> configData = new HashMap<>();
+		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
+		when(extensionApi.getSharedEventState(anyString(), any(Event.class),
+				any(ExtensionErrorCallback.class))).thenReturn(configData);
+
+		// test
+		monitorInternal.queueEvent(stopMonitoringEventWithOutClearData);
+		monitorInternal.processEvents();
+
+		// verify
+		verify(locationManager, times(0)).startMonitoring();
+		verify(locationManager, times(1)).stopMonitoring();
+		verify(locationManager, times(0)).updateLocation();
+		verify(geofenceManager, times(1)).stopMonitoringFences(false);
+		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
+		verify(locationManager, times(0)).setLocationPermission(any(PlacesMonitorLocationPermission.class));
+
+		// verify places call
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.clear();
+	}
+
+	@Test
 	public void test_processEvents_when_stopEventWithoutEventData() {
 		// setup
 		initWithContext(context);
@@ -350,35 +378,6 @@ public class PlacesMonitorInternalTests {
 
 		// verify
 		verify(locationManager, times(0)).startMonitoring();
-		verify(locationManager, times(0)).startMonitoring();
-		verify(locationManager, times(1)).stopMonitoring();
-		verify(locationManager, times(0)).updateLocation();
-		verify(geofenceManager, times(1)).stopMonitoringFences(false);
-		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
-		verify(locationManager, times(0)).setLocationPermission(any(PlacesMonitorLocationPermission.class));
-
-		// verify places call
-		verifyStatic(Places.class, Mockito.times(0));
-		Places.clear();
-	}
-
-
-	@Test
-	public void test_processEvents_when_stopEventWithOutClearData() {
-		// setup
-		initWithContext(context);
-
-		// setup configuration
-		Map<String, Object> configData = new HashMap<>();
-		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
-		when(extensionApi.getSharedEventState(anyString(), any(Event.class),
-				any(ExtensionErrorCallback.class))).thenReturn(configData);
-
-		// test
-		monitorInternal.queueEvent(stopMonitoringEventWithOutClearData);
-		monitorInternal.processEvents();
-
-		// verify
 		verify(locationManager, times(0)).startMonitoring();
 		verify(locationManager, times(1)).stopMonitoring();
 		verify(locationManager, times(0)).updateLocation();
@@ -462,7 +461,6 @@ public class PlacesMonitorInternalTests {
 		verify(geofenceManager, times(0)).startMonitoringFences(ArgumentMatchers.<PlacesPOI>anyList());
 		verify(locationManager, times(1)).setLocationPermission(PlacesMonitorLocationPermission.WHILE_USING_APP);
 	}
-
 
 	@Test
 	public void test_processEvents_when_SetLocationPermissionEventWithNoEventData() {
@@ -564,7 +562,6 @@ public class PlacesMonitorInternalTests {
         callbackCaptor.getValue().error(ExtensionError.UNEXPECTED_ERROR);
     }
 
-
     @Test
     public void test_processEvents_when_OSLocationEvent() {
         // setup
@@ -612,6 +609,27 @@ public class PlacesMonitorInternalTests {
 		verify(geofenceManager, times(0)).stopMonitoringFences(true);
 	}
 
+	@Test
+	public void test_processEvents_when_OSEventWithEmptyEventData() {
+		// setup
+		initWithContext(context);
+		Event osEvent = new Event.Builder("OS Event",
+				PlacesMonitorTestConstants.EventType.OS,
+				PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT).setData(null).build();
+		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
+		Whitebox.setInternalState(monitorInternal, "geofenceManager", geofenceManager);
+
+		// test
+		monitorInternal.queueEvent(osEvent);
+		monitorInternal.processEvents();
+
+		// verify no internal methods are called
+		verify(geofenceManager, times(0)).onGeofenceTriggerReceived(geofenceTransitionEventData());
+		verify(locationManager, times(0)).onLocationReceived(locationUpdateEventData());
+		verify(locationManager, times(0)).beginLocationTracking();
+		verify(locationManager, times(0)).stopMonitoring();
+		verify(geofenceManager, times(0)).stopMonitoringFences(true);
+	}
 
 	@Test
 	public void test_processEvents_when_OSEventWithEmptyEventType() {
@@ -654,7 +672,6 @@ public class PlacesMonitorInternalTests {
 		verify(geofenceManager, times(0)).stopMonitoringFences(true);
     }
 
-
 	@Test
 	public void test_processEvents_when_LocationPermissionEvent_DeniedStatus() {
 		// setup
@@ -671,7 +688,6 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(1)).stopMonitoring();
 		verify(geofenceManager, times(1)).stopMonitoringFences(true);
 	}
-
 
 	@Test
 	public void test_processEvents_when_LocationPermissionEvent_UnknownStatus() {
@@ -764,7 +780,6 @@ public class PlacesMonitorInternalTests {
 		verify(geofenceManager, times(1)).startMonitoringFences(nearbyPois);
 	}
 
-
 	@Test
 	public void test_getPOIsForLocation_when_failure_with_ConfigurationError() {
 		// setup
@@ -790,7 +805,6 @@ public class PlacesMonitorInternalTests {
 		verify(locationManager, times(1)).stopMonitoring();
 		verify(geofenceManager, times(1)).stopMonitoringFences(true);
 	}
-
 
 	@Test
 	public void test_getPOIsForLocation_when_failure_with_OtherErrors() {
@@ -898,7 +912,6 @@ public class PlacesMonitorInternalTests {
         geofenceIds.add("id2");
         return geofenceIds;
     }
-
 
 	private Event makePermissionChangeEvent(final String permissionStatus) {
 		EventData data = new EventData(new HashMap<String, Variant>() {{

@@ -688,7 +688,7 @@ public class PlacesLocationManagerTests {
 	// ========================================================================================
 
 	@Test
-    public void test_onLocationReceived() {
+    public void test_onLocationReceived(){
         // setup
         final ArgumentCaptor<Location> locationCaptor = ArgumentCaptor.forClass(Location.class);
 
@@ -701,7 +701,7 @@ public class PlacesLocationManagerTests {
     }
 
     @Test
-    public void test_onLocationReceived_InvalidLatitude() throws Exception {
+    public void test_onLocationReceived_InvalidLatitude(){
         // test
         locationManager.onLocationReceived(locationUpdateEventData(222.22,33.33));
 
@@ -710,7 +710,7 @@ public class PlacesLocationManagerTests {
     }
 
     @Test
-    public void test_onLocationReceived_InvalidLongitude() throws Exception {
+    public void test_onLocationReceived_InvalidLongitude(){
         // test
         locationManager.onLocationReceived(locationUpdateEventData(22.22,333.33));
 
@@ -719,7 +719,7 @@ public class PlacesLocationManagerTests {
     }
 
     @Test
-    public void test_onLocationReceived_EventDataWithInvalidLatitudeDataType() throws Exception {
+    public void test_onLocationReceived_EventDataWithInvalidLatitudeDataType(){
 	    // setup
         EventData eventData = new EventData(new HashMap<String,Variant>()
         {{put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE, Variant.fromString(PlacesMonitorTestConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_UPDATE));

@@ -145,7 +145,7 @@ class PlacesGeofenceManager {
 				continue;
 			}
 
-			// if the user is not withIn the poi and userWithinGeofences list contains the poi, remove it
+			// if the user is not within the poi and userWithinGeofences list contains the poi, remove it
 			if (!poi.containsUser() && userWithinGeofences.contains(poi.getIdentifier())) {
 				userWithinGeofences.remove(poi.getIdentifier());
 			}
@@ -194,11 +194,12 @@ class PlacesGeofenceManager {
 	 * Handler for processing the received geofence event.
 	 *
 	 * <p>
+	 * Make sure this method is called with non-null eventData.
 	 * This method will be called when the OS event for Geofence transitions is received.
 	 * This method curates the list of geofence transitions received to prevent duplicate entry/exits and then
 	 * calls the {@link PlacesExtension} to process the obtained {@link Geofence} triggers.
 	 *
-	 * @param eventData the {@link EventData} from the OS Event containing geofence transition information.
+	 * @param eventData the {@link EventData} from the OS Event containing geofence transition information
 	 * @see Places#processGeofence(Geofence, int)
 	 */
 	void onGeofenceTriggerReceived(final EventData eventData) {
@@ -246,7 +247,7 @@ class PlacesGeofenceManager {
 	/**
 	 * Compares with the existing in-memory {@code #userWithinGeofences} list, ignores the duplicate entry event,
 	 * updates the in-memory {@code #userWithinGeofences} variable with the obtained geofences and finally returns the curated list
-	 * of GeofenceIDs that needs to be processed
+	 * of GeofenceIDs that needs to be processed.
 	 *
 	 *
 	 * @param obtainedGeofenceIds A {@link List} of {@code String} representing geofenceIDs obtained from the OS event
