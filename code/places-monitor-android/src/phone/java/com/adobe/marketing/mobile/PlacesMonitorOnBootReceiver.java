@@ -19,7 +19,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-
 /**
  * Broadcast receiver for the device boot event.
  * <p>
