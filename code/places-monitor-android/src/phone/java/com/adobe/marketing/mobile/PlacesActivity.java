@@ -116,7 +116,7 @@ public class PlacesActivity extends Activity {
 		Context context = App.getAppContext();
 
 		if (context == null) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "Unable to request permission, context is null");
+			Log.warning(PlacesMonitorConstants.LOG_TAG, "Unable to request permission, App context is null");
 			return;
 		}
 

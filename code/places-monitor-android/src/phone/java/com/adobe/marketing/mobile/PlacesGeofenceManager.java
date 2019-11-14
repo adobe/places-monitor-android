@@ -25,7 +25,6 @@ import android.support.v4.app.ActivityCompat;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
-import com.google.android.gms.location.GeofencingEvent;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -211,12 +210,12 @@ class PlacesGeofenceManager {
 			geofenceIDs = eventData.getStringList(PlacesMonitorConstants.EventDataKey.GEOFENCE_IDS);
 			transitionType = eventData.getInteger(PlacesMonitorConstants.EventDataKey.GEOFENCE_TRANSITION_TYPE);
 		} catch (VariantException exp) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "Exception occured while reading the geofenceIds from the OS event. " + exp.getMessage() + "Ignoring the OS event.");
+			Log.warning(PlacesMonitorConstants.LOG_TAG, String.format("Exception occurred while reading the geofenceIds from the OS event, ignoring the OS event. Exception message - ", exp.getMessage()));
 			return;
 		}
 
-		if(geofenceIDs == null || geofenceIDs.size() <=0) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "no geofenceId's are obtained from OS geofence event. Ignoring the OS event.");
+		if(geofenceIDs == null || geofenceIDs.isEmpty()) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG, "No geofenceId's are obtained from OS geofence event. Ignoring the OS event.");
 			return;
 		}
 
@@ -228,8 +227,8 @@ class PlacesGeofenceManager {
 			// Creating a geofence object.
 			// To successfully create a geofence object, setting of latitude, longitude, radius, transition type and expiry duration are required.
 			// Note : This geofence object is created with inconsequential latitude, longitude and radius.
-			// Places API method processGeofence only reads the geofenceId of the triggered fences. Moreover latitude, longitude and radius cannot be extracted
-			// from the geofence object. Unless its passed to android for monitoring.
+			// Places API method processGeofence only reads the geofenceId of the triggered fences. Other data elements are not used by the Places.processGeofence API.
+			// Moreover latitude, longitude and radius cannot be extracted from the geofence object. Unless its passed to android for monitoring.
 			Geofence geofence = new Geofence.Builder()
 					.setRequestId(geofenceID)
 					.setExpirationDuration(Geofence.NEVER_EXPIRE)
@@ -265,8 +264,7 @@ class PlacesGeofenceManager {
 					curatedGeofenceList.add(geofenceID);
 					userWithinGeofences.add(geofenceID);
 				} else {
-					Log.debug(PlacesMonitorConstants.LOG_TAG,
-							  "Ignoring to process the entry of geofence" + geofenceID + ".Because an entry was already recorded");
+					Log.debug(PlacesMonitorConstants.LOG_TAG, String.format("Ignoring to process the entry of geofenceId %s. Because an entry was already recorded",geofenceID));
 				}
 			}
 		}
@@ -359,7 +357,7 @@ class PlacesGeofenceManager {
 		AdobeCallback<String> onFailiure = new AdobeCallback<String>() {
 			@Override
 			public void call(String message) {
-				Log.warning(PlacesMonitorConstants.LOG_TAG, "Unable to unregister old nearByPois," + message);
+				Log.warning(PlacesMonitorConstants.LOG_TAG, String.format("Unable to unregister old nearByPois. Error message %s.", message));
 				registerPOIs(nearByPOIs);
 			}
 		};
@@ -469,10 +467,7 @@ class PlacesGeofenceManager {
 			.setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
 								Geofence.GEOFENCE_TRANSITION_EXIT)
 			.build();
-			Log.debug(PlacesMonitorConstants.LOG_TAG, "Attempting to Monitor POI with id " + poi.getIdentifier() +
-					  " name " + poi.getName() +
-					  " latitude " + poi.getLatitude() +
-					  " longitude " + poi.getLongitude());
+			Log.debug(PlacesMonitorConstants.LOG_TAG, String.format("Attempting to Monitor POI with id %s name %s latitude %s longitude %s", poi.getIdentifier(), poi.getName(), poi.getLatitude(), poi.getLongitude()));
 			geofences.add(fence);
 		}
 
@@ -495,7 +490,7 @@ class PlacesGeofenceManager {
 			task.addOnSuccessListener(new OnSuccessListener<Void>() {
 				@Override
 				public void onSuccess(Void aVoid) {
-					Log.debug(PlacesMonitorConstants.LOG_TAG, "Successfully added " + geofences.size() + " fences for monitoring");
+					Log.debug(PlacesMonitorConstants.LOG_TAG, String.format("Successfully added %d fences for monitoring",geofences.size()));
 				}
 			});
 			task.addOnFailureListener(new OnFailureListener() {

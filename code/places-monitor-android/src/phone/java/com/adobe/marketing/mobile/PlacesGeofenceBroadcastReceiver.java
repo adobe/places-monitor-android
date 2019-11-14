@@ -65,6 +65,12 @@ public class PlacesGeofenceBroadcastReceiver extends BroadcastReceiver {
 
 		GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
 
+		if (geofencingEvent == null) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+					"PlacesGeofenceBroadcastReceiver : Unable to process the geofence trigger, GeofencingEvent is null");
+			return;
+		}
+
 		if (geofencingEvent.hasError()) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
 					"PlacesGeofenceBroadcastReceiver : Cannot process the geofence trigger, Geofencing event has error. Ignoring region event.");
@@ -108,14 +114,7 @@ public class PlacesGeofenceBroadcastReceiver extends BroadcastReceiver {
 					"PlacesGeofenceBroadcastReceiver : Successfully dispatched OS Response event with geofence transitions");
 		}
 		else {
-			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"PlacesGeofenceBroadcastReceiver : Unable to dispatch the OS Response event with geofence transitions");
+			Log.warning(PlacesMonitorConstants.LOG_TAG,String.format("PlacesGeofenceBroadcastReceiver : Unable to dispatch the OS Response event with geofence transitions %s", event.getEventData()));
 		}
 	}
-
-
-
-
-
-
 }
