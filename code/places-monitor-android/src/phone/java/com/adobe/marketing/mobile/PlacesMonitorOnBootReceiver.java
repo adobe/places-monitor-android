@@ -9,6 +9,10 @@
  governing permissions and limitations under the License.
 */
 
+//
+// PlacesMonitorOnBootReceiver.java
+//
+
 package com.adobe.marketing.mobile;
 
 import android.content.BroadcastReceiver;
@@ -16,9 +20,14 @@ import android.content.Context;
 import android.content.Intent;
 
 /**
+ * Broadcast receiver for the device boot event.
  * <p>
- * PlacesOnBootReceiver is used to receive the boot broadcast from the OS after the user has finished booting.
- * </p>
+ * The {@link #onReceive(Context, Intent)} method of this class is called when the device has finished booting.
+ * This broadcast receiver attempts to restore the geofences after the Android device is rebooted.
+ * Geofence tracking or the location tracking will not be restarted, if the PlacesMonitor hasn't been started
+ * or if the privacy status is opted out.
+ *
+ * @see PlacesMonitor#start()
  */
 
 public class PlacesMonitorOnBootReceiver extends BroadcastReceiver {
