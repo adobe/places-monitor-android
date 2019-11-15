@@ -15,7 +15,6 @@
 
 package com.adobe.marketing.mobile;
 
-import android.content.Context;
 import android.location.Location;
 
 
@@ -48,7 +47,7 @@ class PlacesMonitorInternal extends Extension {
 	 * 	 *  and EventSource {@link PlacesMonitorConstants.EventSource#RESPONSE_CONTENT}</li>
 	 * </ul>
 	 *
-	 * @param extensionApi {@link ExtensionApi} instance
+	 * @param extensionApi 	{@link ExtensionApi} instance
 	 */
 	protected PlacesMonitorInternal(final ExtensionApi extensionApi) {
 		super(extensionApi);
@@ -61,7 +60,7 @@ class PlacesMonitorInternal extends Extension {
 			@Override
 			public void error(ExtensionError extensionError) {
 				if (extensionError != null) {
-					Log.warning("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerHubSharedState for Event Hub shared state events: %s",
+					Log.error("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerHubSharedState for Event Hub shared state events: %s",
 								extensionError.getErrorName());
 				}
 			}
@@ -75,7 +74,7 @@ class PlacesMonitorInternal extends Extension {
 			@Override
 			public void error(ExtensionError extensionError) {
 				if (extensionError != null) {
-					Log.warning("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerPlacesResponseContent for Places Monitor request events: %s",
+					Log.error("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerPlacesResponseContent for Places Monitor request events: %s",
 								extensionError.getErrorName());
 				}
 			}
@@ -90,7 +89,7 @@ class PlacesMonitorInternal extends Extension {
 					@Override
 					public void error(ExtensionError extensionError) {
 						if (extensionError != null) {
-							Log.warning("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerOSResponseContent for OS response events: %s",
+							Log.error("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerOSResponseContent for OS response events: %s",
 									extensionError.getErrorName());
 						}
 					}
@@ -102,25 +101,17 @@ class PlacesMonitorInternal extends Extension {
 		geofenceManager.loadPersistedData();
 		eventQueue = new ConcurrentLinkedQueue<>();
 
-		Context context = App.getAppContext();
-
-		if (context == null) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"PlacesMonitorInternal : Context is null, Internal Broadcast receivers not initialized");
-			return;
-		}
-
 		Log.debug(PlacesMonitorConstants.LOG_TAG,"Registering Places Monitoring extension - version %s", PlacesMonitorConstants.EXTENSION_VERSION);
-
 	}
 
 	/**
 	 * Overridden method of {@link Extension} class to handle error occurred during registration of the module.
 	 *
-	 * @param extensionUnexpectedError {@link ExtensionUnexpectedError} occurred exception
+	 * @param extensionUnexpectedError 	{@link ExtensionUnexpectedError} occurred exception
 	 */
 	@Override
 	protected void onUnexpectedError(ExtensionUnexpectedError extensionUnexpectedError) {
+		Log.error(PlacesMonitorConstants.LOG_TAG, String.format("Unexpected error occurred while registering PlacesMonitor extension. Error message %s", extensionUnexpectedError.getMessage()));
 		this.onUnregistered();
 	}
 
@@ -164,7 +155,7 @@ class PlacesMonitorInternal extends Extension {
 	 * {@link PlacesMonitorConstants#NEARBY_GEOFENCES_COUNT} nearby points of interest around the given location.
 	 * The obtained POIs are then passed to {@link #geofenceManager} to start monitoring for entry/exit events.
 	 *
-	 * @param location A {@link Location} instance representing device's current location
+	 * @param location 	A {@link Location} instance representing device's current location
 	 */
 	void getPOIsForLocation(final Location location) {
 		if (location == null) {
@@ -197,7 +188,7 @@ class PlacesMonitorInternal extends Extension {
 	 * The queued events are then processed in an orderly fashion.
 	 * No action is taken if the provided event's value is null.
 	 *
-	 * @param event The {@link Event} thats needs to be queued
+	 * @param event 	The {@link Event} thats needs to be queued
 	 */
 	void queueEvent(final Event event) {
 		if (event == null) {
@@ -262,7 +253,7 @@ class PlacesMonitorInternal extends Extension {
 	 * <p>
 	 * Differentiates the event by the given name and processes them accordingly.
 	 *
-	 * @param event MonitorRequestContent {@link Event} to process
+	 * @param event 	MonitorRequestContent {@link Event} to process
 	 */
 	private void processMonitorRequestEvent(final Event event) {
 		final String eventName = event.getName();
@@ -290,21 +281,36 @@ class PlacesMonitorInternal extends Extension {
 	}
 
 
+	/**
+	 * Method to process OS response event.
+	 *
+	 * <p>
+	 * This function looks for the appropriate eventData keys and processes the following OS Events:
+	 * <ul>
+	 *     <li> Location change event
+	 *     <li> Geofence transition event
+	 *     <li> Permission change event
+	 * </ul>
+	 * This method will not process the event if the eventData doesn't contain the required eventData keys.
+	 *
+	 * @param event 	An OS {@link Event} to be processed
+	 */
 	private void processOSResponseEvent(final Event event) {
 		EventData eventData = event.getData();
 		if(eventData == null || eventData.isEmpty()){
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Received empty eventData , Ignoring event OS event.");
+			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Received empty eventData , Ignoring OS event.");
 			return;
 		}
 		String eventType;
 		try {
 			eventType = eventData.getString2(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE);
 		} catch (VariantException exception) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Invalid eventType for OS responseContent event, Ignoring event OS event.");
-			return; }
+			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Invalid eventType for OS responseContent event, Ignoring OS event.");
+			return;
+		}
 
 		if(StringUtils.isNullOrEmpty(eventType)){
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Null/Empty eventType for OS responseContent event, Ignoring event OS event.");
+			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Null/Empty eventType for OS responseContent event, Ignoring OS event.");
 			return;
 		}
 
@@ -325,12 +331,17 @@ class PlacesMonitorInternal extends Extension {
 				break;
 			}
 			default: {
-				Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Invalid eventType for OS responseContent event, Ignoring event OS event.");
+				Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Invalid eventType for OS responseContent event, Ignoring OS event.");
 			}
 
 		}
 	}
 
+	/**
+	 * Method to handle the OS event for location permission change.
+	 *
+	 * @param eventData A {@link EventData} of the OS event containing the permission status
+	 */
 	private void handlePermissionChange(final EventData eventData) {
 		String permissionStatus;
 		try {
@@ -366,7 +377,7 @@ class PlacesMonitorInternal extends Extension {
 	/**
 	 * Method to handle the error that occurred while getting the nearbyPointOfInterest.
 	 *
-	 * @param error A {@link PlacesRequestError} representing the type of error
+	 * @param error 	A {@link PlacesRequestError} representing the type of error
 	 */
 	private void handlePlacesRequestError(final PlacesRequestError error) {
 		String errorString = "";

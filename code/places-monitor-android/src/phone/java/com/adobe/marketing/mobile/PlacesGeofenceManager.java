@@ -63,7 +63,7 @@ class PlacesGeofenceManager {
 	 * This method is called by {@link PlacesMonitorInternal} when new set of POIs are available for monitoring.
 	 * No action will be performed if the {@link GeofencingClient} required for the monitoring the POIs is null.
 	 *
-	 * @param nearByPOIs A {@link List} of n nearBy {@link PlacesPOI} objects
+	 * @param nearByPOIs 	A {@link List} of n nearBy {@link PlacesPOI} objects
 	 * @see #getGeofencingClient()
 	 */
 	void startMonitoringFences(List<PlacesPOI> nearByPOIs) {
@@ -453,13 +453,13 @@ class PlacesGeofenceManager {
 
 		for (PlacesPOI poi : nearByPOIs) {
 
-			/**
-			 * If a geofence was previously registered, reading them will just replace the old one, which
-			 * in our case is a no-op. We therefore don't really need to keep track which geofence was
-			 * registered before, which can go out of sync anyway with the OS. Furthermore, android
-			 * does not provide any API to query which geofences are currenty monitored, so it's safer
-			 * to re-register previously registered geofences.
-			 */
+
+			 // If a geofence was previously registered, reading them will just replace the old one, which
+			 // in our case is a no-op. We therefore don't really need to keep track which geofence was
+			 // registered before, which can go out of sync anyway with the OS. Furthermore, android
+			 // does not provide any API to query which geofences are currently monitored, so it's safer
+			 // to re-register previously registered geofences.
+
 			final Geofence fence = new Geofence.Builder()
 			.setRequestId(poi.getIdentifier())
 			.setCircularRegion(poi.getLatitude(), poi.getLongitude(), poi.getRadius())
@@ -478,10 +478,11 @@ class PlacesGeofenceManager {
 
 		GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
 
-		/*	by default initial trigger is set to INITIAL_TRIGGER_ENTER | INITIAL_TRIGGER_DWELL
-		*   This is not what we want since it will result in duplicate triggers if we are already
-		 *   inside POI(s).
-		* */
+
+		 // By default initial trigger is set to INITIAL_TRIGGER_ENTER | INITIAL_TRIGGER_DWELL
+		 // This is not what we want since it will result in duplicate triggers if we are already
+		 // inside POI(s).
+
 		builder.setInitialTrigger(0);
 		builder.addGeofences(geofences);
 

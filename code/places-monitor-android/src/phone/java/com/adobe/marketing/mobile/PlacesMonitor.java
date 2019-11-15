@@ -15,9 +15,6 @@
 
 package com.adobe.marketing.mobile;
 
-import android.location.Location;
-import android.location.LocationManager;
-
 public class PlacesMonitor {
 
 	/**

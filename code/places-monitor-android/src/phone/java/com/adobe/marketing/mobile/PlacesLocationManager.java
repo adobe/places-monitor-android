@@ -272,13 +272,13 @@ class PlacesLocationManager {
 			longitude = eventData.getDouble(PlacesMonitorConstants.EventDataKey.LONGITUDE);
 		}
 		catch (VariantException exception) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesLocationManager : Exception occurred while extracting latitude/longitude from the OS event. Ignoring location update event." + exception.getMessage());
+			Log.warning(PlacesMonitorConstants.LOG_TAG, String.format("PlacesLocationManager : Exception occurred while extracting latitude/longitude from the OS event. Ignoring location update event. Error message - %s", exception.getMessage()));
 			return;
 		}
 
 
 		if(!isValidLat(latitude) || !isValidLon(longitude)){
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesLocationManager : Invalid Latitude: ("+latitude+") or Longitude (" + longitude + ") obtained from the OS event. Ignoring location update event.");
+			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesLocationManager : Invalid Latitude: (" +latitude+ ") or Longitude (" + longitude + ") obtained from the OS event. Ignoring location update event.");
 			return;
 		}
 

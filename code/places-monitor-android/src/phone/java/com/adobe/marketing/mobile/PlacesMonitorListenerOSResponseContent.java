@@ -52,12 +52,14 @@ public class PlacesMonitorListenerOSResponseContent extends ExtensionListener {
     @Override
     public void hear(final Event event) {
         if (event.getEventData() == null) {
+            Log.warning(PlacesMonitorConstants.LOG_TAG, "EventData is null, ignoring the OS response content event.");
             return;
         }
 
         final PlacesMonitorInternal parentExtension = (PlacesMonitorInternal) super.getParentExtension();
 
         if (parentExtension == null) {
+            Log.warning(PlacesMonitorConstants.LOG_TAG, "The parent extension, associated with the PlacesMonitorListenerOSResponseContent is null, ignoring the OS response content event.");
             return;
         }
 

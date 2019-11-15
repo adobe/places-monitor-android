@@ -42,8 +42,8 @@ public class PlacesLocationBroadcastReceiver extends BroadcastReceiver {
 	 *  No action is performed if the received {@code LocationResult} is null.
 	 *  No action is performed if the location array or the location is null.
 	 *
-	 * @param context the application's {@link Context}
-	 * @param intent the broadcasted location message wrapped in an intent
+	 * @param context 	the application's {@link Context}
+	 * @param intent 	the broadcasted location message wrapped in an intent
 	 */
 	@Override
 	public void onReceive(Context context, Intent intent) {
@@ -88,6 +88,13 @@ public class PlacesLocationBroadcastReceiver extends BroadcastReceiver {
 	}
 
 
+	/**
+	 * Creates and dispatches {@link PlacesMonitorConstants.EventType#OS} {@link PlacesMonitorConstants.EventSource#RESPONSE_CONTENT} event with
+	 * obtained latitude and longitude to the eventHub.
+	 *
+	 * @param latitude 		{@code double} indicating latitude value
+	 * @param longitude		{@code double} indicating longitude value
+	 */
 	private void dispatchOSLocationUpdateEvent(final double latitude, final double longitude) {
 		HashMap<String,Object> eventData = new HashMap<>();
 		eventData.put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE, PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_UPDATE);
@@ -101,8 +108,7 @@ public class PlacesLocationBroadcastReceiver extends BroadcastReceiver {
 					"PlacesLocationBroadcastReceiver : Successfully dispatched OS Response event with new location");
 		}
 		else {
-			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"PlacesLocationBroadcastReceiver : Unable to dispatch the OS Response event with new location");
+			Log.warning(PlacesMonitorConstants.LOG_TAG,String.format("PlacesLocationBroadcastReceiver : Unable to dispatch the OS Response event with new location %s", eventData));
 		}
 
 	}

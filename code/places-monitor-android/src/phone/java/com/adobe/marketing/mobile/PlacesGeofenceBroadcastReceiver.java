@@ -44,8 +44,8 @@ public class PlacesGeofenceBroadcastReceiver extends BroadcastReceiver {
 	 *  No action is taken if actionName of the intent is not equal to {@link #ACTION_GEOFENCE_UPDATE}.
 	 *  No action is taken if {@link GeofencingEvent} has error or if no geofences associated with the event.
 	 *
-	 * @param context the application's {@link Context}
-	 * @param intent the broadcasted geofence event message wrapped in an intent
+	 * @param context 	the application's {@link Context}
+	 * @param intent 	the broadcasted geofence event message wrapped in an intent
 	 */
 	@Override
 	public void onReceive(Context context, Intent intent) {
@@ -98,6 +98,13 @@ public class PlacesGeofenceBroadcastReceiver extends BroadcastReceiver {
 	}
 
 
+	/**
+	 * Creates and dispatches {@link PlacesMonitorConstants.EventType#OS} {@link PlacesMonitorConstants.EventSource#RESPONSE_CONTENT} event with
+	 * obtained list of geofenceIDs and transitionType to the eventHub.
+	 *
+	 * @param geofenceIDs		A {@link List} of geofenceIDs
+	 * @param transitionType	An {@code int} representing the type of geofence transition
+	 */
 	private void dispatchOSGeofenceTriggerEvent(final List<String> geofenceIDs, final int transitionType) {
 		// create eventData
 		HashMap<String,Object> eventData = new HashMap<>();
