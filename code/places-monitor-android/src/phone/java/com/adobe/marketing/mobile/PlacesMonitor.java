@@ -71,7 +71,7 @@ public class PlacesMonitor {
 	public static void setLocationPermission(final PlacesMonitorLocationPermission placesMonitorLocationPermission) {
 		EventData data = new EventData();
 		String locationPermissionString = placesMonitorLocationPermission == null ? null : placesMonitorLocationPermission.getValue();
-		data.putString(PlacesMonitorConstants.EventDataKeys.EVENT_DATA_LOCATION_PERMISSION, locationPermissionString);
+		data.putString(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION, locationPermissionString);
 		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_SET_LOCATION_PERMISSION, data);
 	}
 
@@ -147,7 +147,7 @@ public class PlacesMonitor {
 	 */
 	private static void dispatchStopEvent(final boolean clearData) {
 		EventData data = new EventData();
-		data.putBoolean(PlacesMonitorConstants.EventDataKeys.EVENT_DATA_CLEAR, clearData);
+		data.putBoolean(PlacesMonitorConstants.EventDataKey.CLEAR, clearData);
 		final Event stopEvent = new Event.Builder(PlacesMonitorConstants.EVENTNAME_STOP,
 				PlacesMonitorConstants.EventType.MONITOR,
 				PlacesMonitorConstants.EventSource.REQUEST_CONTENT).setData(data).build();

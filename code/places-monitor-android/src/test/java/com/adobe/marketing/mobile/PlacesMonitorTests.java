@@ -28,7 +28,6 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
@@ -135,7 +134,7 @@ public class PlacesMonitorTests {
 				event.getSource());
 		// verify eventData
 		Map<String,Object> data =event.getEventData();
-		assertEquals(true, data.get(PlacesMonitorTestConstants.EventDataKeys.EVENT_DATA_CLEAR));
+		assertEquals(true, data.get(PlacesMonitorTestConstants.EventDataKey.CLEAR));
 	}
 
 
@@ -164,7 +163,7 @@ public class PlacesMonitorTests {
 				event.getSource());
 		// verify eventData
 		Map<String,Object> data =event.getEventData();
-		assertEquals(false, data.get(PlacesMonitorTestConstants.EventDataKeys.EVENT_DATA_CLEAR));
+		assertEquals(false, data.get(PlacesMonitorTestConstants.EventDataKey.CLEAR));
 	}
 
 
@@ -226,7 +225,7 @@ public class PlacesMonitorTests {
 		assertEquals("the event source should be correct", PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT,
 				event.getSource());
 		assertEquals("the event data size should be correct",1, event.getEventData().size());
-		assertEquals("the event data should be correct",PlacesMonitorLocationPermission.WHILE_USING_APP.getValue(), event.getEventData().get(PlacesMonitorTestConstants.EventDataKeys.EVENT_DATA_LOCATION_PERMISSION));
+		assertEquals("the event data should be correct",PlacesMonitorLocationPermission.WHILE_USING_APP.getValue(), event.getEventData().get(PlacesMonitorTestConstants.EventDataKey.LOCATION_PERMISSION));
 	}
 
 	// ========================================================================================
