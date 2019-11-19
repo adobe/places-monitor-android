@@ -56,13 +56,13 @@ public class PlacesMonitorInternalTests {
 			PlacesMonitorTestConstants.EventType.MONITOR,
 			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).build();
 
-    private Event OSLocationEvent = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_OS_LOCATION_UPDATE,
-            PlacesMonitorTestConstants.EventType.OS,
-            PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT).setData(locationUpdateEventData()).build();
+	private Event OSLocationEvent = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_OS_LOCATION_UPDATE,
+			PlacesMonitorTestConstants.EventType.OS,
+			PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT).setData(locationUpdateEventData()).build();
 
-    private Event OSGeofenceEvent = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_OS_GEOFENCE_TRIGGER,
-            PlacesMonitorTestConstants.EventType.OS,
-            PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT).setData(geofenceTransitionEventData()).build();
+	private Event OSGeofenceEvent = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_OS_GEOFENCE_TRIGGER,
+			PlacesMonitorTestConstants.EventType.OS,
+			PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT).setData(geofenceTransitionEventData()).build();
 
 	private Event stopMonitoringEvent = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_STOP,
 			PlacesMonitorTestConstants.EventType.MONITOR,
@@ -70,26 +70,38 @@ public class PlacesMonitorInternalTests {
 
 	private Event stopMonitoringEventWithClearData = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_STOP,
 			PlacesMonitorTestConstants.EventType.MONITOR,
-			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(new EventData(new HashMap<String,Variant>()
-	{{ put(PlacesMonitorConstants.EventDataKey.CLEAR, Variant.fromBoolean(true)); }})).build();
+	PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(new EventData(new HashMap<String, Variant>() {
+		{
+			put(PlacesMonitorConstants.EventDataKey.CLEAR, Variant.fromBoolean(true));
+		}
+	})).build();
 
 	private Event stopMonitoringEventWithOutClearData = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_STOP,
 			PlacesMonitorTestConstants.EventType.MONITOR,
-			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(new EventData(new HashMap<String,Variant>()
-	{{ put(PlacesMonitorConstants.EventDataKey.CLEAR, Variant.fromBoolean(false)); }})).build();
+	PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(new EventData(new HashMap<String, Variant>() {
+		{
+			put(PlacesMonitorConstants.EventDataKey.CLEAR, Variant.fromBoolean(false));
+		}
+	})).build();
 
 	private Event updateLocationEvent = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_UPDATE,
 			PlacesMonitorTestConstants.EventType.MONITOR,
 			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).build();
 
-	private Event setLocationPermissionEvent = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_SET_LOCATION_PERMISSION,
-			PlacesMonitorTestConstants.EventType.MONITOR,
-			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(new EventData(new HashMap<String,Variant>()
-	{{ put(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION, Variant.fromString(PlacesMonitorLocationPermission.WHILE_USING_APP.getValue())); }})).build();
+	private Event setLocationPermissionEvent = new Event.Builder(
+		PlacesMonitorTestConstants.EVENTNAME_SET_LOCATION_PERMISSION,
+		PlacesMonitorTestConstants.EventType.MONITOR,
+	PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(new EventData(new HashMap<String, Variant>() {
+		{
+			put(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION,
+				Variant.fromString(PlacesMonitorLocationPermission.WHILE_USING_APP.getValue()));
+		}
+	})).build();
 
-	private Event setLocationPermissionEventNoEventData = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_SET_LOCATION_PERMISSION,
-			PlacesMonitorTestConstants.EventType.MONITOR,
-			PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).build();
+	private Event setLocationPermissionEventNoEventData = new Event.Builder(
+		PlacesMonitorTestConstants.EVENTNAME_SET_LOCATION_PERMISSION,
+		PlacesMonitorTestConstants.EventType.MONITOR,
+		PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).build();
 
 	private Event invalidMonitorRequestEvent = new Event.Builder("Invalid API",
 			PlacesMonitorTestConstants.EventType.MONITOR,
@@ -102,7 +114,7 @@ public class PlacesMonitorInternalTests {
 	Context context;
 
 	@Mock
-    ExtensionUnexpectedError extensionUnexpectedError;
+	ExtensionUnexpectedError extensionUnexpectedError;
 
 	@Mock
 	ExtensionApi extensionApi;
@@ -224,19 +236,19 @@ public class PlacesMonitorInternalTests {
 		verify(extensionApi, times(1)).clearSharedEventStates(null);
 	}
 
-    // ========================================================================================
-    // onUnregistered
-    // ========================================================================================
+	// ========================================================================================
+	// onUnregistered
+	// ========================================================================================
 
-    @Test
-    public void test_onUnregistered() {
-        // setup
-        initWithContext(context);
+	@Test
+	public void test_onUnregistered() {
+		// setup
+		initWithContext(context);
 
-        // test
-        monitorInternal.onUnregistered();
-        verify(extensionApi, times(1)).clearSharedEventStates(null);
-    }
+		// test
+		monitorInternal.onUnregistered();
+		verify(extensionApi, times(1)).clearSharedEventStates(null);
+	}
 
 	// ========================================================================================
 	// queueEvent
@@ -342,7 +354,7 @@ public class PlacesMonitorInternalTests {
 		Map<String, Object> configData = new HashMap<>();
 		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
 		when(extensionApi.getSharedEventState(anyString(), any(Event.class),
-				any(ExtensionErrorCallback.class))).thenReturn(configData);
+											  any(ExtensionErrorCallback.class))).thenReturn(configData);
 
 		// test
 		monitorInternal.queueEvent(stopMonitoringEventWithOutClearData);
@@ -370,7 +382,7 @@ public class PlacesMonitorInternalTests {
 		Map<String, Object> configData = new HashMap<>();
 		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
 		when(extensionApi.getSharedEventState(anyString(), any(Event.class),
-				any(ExtensionErrorCallback.class))).thenReturn(configData);
+											  any(ExtensionErrorCallback.class))).thenReturn(configData);
 
 		// test
 		monitorInternal.queueEvent(stopMonitoringEvent);
@@ -447,7 +459,7 @@ public class PlacesMonitorInternalTests {
 		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
 		Map<String, Object> configData = new HashMap<>();
 		when(extensionApi.getSharedEventState(anyString(), any(Event.class),
-				any(ExtensionErrorCallback.class))).thenReturn(configData);
+											  any(ExtensionErrorCallback.class))).thenReturn(configData);
 
 		// test
 		monitorInternal.queueEvent(setLocationPermissionEvent);
@@ -471,7 +483,7 @@ public class PlacesMonitorInternalTests {
 		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
 		Map<String, Object> configData = new HashMap<>();
 		when(extensionApi.getSharedEventState(anyString(), any(Event.class),
-				any(ExtensionErrorCallback.class))).thenReturn(configData);
+											  any(ExtensionErrorCallback.class))).thenReturn(configData);
 
 		// test
 		monitorInternal.queueEvent(setLocationPermissionEventNoEventData);
@@ -540,55 +552,55 @@ public class PlacesMonitorInternalTests {
 	}
 
 	@Test
-    public void test_processEvents_when_configurationRetrievalError() {
-        // setup
-        initWithContext(context);
-        when(extensionApi.getSharedEventState(anyString(), any(Event.class),
-                any(ExtensionErrorCallback.class))).thenReturn(null);
+	public void test_processEvents_when_configurationRetrievalError() {
+		// setup
+		initWithContext(context);
+		when(extensionApi.getSharedEventState(anyString(), any(Event.class),
+											  any(ExtensionErrorCallback.class))).thenReturn(null);
 
-        // setup argument captors
-        final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
+		// setup argument captors
+		final ArgumentCaptor<ExtensionErrorCallback> callbackCaptor = ArgumentCaptor.forClass(ExtensionErrorCallback.class);
 
-        // test
-        monitorInternal.queueEvent(startMonitoringEvent);
-        monitorInternal.processEvents();
+		// test
+		monitorInternal.queueEvent(startMonitoringEvent);
+		monitorInternal.processEvents();
 
-        // verify getSharedEventState callback
-        verify(extensionApi, times(1)).getSharedEventState(anyString(), any(Event.class), callbackCaptor.capture());
-        ExtensionErrorCallback extensionErrorCallback = callbackCaptor.getValue();
-        assertNotNull("the extension error callback should not be null", extensionErrorCallback);
+		// verify getSharedEventState callback
+		verify(extensionApi, times(1)).getSharedEventState(anyString(), any(Event.class), callbackCaptor.capture());
+		ExtensionErrorCallback extensionErrorCallback = callbackCaptor.getValue();
+		assertNotNull("the extension error callback should not be null", extensionErrorCallback);
 
-        // invoking callback with error, should not crash
-        callbackCaptor.getValue().error(ExtensionError.UNEXPECTED_ERROR);
-    }
+		// invoking callback with error, should not crash
+		callbackCaptor.getValue().error(ExtensionError.UNEXPECTED_ERROR);
+	}
 
-    @Test
-    public void test_processEvents_when_OSLocationEvent() {
-        // setup
-        initWithContext(context);
-        Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
+	@Test
+	public void test_processEvents_when_OSLocationEvent() {
+		// setup
+		initWithContext(context);
+		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
 
-        // test
-        monitorInternal.queueEvent(OSLocationEvent);
-        monitorInternal.processEvents();
+		// test
+		monitorInternal.queueEvent(OSLocationEvent);
+		monitorInternal.processEvents();
 
-        // verify locationManager is called with the correct data
-        verify(locationManager, times(1)).onLocationReceived(locationUpdateEventData());
-    }
+		// verify locationManager is called with the correct data
+		verify(locationManager, times(1)).onLocationReceived(locationUpdateEventData());
+	}
 
-    @Test
-    public void test_processEvents_when_OSGeofenceEvent() {
-        // setup
-        initWithContext(context);
-        Whitebox.setInternalState(monitorInternal, "geofenceManager", geofenceManager);
+	@Test
+	public void test_processEvents_when_OSGeofenceEvent() {
+		// setup
+		initWithContext(context);
+		Whitebox.setInternalState(monitorInternal, "geofenceManager", geofenceManager);
 
-        // test
-        monitorInternal.queueEvent(OSGeofenceEvent);
-        monitorInternal.processEvents();
+		// test
+		monitorInternal.queueEvent(OSGeofenceEvent);
+		monitorInternal.processEvents();
 
-        // verify geofenceManager is called with the correct data
-        verify(geofenceManager, times(1)).onGeofenceTriggerReceived(geofenceTransitionEventData());
-    }
+		// verify geofenceManager is called with the correct data
+		verify(geofenceManager, times(1)).onGeofenceTriggerReceived(geofenceTransitionEventData());
+	}
 
 	@Test
 	public void test_processEvents_when_OSEventUnknownType() {
@@ -614,8 +626,8 @@ public class PlacesMonitorInternalTests {
 		// setup
 		initWithContext(context);
 		Event osEvent = new Event.Builder("OS Event",
-				PlacesMonitorTestConstants.EventType.OS,
-				PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT).setData(null).build();
+										  PlacesMonitorTestConstants.EventType.OS,
+										  PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT).setData(null).build();
 		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
 		Whitebox.setInternalState(monitorInternal, "geofenceManager", geofenceManager);
 
@@ -655,22 +667,23 @@ public class PlacesMonitorInternalTests {
 	// process OS location permission change events
 	// ========================================================================================
 
-    @Test
-    public void test_processEvents_when_LocationPermissionEvent_GrantedStatus() {
-        // setup
-        initWithContext(context);
+	@Test
+	public void test_processEvents_when_LocationPermissionEvent_GrantedStatus() {
+		// setup
+		initWithContext(context);
 		Whitebox.setInternalState(monitorInternal, "locationManager", locationManager);
 		Whitebox.setInternalState(monitorInternal, "geofenceManager", geofenceManager);
 
-        // test
-        monitorInternal.queueEvent(makePermissionChangeEvent(PlacesMonitorTestConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_GRANTED));
-        monitorInternal.processEvents();
+		// test
+		monitorInternal.queueEvent(makePermissionChangeEvent(
+									   PlacesMonitorTestConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_GRANTED));
+		monitorInternal.processEvents();
 
-        // verify if location tracking is started
+		// verify if location tracking is started
 		verify(locationManager, times(1)).beginLocationTracking();
 		verify(locationManager, times(0)).stopMonitoring();
 		verify(geofenceManager, times(0)).stopMonitoringFences(true);
-    }
+	}
 
 	@Test
 	public void test_processEvents_when_LocationPermissionEvent_DeniedStatus() {
@@ -680,7 +693,8 @@ public class PlacesMonitorInternalTests {
 		Whitebox.setInternalState(monitorInternal, "geofenceManager", geofenceManager);
 
 		// test
-		monitorInternal.queueEvent(makePermissionChangeEvent(PlacesMonitorTestConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_DENIED));
+		monitorInternal.queueEvent(makePermissionChangeEvent(
+									   PlacesMonitorTestConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_DENIED));
 		monitorInternal.processEvents();
 
 		// verify if the location tracking and geofence monitoring is stopped
@@ -820,7 +834,7 @@ public class PlacesMonitorInternalTests {
 		// verify
 		verifyStatic(Places.class, Mockito.times(1));
 		Places.getNearbyPointsOfInterest(any(Location.class), anyInt(), successCallbackCaptor.capture(),
-				failureCallbackCaptor.capture());
+										 failureCallbackCaptor.capture());
 
 		// call the failure callback with CONNECTIVITY_ERROR
 		failureCallbackCaptor.getValue().call(PlacesRequestError.CONNECTIVITY_ERROR);
@@ -893,46 +907,60 @@ public class PlacesMonitorInternalTests {
 	}
 
 	private EventData locationUpdateEventData() {
-	    return new EventData(new HashMap<String,Variant>()
-        {{put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE, Variant.fromString(PlacesMonitorTestConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_UPDATE));
-            put(PlacesMonitorConstants.EventDataKey.LATITUDE, Variant.fromDouble(22.22));
-            put(PlacesMonitorConstants.EventDataKey.LONGITUDE, Variant.fromDouble(33.33));}});
-    }
+		return new EventData(new HashMap<String, Variant>() {
+			{
+				put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE,
+					Variant.fromString(PlacesMonitorTestConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_UPDATE));
+				put(PlacesMonitorConstants.EventDataKey.LATITUDE, Variant.fromDouble(22.22));
+				put(PlacesMonitorConstants.EventDataKey.LONGITUDE, Variant.fromDouble(33.33));
+			}
+		});
+	}
 
-    private EventData geofenceTransitionEventData() {
-     return new EventData(new HashMap<String,Variant>()
-     {{ put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE, Variant.fromString(PlacesMonitorTestConstants.EventDataValue.OS_EVENT_TYPE_GEOFENCE_TRIGGER));
-         put(PlacesMonitorConstants.EventDataKey.GEOFENCE_IDS, Variant.fromStringList(getGeofenceIds()));
-         put(PlacesMonitorConstants.EventDataKey.GEOFENCE_TRANSITION_TYPE, Variant.fromInteger(Geofence.GEOFENCE_TRANSITION_ENTER));}});
-    }
+	private EventData geofenceTransitionEventData() {
+		return new EventData(new HashMap<String, Variant>() {
+			{
+				put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE,
+					Variant.fromString(PlacesMonitorTestConstants.EventDataValue.OS_EVENT_TYPE_GEOFENCE_TRIGGER));
+				put(PlacesMonitorConstants.EventDataKey.GEOFENCE_IDS, Variant.fromStringList(getGeofenceIds()));
+				put(PlacesMonitorConstants.EventDataKey.GEOFENCE_TRANSITION_TYPE,
+					Variant.fromInteger(Geofence.GEOFENCE_TRANSITION_ENTER));
+			}
+		});
+	}
 
 	private List<String> getGeofenceIds() {
-	    List<String> geofenceIds = new ArrayList<>();
-	    geofenceIds.add("id1");
-        geofenceIds.add("id2");
-        return geofenceIds;
-    }
+		List<String> geofenceIds = new ArrayList<>();
+		geofenceIds.add("id1");
+		geofenceIds.add("id2");
+		return geofenceIds;
+	}
 
 	private Event makePermissionChangeEvent(final String permissionStatus) {
-		EventData data = new EventData(new HashMap<String, Variant>() {{
-			put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE, Variant.fromString(PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_PERMISSION_CHANGE));
-			put(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION_STATUS, Variant.fromString(permissionStatus));
-		}});
+		EventData data = new EventData(new HashMap<String, Variant>() {
+			{
+				put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE,
+					Variant.fromString(PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_PERMISSION_CHANGE));
+				put(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION_STATUS, Variant.fromString(permissionStatus));
+			}
+		});
 
 		Event event = new Event.Builder(PlacesMonitorTestConstants.EVENTNAME_OS_PERMISSION_CHANGE,
-				PlacesMonitorTestConstants.EventType.OS,
-				PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT).setData(data).build();
+										PlacesMonitorTestConstants.EventType.OS,
+										PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT).setData(data).build();
 		return event;
 	}
 
 	private Event makeOSEvent(final String eventType) {
-		EventData data = new EventData(new HashMap<String, Variant>() {{
-			put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE, Variant.fromString(eventType));
-		}});
+		EventData data = new EventData(new HashMap<String, Variant>() {
+			{
+				put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE, Variant.fromString(eventType));
+			}
+		});
 
 		Event event = new Event.Builder("OS Event",
-				PlacesMonitorTestConstants.EventType.OS,
-				PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT).setData(data).build();
+										PlacesMonitorTestConstants.EventType.OS,
+										PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT).setData(data).build();
 		return event;
 	}
 

@@ -28,49 +28,49 @@ package com.adobe.marketing.mobile;
  * A new permission "Allow only while using the app" is added.
  */
 public enum PlacesMonitorLocationPermission {
-    /**
-     * Permission for Places Monitor to access location while using application.
-     * An app is considered to be in use when the user is looking at the app on their device screen (i.e) an activity is running in the foreground.
-     * <p>
-     * Important:  Geofences will not get registered with the Operating system if the app user has granted "While using app" permission.
-     * "Always Allow" permission is mandatory for registering and getting the entry/exit triggers on the geofence from the OS.
-     */
-    WHILE_USING_APP("whileusingapp"),
+	/**
+	 * Permission for Places Monitor to access location while using application.
+	 * An app is considered to be in use when the user is looking at the app on their device screen (i.e) an activity is running in the foreground.
+	 * <p>
+	 * Important:  Geofences will not get registered with the Operating system if the app user has granted "While using app" permission.
+	 * "Always Allow" permission is mandatory for registering and getting the entry/exit triggers on the geofence from the OS.
+	 */
+	WHILE_USING_APP("whileusingapp"),
 
-    /**
-     * Permission for Places Monitor to access location in foreground and background.
-     */
-    ALWAYS_ALLOW("alwaysAllow");
+	/**
+	 * Permission for Places Monitor to access location in foreground and background.
+	 */
+	ALWAYS_ALLOW("alwaysAllow");
 
-    private final String value;
+	private final String value;
 
-    PlacesMonitorLocationPermission(final String value) {
-        this.value = value;
-    }
+	PlacesMonitorLocationPermission(final String value) {
+		this.value = value;
+	}
 
-    /**
-     * Returns the string value for this enum type.
-     * @return the string name for this enum type.
-     */
-    public String getValue() {
-        return value;
-    }
+	/**
+	 * Returns the string value for this enum type.
+	 * @return the string name for this enum type.
+	 */
+	public String getValue() {
+		return value;
+	}
 
-    /**
-     * Returns a {@link PlacesMonitorLocationPermission} object based on the provided {@code text}.
-     * <p>
-     * If the text provided is not valid, {@link #ALWAYS_ALLOW} will be returned.
-     *
-     * @param text {@link String} to be converted to a {@code PlacesMonitorLocationPermission} object
-     * @return {@code PlacesMonitorLocationPermission} object equivalent to the provided text
-     */
-    static PlacesMonitorLocationPermission fromString(final String text) {
-        for (PlacesMonitorLocationPermission b : PlacesMonitorLocationPermission.values()) {
-            if (b.value.equalsIgnoreCase(text)) {
-                return b;
-            }
-        }
+	/**
+	 * Returns a {@link PlacesMonitorLocationPermission} object based on the provided {@code text}.
+	 * <p>
+	 * If the text provided is not valid, {@link #ALWAYS_ALLOW} will be returned.
+	 *
+	 * @param text {@link String} to be converted to a {@code PlacesMonitorLocationPermission} object
+	 * @return {@code PlacesMonitorLocationPermission} object equivalent to the provided text
+	 */
+	static PlacesMonitorLocationPermission fromString(final String text) {
+		for (PlacesMonitorLocationPermission b : PlacesMonitorLocationPermission.values()) {
+			if (b.value.equalsIgnoreCase(text)) {
+				return b;
+			}
+		}
 
-        return ALWAYS_ALLOW;
-    }
+		return ALWAYS_ALLOW;
+	}
 }

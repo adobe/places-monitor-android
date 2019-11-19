@@ -156,11 +156,11 @@ class PlacesGeofenceManager {
 
 	/**
 	 * Stops monitoring for entry and exit event on nearby places of interest.
-     *
-     * Calling this method with YES for clearData will purge the {@link #userWithinGeofences} data in addition to stop monitoring
-     * for further geofence events.
-     *
-     * @param clearData a boolean indicating whether to clear the {@link #userWithinGeofences} from in-memory and persistence
+	 *
+	 * Calling this method with YES for clearData will purge the {@link #userWithinGeofences} data in addition to stop monitoring
+	 * for further geofence events.
+	 *
+	 * @param clearData a boolean indicating whether to clear the {@link #userWithinGeofences} from in-memory and persistence
 	 */
 	void stopMonitoringFences(final boolean clearData) {
 		AdobeCallback<Void> onSuccess = new AdobeCallback<Void>() {
@@ -177,7 +177,7 @@ class PlacesGeofenceManager {
 			}
 		};
 
-		if(clearData){
+		if (clearData) {
 			userWithinGeofences.clear();
 			saveUserWithinGeofences();
 		}
@@ -205,17 +205,21 @@ class PlacesGeofenceManager {
 
 		List<String> geofenceIDs;
 		int transitionType;
+
 		try {
 
 			geofenceIDs = eventData.getStringList(PlacesMonitorConstants.EventDataKey.GEOFENCE_IDS);
 			transitionType = eventData.getInteger(PlacesMonitorConstants.EventDataKey.GEOFENCE_TRANSITION_TYPE);
 		} catch (VariantException exp) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, String.format("Exception occurred while reading the geofenceIds from the OS event, ignoring the OS event. Exception message - ", exp.getMessage()));
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						String.format("Exception occurred while reading the geofenceIds from the OS event, ignoring the OS event. Exception message - ",
+									  exp.getMessage()));
 			return;
 		}
 
-		if(geofenceIDs == null || geofenceIDs.isEmpty()) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "No geofenceId's are obtained from OS geofence event. Ignoring the OS event.");
+		if (geofenceIDs == null || geofenceIDs.isEmpty()) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"No geofenceId's are obtained from OS geofence event. Ignoring the OS event.");
 			return;
 		}
 
@@ -230,11 +234,11 @@ class PlacesGeofenceManager {
 			// Places API method processGeofence only reads the geofenceId of the triggered fences. Other data elements are not used by the Places.processGeofence API.
 			// Moreover latitude, longitude and radius cannot be extracted from the geofence object. Unless its passed to android for monitoring.
 			Geofence geofence = new Geofence.Builder()
-					.setRequestId(geofenceID)
-					.setExpirationDuration(Geofence.NEVER_EXPIRE)
-					.setTransitionTypes(transitionType)
-					.setCircularRegion(INCONSEQUENTIAL_LATITUDE,INCONSEQUENTIAL_LONGITUDE,INCONSEQUENTIAL_RADIUS)
-					.build();
+			.setRequestId(geofenceID)
+			.setExpirationDuration(Geofence.NEVER_EXPIRE)
+			.setTransitionTypes(transitionType)
+			.setCircularRegion(INCONSEQUENTIAL_LATITUDE, INCONSEQUENTIAL_LONGITUDE, INCONSEQUENTIAL_RADIUS)
+			.build();
 			Places.processGeofence(geofence, transitionType);
 		}
 	}
@@ -264,7 +268,8 @@ class PlacesGeofenceManager {
 					curatedGeofenceList.add(geofenceID);
 					userWithinGeofences.add(geofenceID);
 				} else {
-					Log.debug(PlacesMonitorConstants.LOG_TAG, String.format("Ignoring to process the entry of geofenceId %s. Because an entry was already recorded",geofenceID));
+					Log.debug(PlacesMonitorConstants.LOG_TAG,
+							  String.format("Ignoring to process the entry of geofenceId %s. Because an entry was already recorded", geofenceID));
 				}
 			}
 		}
@@ -357,7 +362,8 @@ class PlacesGeofenceManager {
 		AdobeCallback<String> onFailiure = new AdobeCallback<String>() {
 			@Override
 			public void call(String message) {
-				Log.warning(PlacesMonitorConstants.LOG_TAG, String.format("Unable to unregister old nearByPois. Error message %s.", message));
+				Log.warning(PlacesMonitorConstants.LOG_TAG, String.format("Unable to unregister old nearByPois. Error message %s.",
+							message));
 				registerPOIs(nearByPOIs);
 			}
 		};
@@ -454,11 +460,11 @@ class PlacesGeofenceManager {
 		for (PlacesPOI poi : nearByPOIs) {
 
 
-			 // If a geofence was previously registered, reading them will just replace the old one, which
-			 // in our case is a no-op. We therefore don't really need to keep track which geofence was
-			 // registered before, which can go out of sync anyway with the OS. Furthermore, android
-			 // does not provide any API to query which geofences are currently monitored, so it's safer
-			 // to re-register previously registered geofences.
+			// If a geofence was previously registered, reading them will just replace the old one, which
+			// in our case is a no-op. We therefore don't really need to keep track which geofence was
+			// registered before, which can go out of sync anyway with the OS. Furthermore, android
+			// does not provide any API to query which geofences are currently monitored, so it's safer
+			// to re-register previously registered geofences.
 
 			final Geofence fence = new Geofence.Builder()
 			.setRequestId(poi.getIdentifier())
@@ -467,7 +473,9 @@ class PlacesGeofenceManager {
 			.setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
 								Geofence.GEOFENCE_TRANSITION_EXIT)
 			.build();
-			Log.debug(PlacesMonitorConstants.LOG_TAG, String.format("Attempting to Monitor POI with id %s name %s latitude %s longitude %s", poi.getIdentifier(), poi.getName(), poi.getLatitude(), poi.getLongitude()));
+			Log.debug(PlacesMonitorConstants.LOG_TAG,
+					  String.format("Attempting to Monitor POI with id %s name %s latitude %s longitude %s", poi.getIdentifier(),
+									poi.getName(), poi.getLatitude(), poi.getLongitude()));
 			geofences.add(fence);
 		}
 
@@ -479,9 +487,9 @@ class PlacesGeofenceManager {
 		GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
 
 
-		 // By default initial trigger is set to INITIAL_TRIGGER_ENTER | INITIAL_TRIGGER_DWELL
-		 // This is not what we want since it will result in duplicate triggers if we are already
-		 // inside POI(s).
+		// By default initial trigger is set to INITIAL_TRIGGER_ENTER | INITIAL_TRIGGER_DWELL
+		// This is not what we want since it will result in duplicate triggers if we are already
+		// inside POI(s).
 
 		builder.setInitialTrigger(0);
 		builder.addGeofences(geofences);
@@ -491,7 +499,8 @@ class PlacesGeofenceManager {
 			task.addOnSuccessListener(new OnSuccessListener<Void>() {
 				@Override
 				public void onSuccess(Void aVoid) {
-					Log.debug(PlacesMonitorConstants.LOG_TAG, String.format("Successfully added %d fences for monitoring",geofences.size()));
+					Log.debug(PlacesMonitorConstants.LOG_TAG, String.format("Successfully added %d fences for monitoring",
+							  geofences.size()));
 				}
 			});
 			task.addOnFailureListener(new OnFailureListener() {

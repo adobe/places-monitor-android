@@ -95,21 +95,25 @@ public class PlacesGeofenceBroadcastReceiverTests {
 		// verify dispatched event
 		Event event = eventCaptor.getValue();
 		assertNotNull("The dispatched event should not be null", event);
-		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_OS_GEOFENCE_TRIGGER, event.getName());
+		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_OS_GEOFENCE_TRIGGER,
+					 event.getName());
 		assertEquals("the event type should be correct", PlacesMonitorTestConstants.EventType.OS, event.getType());
 		assertEquals("the event source should be correct", PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT,
-				event.getSource());
+					 event.getSource());
 		// evaluate the eventData
 		EventData eventData = event.getData();
 		assertEquals("the event data should contain two element", 3, eventData.size());
-		assertEquals("the event data should contain the correct  event type", PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_GEOFENCE_TRIGGER, eventData.getString2(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE));
-		assertEquals("the event data should contain the correct  geofence transition type", Geofence.GEOFENCE_TRANSITION_EXIT , eventData.getInteger(PlacesMonitorConstants.EventDataKey.GEOFENCE_TRANSITION_TYPE));
+		assertEquals("the event data should contain the correct  event type",
+					 PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_GEOFENCE_TRIGGER,
+					 eventData.getString2(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE));
+		assertEquals("the event data should contain the correct  geofence transition type", Geofence.GEOFENCE_TRANSITION_EXIT,
+					 eventData.getInteger(PlacesMonitorConstants.EventDataKey.GEOFENCE_TRANSITION_TYPE));
 
 		// evaluate the geofenceIds
 		List<String> obtainedGeofenceIds = eventData.getStringList(PlacesMonitorConstants.EventDataKey.GEOFENCE_IDS);
-		assertEquals("the event data should contain the correct geofence ids count", 2 ,  obtainedGeofenceIds.size());
-		assertEquals("the event data should contain the correct geofence ids", "id0" ,  obtainedGeofenceIds.get(0));
-		assertEquals("the event data should contain the correct geofence ids", "id1" ,  obtainedGeofenceIds.get(1));
+		assertEquals("the event data should contain the correct geofence ids count", 2,  obtainedGeofenceIds.size());
+		assertEquals("the event data should contain the correct geofence ids", "id0",  obtainedGeofenceIds.get(0));
+		assertEquals("the event data should contain the correct geofence ids", "id1",  obtainedGeofenceIds.get(1));
 	}
 
 
@@ -169,10 +173,11 @@ public class PlacesGeofenceBroadcastReceiverTests {
 
 	private void mockGeofenceWithCount(int count) throws Exception {
 		List<Geofence> obtainedGeofence = new ArrayList<>();
-		for(int i=0; i<count; i++){
+
+		for (int i = 0; i < count; i++) {
 			Geofence geofence = new Geofence.Builder().setRequestId("id" + i).setTransitionTypes(
-					Geofence.GEOFENCE_TRANSITION_EXIT).setCircularRegion(22.33, -33.33,
-					100).setExpirationDuration(Geofence.NEVER_EXPIRE).build();
+				Geofence.GEOFENCE_TRANSITION_EXIT).setCircularRegion(22.33, -33.33,
+						100).setExpirationDuration(Geofence.NEVER_EXPIRE).build();
 			obtainedGeofence.add(geofence);
 		}
 

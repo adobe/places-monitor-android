@@ -28,49 +28,51 @@ package com.adobe.marketing.mobile;
  */
 public class PlacesMonitorListenerOSResponseContent extends ExtensionListener {
 
-    /**
-     * Constructor.
-     *
-     * @param extensionApi an instance of  {@link ExtensionApi}
-     * @param type  {@link EventType} this listener is registered to handle
-     * @param source {@link EventSource} this listener is registered to handle
-     */
-    protected PlacesMonitorListenerOSResponseContent(final ExtensionApi extensionApi, final String type, final String source) {
-        super(extensionApi, type, source);
-    }
+	/**
+	 * Constructor.
+	 *
+	 * @param extensionApi an instance of  {@link ExtensionApi}
+	 * @param type  {@link EventType} this listener is registered to handle
+	 * @param source {@link EventSource} this listener is registered to handle
+	 */
+	protected PlacesMonitorListenerOSResponseContent(final ExtensionApi extensionApi, final String type,
+			final String source) {
+		super(extensionApi, type, source);
+	}
 
 
-    /**
-     * Method that gets called when {@link PlacesMonitorConstants.EventType#OS},
-     * {@link PlacesMonitorConstants.EventSource#RESPONSE_CONTENT} event is dispatched through eventHub.
-     * <p>
-     * {@link PlacesMonitorInternal} queues event and attempts to process them immediately.
-     *
-     * @param event OS {@link Event} to be processed
-     * @see PlacesMonitorInternal#processEvents()
-     */
-    @Override
-    public void hear(final Event event) {
-        if (event.getEventData() == null) {
-            Log.warning(PlacesMonitorConstants.LOG_TAG, "EventData is null, ignoring the OS response content event.");
-            return;
-        }
+	/**
+	 * Method that gets called when {@link PlacesMonitorConstants.EventType#OS},
+	 * {@link PlacesMonitorConstants.EventSource#RESPONSE_CONTENT} event is dispatched through eventHub.
+	 * <p>
+	 * {@link PlacesMonitorInternal} queues event and attempts to process them immediately.
+	 *
+	 * @param event OS {@link Event} to be processed
+	 * @see PlacesMonitorInternal#processEvents()
+	 */
+	@Override
+	public void hear(final Event event) {
+		if (event.getEventData() == null) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG, "EventData is null, ignoring the OS response content event.");
+			return;
+		}
 
-        final PlacesMonitorInternal parentExtension = (PlacesMonitorInternal) super.getParentExtension();
+		final PlacesMonitorInternal parentExtension = (PlacesMonitorInternal) super.getParentExtension();
 
-        if (parentExtension == null) {
-            Log.warning(PlacesMonitorConstants.LOG_TAG, "The parent extension, associated with the PlacesMonitorListenerOSResponseContent is null, ignoring the OS response content event.");
-            return;
-        }
+		if (parentExtension == null) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"The parent extension, associated with the PlacesMonitorListenerOSResponseContent is null, ignoring the OS response content event.");
+			return;
+		}
 
-        parentExtension.getExecutor().execute(new Runnable() {
-            @Override
-            public void run() {
-                // handle places monitor request event
-                parentExtension.queueEvent(event);
-                parentExtension.processEvents();
-            }
-        });
+		parentExtension.getExecutor().execute(new Runnable() {
+			@Override
+			public void run() {
+				// handle places monitor request event
+				parentExtension.queueEvent(event);
+				parentExtension.processEvents();
+			}
+		});
 
-    }
+	}
 }

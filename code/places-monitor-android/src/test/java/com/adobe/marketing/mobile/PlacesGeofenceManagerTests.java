@@ -341,7 +341,7 @@ public class PlacesGeofenceManagerTests {
 		// verify interaction with SharedPreference
 		verify(mockSharedPreference, times(1)).edit();
 		verify(mockSharedPreferenceEditor, times(1)).remove(eq(
-				PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY));
+					PlacesMonitorTestConstants.SharedPreference.USERWITHIN_GEOFENCES_KEY));
 		verify(mockSharedPreferenceEditor, times(1)).commit();
 	}
 
@@ -433,23 +433,24 @@ public class PlacesGeofenceManagerTests {
 	}
 
 
-    // ========================================================================================
-    // onGeofenceTransitionReceived
-    // ========================================================================================
+	// ========================================================================================
+	// onGeofenceTransitionReceived
+	// ========================================================================================
 
 	@Test
 	public void test_onGeofenceTransitionReceived() {
 		// setup
-        final ArgumentCaptor<Geofence> geofenceCaptor = ArgumentCaptor.forClass(Geofence.class);
-        List<String> geofenceTransitionIDs  = new ArrayList<>();
-        geofenceTransitionIDs.add("id1");
+		final ArgumentCaptor<Geofence> geofenceCaptor = ArgumentCaptor.forClass(Geofence.class);
+		List<String> geofenceTransitionIDs  = new ArrayList<>();
+		geofenceTransitionIDs.add("id1");
 
 		// test
-		geofenceManager.onGeofenceTriggerReceived(geofenceTransitionEventData(geofenceTransitionIDs,Geofence.GEOFENCE_TRANSITION_ENTER));
+		geofenceManager.onGeofenceTriggerReceived(geofenceTransitionEventData(geofenceTransitionIDs,
+				Geofence.GEOFENCE_TRANSITION_ENTER));
 
 		// verify
 		verifyStatic(Places.class, Mockito.times(1));
-		Places.processGeofence(geofenceCaptor.capture() , eq(Geofence.GEOFENCE_TRANSITION_ENTER));
+		Places.processGeofence(geofenceCaptor.capture(), eq(Geofence.GEOFENCE_TRANSITION_ENTER));
 		assertEquals("id1", geofenceCaptor.getValue().getRequestId());
 	}
 
@@ -460,12 +461,13 @@ public class PlacesGeofenceManagerTests {
 		initialUserWithinGeofenceSet.add("id1");
 		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", initialUserWithinGeofenceSet);
 
-        // prepare the geofence id for the OS Event
-        List<String> geofenceTransitionIDs  = new ArrayList<>();
-        geofenceTransitionIDs.add("id1");
+		// prepare the geofence id for the OS Event
+		List<String> geofenceTransitionIDs  = new ArrayList<>();
+		geofenceTransitionIDs.add("id1");
 
 		// test
-        geofenceManager.onGeofenceTriggerReceived(geofenceTransitionEventData(geofenceTransitionIDs,Geofence.GEOFENCE_TRANSITION_ENTER));
+		geofenceManager.onGeofenceTriggerReceived(geofenceTransitionEventData(geofenceTransitionIDs,
+				Geofence.GEOFENCE_TRANSITION_ENTER));
 
 		// verify
 		verifyStatic(Places.class, Mockito.times(0));
@@ -475,17 +477,18 @@ public class PlacesGeofenceManagerTests {
 	@Test
 	public void test_onGeofenceTransitionReceived_ForExit_whenPOIAlreadyEntered() {
 		// setup
-        final ArgumentCaptor<Geofence> geofenceCaptor = ArgumentCaptor.forClass(Geofence.class);
+		final ArgumentCaptor<Geofence> geofenceCaptor = ArgumentCaptor.forClass(Geofence.class);
 		HashSet<String> initialUserWithinGeofenceSet = new HashSet<String>();
 		initialUserWithinGeofenceSet.add("id1");
 		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", initialUserWithinGeofenceSet);
 
-        // prepare the geofenceIDs for the OS Event
-        List<String> geofenceTransitionIDs  = new ArrayList<>();
-        geofenceTransitionIDs.add("id1");
+		// prepare the geofenceIDs for the OS Event
+		List<String> geofenceTransitionIDs  = new ArrayList<>();
+		geofenceTransitionIDs.add("id1");
 
-        // test
-        geofenceManager.onGeofenceTriggerReceived(geofenceTransitionEventData(geofenceTransitionIDs,Geofence.GEOFENCE_TRANSITION_EXIT));
+		// test
+		geofenceManager.onGeofenceTriggerReceived(geofenceTransitionEventData(geofenceTransitionIDs,
+				Geofence.GEOFENCE_TRANSITION_EXIT));
 
 		// verify
 		verifyStatic(Places.class, Mockito.times(1));
@@ -494,21 +497,22 @@ public class PlacesGeofenceManagerTests {
 		// verify result
 		HashSet<String> resultUserWithInGeofences = Whitebox.getInternalState(geofenceManager, "userWithinGeofences");
 		assertEquals(0, resultUserWithInGeofences.size());
-        assertEquals("id1", geofenceCaptor.getValue().getRequestId());
+		assertEquals("id1", geofenceCaptor.getValue().getRequestId());
 	}
 
 	@Test
 	public void test_onGeofenceTransitionReceived_ForExit_whenPOINotAlreadyEntered() {
 		// setup
-        final ArgumentCaptor<Geofence> geofenceCaptor = ArgumentCaptor.forClass(Geofence.class);
+		final ArgumentCaptor<Geofence> geofenceCaptor = ArgumentCaptor.forClass(Geofence.class);
 		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", new HashSet<String>());
 
-        // prepare the geofenceIDs for the OS Event
-        List<String> geofenceTransitionIDs  = new ArrayList<>();
-        geofenceTransitionIDs.add("id1");
+		// prepare the geofenceIDs for the OS Event
+		List<String> geofenceTransitionIDs  = new ArrayList<>();
+		geofenceTransitionIDs.add("id1");
 
 		// test
-        geofenceManager.onGeofenceTriggerReceived(geofenceTransitionEventData(geofenceTransitionIDs,Geofence.GEOFENCE_TRANSITION_EXIT));
+		geofenceManager.onGeofenceTriggerReceived(geofenceTransitionEventData(geofenceTransitionIDs,
+				Geofence.GEOFENCE_TRANSITION_EXIT));
 
 		// verify that exit event goes out, if the poi is not already entered.
 		verifyStatic(Places.class, Mockito.times(1));
@@ -517,41 +521,42 @@ public class PlacesGeofenceManagerTests {
 		// verify result
 		HashSet<String> resultUserWithInGeofences = Whitebox.getInternalState(geofenceManager, "userWithinGeofences");
 		assertEquals(0, resultUserWithInGeofences.size());
-        assertEquals("id1", geofenceCaptor.getValue().getRequestId());
+		assertEquals("id1", geofenceCaptor.getValue().getRequestId());
 	}
 
-    @Test
-    public void test_onGeofenceTransitionReceived_with_noGeofences(){
-        // setup
-        Whitebox.setInternalState(geofenceManager, "userWithinGeofences", new HashSet<String>());
+	@Test
+	public void test_onGeofenceTransitionReceived_with_noGeofences() {
+		// setup
+		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", new HashSet<String>());
 
-        // test
-        geofenceManager.onGeofenceTriggerReceived(geofenceTransitionEventData(new ArrayList<String>(),Geofence.GEOFENCE_TRANSITION_EXIT));
+		// test
+		geofenceManager.onGeofenceTriggerReceived(geofenceTransitionEventData(new ArrayList<String>(),
+				Geofence.GEOFENCE_TRANSITION_EXIT));
 
-        // verify
-        verifyStatic(Places.class, Mockito.times(0));
-        Places.processGeofence(any(Geofence.class), anyInt());
-        HashSet<String> resultUserWithInGeofences = Whitebox.getInternalState(geofenceManager, "userWithinGeofences");
-        assertEquals(0, resultUserWithInGeofences.size());
-    }
+		// verify
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.processGeofence(any(Geofence.class), anyInt());
+		HashSet<String> resultUserWithInGeofences = Whitebox.getInternalState(geofenceManager, "userWithinGeofences");
+		assertEquals(0, resultUserWithInGeofences.size());
+	}
 
-    @Test
-    public void test_onGeofenceTransitionReceived_with_invalidEventData(){
-        // setup
-        Whitebox.setInternalState(geofenceManager, "userWithinGeofences", new HashSet<String>());
+	@Test
+	public void test_onGeofenceTransitionReceived_with_invalidEventData() {
+		// setup
+		Whitebox.setInternalState(geofenceManager, "userWithinGeofences", new HashSet<String>());
 
-        // test
-        geofenceManager.onGeofenceTriggerReceived(new EventData());
+		// test
+		geofenceManager.onGeofenceTriggerReceived(new EventData());
 
-        // verify
-        verifyStatic(Places.class, Mockito.times(0));
-        Places.processGeofence(any(Geofence.class), anyInt());
-        HashSet<String> resultUserWithInGeofences = Whitebox.getInternalState(geofenceManager, "userWithinGeofences");
-        assertEquals(0, resultUserWithInGeofences.size());
-    }
+		// verify
+		verifyStatic(Places.class, Mockito.times(0));
+		Places.processGeofence(any(Geofence.class), anyInt());
+		HashSet<String> resultUserWithInGeofences = Whitebox.getInternalState(geofenceManager, "userWithinGeofences");
+		assertEquals(0, resultUserWithInGeofences.size());
+	}
 
 
-    // ========================================================================================
+	// ========================================================================================
 	// findNewlyEnteredPOIs
 	// ========================================================================================
 
@@ -843,11 +848,15 @@ public class PlacesGeofenceManagerTests {
 		return pois;
 	}
 
-    private EventData geofenceTransitionEventData(final List<String> geofenceIDs, final int transitionType) {
-        return new EventData(new HashMap<String,Variant>()
-        {{ put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE, Variant.fromString(PlacesMonitorTestConstants.EventDataValue.OS_EVENT_TYPE_GEOFENCE_TRIGGER));
-            put(PlacesMonitorConstants.EventDataKey.GEOFENCE_IDS, Variant.fromStringList(geofenceIDs));
-            put(PlacesMonitorConstants.EventDataKey.GEOFENCE_TRANSITION_TYPE, Variant.fromInteger(transitionType));}});
-    }
+	private EventData geofenceTransitionEventData(final List<String> geofenceIDs, final int transitionType) {
+		return new EventData(new HashMap<String, Variant>() {
+			{
+				put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE,
+					Variant.fromString(PlacesMonitorTestConstants.EventDataValue.OS_EVENT_TYPE_GEOFENCE_TRIGGER));
+				put(PlacesMonitorConstants.EventDataKey.GEOFENCE_IDS, Variant.fromStringList(geofenceIDs));
+				put(PlacesMonitorConstants.EventDataKey.GEOFENCE_TRANSITION_TYPE, Variant.fromInteger(transitionType));
+			}
+		});
+	}
 
 }
