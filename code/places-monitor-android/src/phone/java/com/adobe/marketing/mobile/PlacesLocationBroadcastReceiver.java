@@ -63,6 +63,7 @@ public class PlacesLocationBroadcastReceiver extends BroadcastReceiver {
 
 
 		LocationResult result = LocationResult.extractResult(intent);
+
 		if (result == null) {
 			return;
 		}
@@ -70,19 +71,22 @@ public class PlacesLocationBroadcastReceiver extends BroadcastReceiver {
 		List<Location> locations = result.getLocations();
 
 		if (locations == null || locations.isEmpty()) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesLocationBroadcastReceiver : Cannot process the location update, Received location array is null");
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"PlacesLocationBroadcastReceiver : Cannot process the location update, Received location array is null");
 			return;
 		}
 
 		Location location = locations.get(0);
 
 		if (location == null) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesLocationBroadcastReceiver : Cannot process the location update, Received location is null");
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"PlacesLocationBroadcastReceiver : Cannot process the location update, Received location is null");
 			return;
 		}
 
-		String locationLog = "PlacesLocationBroadcastReceiver : A new location received with accuracy: " + location.getAccuracy() + " lat: " + location.getLatitude() +
-				" lon: " + location.getLongitude();
+		String locationLog = "PlacesLocationBroadcastReceiver : A new location received with accuracy: " +
+							 location.getAccuracy() + " lat: " + location.getLatitude() +
+							 " lon: " + location.getLongitude();
 		Log.debug(PlacesMonitorConstants.LOG_TAG, locationLog);
 		dispatchOSLocationUpdateEvent(location.getLatitude(), location.getLongitude());
 	}
@@ -96,19 +100,23 @@ public class PlacesLocationBroadcastReceiver extends BroadcastReceiver {
 	 * @param longitude		{@code double} indicating longitude value
 	 */
 	private void dispatchOSLocationUpdateEvent(final double latitude, final double longitude) {
-		HashMap<String,Object> eventData = new HashMap<>();
-		eventData.put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE, PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_UPDATE);
+		HashMap<String, Object> eventData = new HashMap<>();
+		eventData.put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE,
+					  PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_UPDATE);
 		eventData.put(PlacesMonitorConstants.EventDataKey.LATITUDE, latitude);
 		eventData.put(PlacesMonitorConstants.EventDataKey.LONGITUDE, longitude);
 
-		Event event = new Event.Builder(PlacesMonitorConstants.EVENTNAME_OS_LOCATION_UPDATE,PlacesMonitorConstants.EventType.OS, PlacesMonitorConstants.EventSource.RESPONSE_CONTENT).
-				setEventData(eventData).build();
+		Event event = new Event.Builder(PlacesMonitorConstants.EVENTNAME_OS_LOCATION_UPDATE,
+										PlacesMonitorConstants.EventType.OS, PlacesMonitorConstants.EventSource.RESPONSE_CONTENT).
+		setEventData(eventData).build();
+
 		if (MobileCore.dispatchEvent(event, null)) {
 			Log.debug(PlacesMonitorConstants.LOG_TAG,
-					"PlacesLocationBroadcastReceiver : Successfully dispatched OS Response event with new location");
-		}
-		else {
-			Log.warning(PlacesMonitorConstants.LOG_TAG,String.format("PlacesLocationBroadcastReceiver : Unable to dispatch the OS Response event with new location %s", eventData));
+					  "PlacesLocationBroadcastReceiver : Successfully dispatched OS Response event with new location");
+		} else {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						String.format("PlacesLocationBroadcastReceiver : Unable to dispatch the OS Response event with new location %s",
+									  eventData));
 		}
 
 	}

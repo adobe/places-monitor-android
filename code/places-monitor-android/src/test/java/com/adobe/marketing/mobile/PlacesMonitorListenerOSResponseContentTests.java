@@ -38,89 +38,89 @@ import static org.mockito.Mockito.when;
 @PrepareForTest({PlacesMonitorInternal.class, ExtensionApi.class})
 public class PlacesMonitorListenerOSResponseContentTests {
 
-    @Mock
-    PlacesMonitorInternal mockPlacesMonitorInternal;
+	@Mock
+	PlacesMonitorInternal mockPlacesMonitorInternal;
 
-    @Mock
-    ExtensionApi extensionApi;
+	@Mock
+	ExtensionApi extensionApi;
 
-    private int EXECUTOR_TIMEOUT = 5;  // 5 milliseconds
-    private PlacesMonitorListenerOSResponseContent listener;
-    private ExecutorService executor = Executors.newSingleThreadExecutor();
+	private int EXECUTOR_TIMEOUT = 5;  // 5 milliseconds
+	private PlacesMonitorListenerOSResponseContent listener;
+	private ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    @Before
-    public void beforeEach() {
-        listener = new PlacesMonitorListenerOSResponseContent(extensionApi, PlacesMonitorTestConstants.EventType.MONITOR,
-                PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT);
-        when(mockPlacesMonitorInternal.getExecutor()).thenReturn(executor);
-        when(extensionApi.getExtension()).thenReturn(mockPlacesMonitorInternal);
-    }
+	@Before
+	public void beforeEach() {
+		listener = new PlacesMonitorListenerOSResponseContent(extensionApi, PlacesMonitorTestConstants.EventType.MONITOR,
+				PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT);
+		when(mockPlacesMonitorInternal.getExecutor()).thenReturn(executor);
+		when(extensionApi.getExtension()).thenReturn(mockPlacesMonitorInternal);
+	}
 
-    @Test
-    public void testHear_WithNullEventData() {
-        // setup
-        Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventType.MONITOR,
-                PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(null).build();
+	@Test
+	public void testHear_WithNullEventData() {
+		// setup
+		Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventType.MONITOR,
+										PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(null).build();
 
-        // test
-        listener.hear(event);
-        waitForExecutor();
+		// test
+		listener.hear(event);
+		waitForExecutor();
 
-        // verify
-        verify(mockPlacesMonitorInternal, times(0)).processEvents();
-    }
+		// verify
+		verify(mockPlacesMonitorInternal, times(0)).processEvents();
+	}
 
-    @Test
-    public void testHear_WithNullParentExtension() {
-        // setup
-        EventData eventData = new EventData();
-        eventData.putString("dummyKey", "dummyValue");
-        Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventType.MONITOR,
-                PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(eventData).build();
-        when(extensionApi.getExtension()).thenReturn(null);
+	@Test
+	public void testHear_WithNullParentExtension() {
+		// setup
+		EventData eventData = new EventData();
+		eventData.putString("dummyKey", "dummyValue");
+		Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventType.MONITOR,
+										PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT).setData(eventData).build();
+		when(extensionApi.getExtension()).thenReturn(null);
 
-        // test
-        listener.hear(event);
-        waitForExecutor();
+		// test
+		listener.hear(event);
+		waitForExecutor();
 
-        // verify
-        verify(mockPlacesMonitorInternal, times(0)).processEvents();
-
-
-       // Geofence geofence = new Geofence.Builder().setRequestId("id").setTransitionTypes(1).setExpirationDuration(23).setCircularRegion().build();
-
-    }
+		// verify
+		verify(mockPlacesMonitorInternal, times(0)).processEvents();
 
 
-    @Test
-    public void testHear_ValidEvent_Then_QueuesAndProcessesEvent() {
-        // setup
-        EventData eventData = new EventData();
-        eventData.putString("dummyKey", "dummyValue");
-        Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT,
-                PlacesMonitorTestConstants.EventType.MONITOR).setData(eventData).build();
+		// Geofence geofence = new Geofence.Builder().setRequestId("id").setTransitionTypes(1).setExpirationDuration(23).setCircularRegion().build();
 
-        // test
-        listener.hear(event);
-        waitForExecutor();
+	}
 
-        // verify
-        verify(mockPlacesMonitorInternal, times(1)).queueEvent(event);
-        verify(mockPlacesMonitorInternal, times(1)).processEvents();
-    }
 
-    void waitForExecutor() {
-        Future<?> future = executor.submit(new Runnable() {
-            @Override
-            public void run() {
-                // Fake task to check the execution termination
-            }
-        });
+	@Test
+	public void testHear_ValidEvent_Then_QueuesAndProcessesEvent() {
+		// setup
+		EventData eventData = new EventData();
+		eventData.putString("dummyKey", "dummyValue");
+		Event event = new Event.Builder("testEvent", PlacesMonitorTestConstants.EventSource.REQUEST_CONTENT,
+										PlacesMonitorTestConstants.EventType.MONITOR).setData(eventData).build();
 
-        try {
-            future.get(EXECUTOR_TIMEOUT, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            fail(String.format("Executor took longer than %s (sec)", EXECUTOR_TIMEOUT));
-        }
-    }
+		// test
+		listener.hear(event);
+		waitForExecutor();
+
+		// verify
+		verify(mockPlacesMonitorInternal, times(1)).queueEvent(event);
+		verify(mockPlacesMonitorInternal, times(1)).processEvents();
+	}
+
+	void waitForExecutor() {
+		Future<?> future = executor.submit(new Runnable() {
+			@Override
+			public void run() {
+				// Fake task to check the execution termination
+			}
+		});
+
+		try {
+			future.get(EXECUTOR_TIMEOUT, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			fail(String.format("Executor took longer than %s (sec)", EXECUTOR_TIMEOUT));
+		}
+	}
 }

@@ -28,27 +28,27 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({PlacesMonitor.class})
 public class PlacesMonitorOnBootReceiverTests {
-    private PlacesMonitorOnBootReceiver receiver;
+	private PlacesMonitorOnBootReceiver receiver;
 
-    @Mock
-    Context mockContext;
+	@Mock
+	Context mockContext;
 
-    @Mock
-    Intent mockIntent;
+	@Mock
+	Intent mockIntent;
 
-    @Before
-    public void before() {
-        receiver = new PlacesMonitorOnBootReceiver();
-        PowerMockito.mockStatic(PlacesMonitor.class);
-    }
+	@Before
+	public void before() {
+		receiver = new PlacesMonitorOnBootReceiver();
+		PowerMockito.mockStatic(PlacesMonitor.class);
+	}
 
-    @Test
-    public void test_OnReceive(){
-        // test
-        receiver.onReceive(mockContext, mockIntent);
+	@Test
+	public void test_OnReceive() {
+		// test
+		receiver.onReceive(mockContext, mockIntent);
 
-        // verify
-        verifyStatic(PlacesMonitor.class, Mockito.times(1));
-        PlacesMonitor.updateLocation();
-    }
+		// verify
+		verifyStatic(PlacesMonitor.class, Mockito.times(1));
+		PlacesMonitor.updateLocation();
+	}
 }

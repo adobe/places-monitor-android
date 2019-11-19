@@ -60,7 +60,8 @@ class PlacesMonitorListenerMonitorRequestContent extends ExtensionListener {
 		final PlacesMonitorInternal parentExtension = (PlacesMonitorInternal) super.getParentExtension();
 
 		if (parentExtension == null) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "The parent extension, associated with the PlacesMonitorListenerMonitorRequestContent is null, ignoring the monitor request content event.");
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"The parent extension, associated with the PlacesMonitorListenerMonitorRequestContent is null, ignoring the monitor request content event.");
 			return;
 		}
 

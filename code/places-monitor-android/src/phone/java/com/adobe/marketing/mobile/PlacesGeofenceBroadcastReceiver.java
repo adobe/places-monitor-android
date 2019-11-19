@@ -67,13 +67,13 @@ public class PlacesGeofenceBroadcastReceiver extends BroadcastReceiver {
 
 		if (geofencingEvent == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"PlacesGeofenceBroadcastReceiver : Unable to process the geofence trigger, GeofencingEvent is null");
+						"PlacesGeofenceBroadcastReceiver : Unable to process the geofence trigger, GeofencingEvent is null");
 			return;
 		}
 
 		if (geofencingEvent.hasError()) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"PlacesGeofenceBroadcastReceiver : Cannot process the geofence trigger, Geofencing event has error. Ignoring region event.");
+						"PlacesGeofenceBroadcastReceiver : Cannot process the geofence trigger, Geofencing event has error. Ignoring region event.");
 			return;
 		}
 
@@ -81,7 +81,7 @@ public class PlacesGeofenceBroadcastReceiver extends BroadcastReceiver {
 
 		if (obtainedGeofences == null || obtainedGeofences.isEmpty()) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"PlacesGeofenceBroadcastReceiver : Cannot process the geofence trigger, null or empty geofence obtained from the geofence trigger");
+						"PlacesGeofenceBroadcastReceiver : Cannot process the geofence trigger, null or empty geofence obtained from the geofence trigger");
 
 			return;
 		}
@@ -107,21 +107,25 @@ public class PlacesGeofenceBroadcastReceiver extends BroadcastReceiver {
 	 */
 	private void dispatchOSGeofenceTriggerEvent(final List<String> geofenceIDs, final int transitionType) {
 		// create eventData
-		HashMap<String,Object> eventData = new HashMap<>();
+		HashMap<String, Object> eventData = new HashMap<>();
 
-		eventData.put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE, PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_GEOFENCE_TRIGGER);
+		eventData.put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE,
+					  PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_GEOFENCE_TRIGGER);
 		eventData.put(PlacesMonitorConstants.EventDataKey.GEOFENCE_IDS, geofenceIDs);
 		eventData.put(PlacesMonitorConstants.EventDataKey.GEOFENCE_TRANSITION_TYPE, transitionType);
 
 		// dispatch OS event
-		Event event = new Event.Builder(PlacesMonitorConstants.EVENTNAME_OS_GEOFENCE_TRIGGER,PlacesMonitorConstants.EventType.OS, PlacesMonitorConstants.EventSource.RESPONSE_CONTENT).
-				setEventData(eventData).build();
+		Event event = new Event.Builder(PlacesMonitorConstants.EVENTNAME_OS_GEOFENCE_TRIGGER,
+										PlacesMonitorConstants.EventType.OS, PlacesMonitorConstants.EventSource.RESPONSE_CONTENT).
+		setEventData(eventData).build();
+
 		if (MobileCore.dispatchEvent(event, null)) {
 			Log.debug(PlacesMonitorConstants.LOG_TAG,
-					"PlacesGeofenceBroadcastReceiver : Successfully dispatched OS Response event with geofence transitions");
-		}
-		else {
-			Log.warning(PlacesMonitorConstants.LOG_TAG,String.format("PlacesGeofenceBroadcastReceiver : Unable to dispatch the OS Response event with geofence transitions %s", event.getEventData()));
+					  "PlacesGeofenceBroadcastReceiver : Successfully dispatched OS Response event with geofence transitions");
+		} else {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						String.format("PlacesGeofenceBroadcastReceiver : Unable to dispatch the OS Response event with geofence transitions %s",
+									  event.getEventData()));
 		}
 	}
 }

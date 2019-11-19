@@ -101,18 +101,18 @@ class PlacesLocationManager {
 
 		if (context == null) {
 			Log.debug(PlacesMonitorConstants.LOG_TAG,
-					"Unable to start monitoring places, App context is null");
+					  "Unable to start monitoring places, App context is null");
 			return;
 		}
 
 		Log.debug(PlacesMonitorConstants.LOG_TAG,
-				"Location permission is granted. Starting to monitor location updates");
+				  "Location permission is granted. Starting to monitor location updates");
 
 
 		// Begin by checking if the device has the necessary location settings.
 		final LocationRequest locationRequest = getLocationRequest();
 		LocationSettingsRequest settingsRequest = new LocationSettingsRequest.Builder()
-				.addLocationRequest(locationRequest).build();
+		.addLocationRequest(locationRequest).build();
 		SettingsClient settingsClient = LocationServices.getSettingsClient(context);
 		Task<LocationSettingsResponse> task = settingsClient.checkLocationSettings(settingsRequest);
 		task.addOnSuccessListener(new OnSuccessListener<LocationSettingsResponse>() {
@@ -123,7 +123,7 @@ class PlacesLocationManager {
 
 				if (fusedLocationProviderClient == null) {
 					Log.warning(PlacesMonitorConstants.LOG_TAG,
-							"Unable to start monitoring location, fusedLocationProviderClient instance is null");
+								"Unable to start monitoring location, fusedLocationProviderClient instance is null");
 					return;
 				}
 
@@ -131,7 +131,7 @@ class PlacesLocationManager {
 
 				if (locationIntent == null) {
 					Log.warning(PlacesMonitorConstants.LOG_TAG,
-							"Unable to start monitoring location, Places Location Broadcast Receiver cannot be initialized");
+								"Unable to start monitoring location, Places Location Broadcast Receiver cannot be initialized");
 					return;
 				}
 
@@ -152,7 +152,7 @@ class PlacesLocationManager {
 				switch (statusCode) {
 					case LocationSettingsStatusCodes.RESOLUTION_REQUIRED: {
 						Log.debug(PlacesMonitorConstants.LOG_TAG,
-								"Failed to start location updates, status code : RESOLUTION_REQUIRED.  Attempting to get permission.");
+								  "Failed to start location updates, status code : RESOLUTION_REQUIRED.  Attempting to get permission.");
 
 						// Location settings are not satisfied. But could be fixed by showing the
 						// user a dialog.
@@ -176,8 +176,8 @@ class PlacesLocationManager {
 
 					case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE: {
 						Log.error(PlacesMonitorConstants.LOG_TAG,
-								"Failed to start location updates, status code : SETTINGS_CHANGE_UNAVAILABLE. " +
-                                        "Location settings can't be changed to meet the requirements, no dialog pops up");
+								  "Failed to start location updates, status code : SETTINGS_CHANGE_UNAVAILABLE. " +
+								  "Location settings can't be changed to meet the requirements, no dialog pops up");
 						break;
 					}
 
@@ -267,18 +267,22 @@ class PlacesLocationManager {
 	void onLocationReceived(final EventData eventData) {
 		double latitude;
 		double longitude;
+
 		try {
 			latitude = eventData.getDouble(PlacesMonitorConstants.EventDataKey.LATITUDE);
 			longitude = eventData.getDouble(PlacesMonitorConstants.EventDataKey.LONGITUDE);
-		}
-		catch (VariantException exception) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, String.format("PlacesLocationManager : Exception occurred while extracting latitude/longitude from the OS event. Ignoring location update event. Error message - %s", exception.getMessage()));
+		} catch (VariantException exception) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						String.format("PlacesLocationManager : Exception occurred while extracting latitude/longitude from the OS event. Ignoring location update event. Error message - %s",
+									  exception.getMessage()));
 			return;
 		}
 
 
-		if(!isValidLat(latitude) || !isValidLon(longitude)){
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesLocationManager : Invalid Latitude: (" +latitude+ ") or Longitude (" + longitude + ") obtained from the OS event. Ignoring location update event.");
+		if (!isValidLat(latitude) || !isValidLon(longitude)) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"PlacesLocationManager : Invalid Latitude: (" + latitude + ") or Longitude (" + longitude +
+						") obtained from the OS event. Ignoring location update event.");
 			return;
 		}
 
@@ -446,7 +450,7 @@ class PlacesLocationManager {
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Unable to save location permission value to persistence, sharedPreference is null");
+						"Unable to save location permission value to persistence, sharedPreference is null");
 			return;
 		}
 
@@ -454,7 +458,7 @@ class PlacesLocationManager {
 
 		if (editor == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Unable to save location permission value to persistence, shared preference editor is null");
+						"Unable to save location permission value to persistence, shared preference editor is null");
 			return;
 		}
 
@@ -482,7 +486,8 @@ class PlacesLocationManager {
 		Log.trace(PlacesMonitorConstants.LOG_TAG,
 				  "PlacesLocationManager has loaded " + hasMonitoringStarted +  " for hasMonitoringStarted from persistence");
 
-		String locationPermissionString = sharedPreferences.getString(PlacesMonitorConstants.SharedPreference.LOCATION_PERMISSION_KEY, "");
+		String locationPermissionString = sharedPreferences.getString(
+											  PlacesMonitorConstants.SharedPreference.LOCATION_PERMISSION_KEY, "");
 		this.requestedLocationPermission = PlacesMonitorLocationPermission.fromString(locationPermissionString);
 	}
 

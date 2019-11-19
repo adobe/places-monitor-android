@@ -61,7 +61,7 @@ class PlacesMonitorInternal extends Extension {
 			public void error(ExtensionError extensionError) {
 				if (extensionError != null) {
 					Log.error("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerHubSharedState for Event Hub shared state events: %s",
-								extensionError.getErrorName());
+							  extensionError.getErrorName());
 				}
 			}
 		});
@@ -75,7 +75,7 @@ class PlacesMonitorInternal extends Extension {
 			public void error(ExtensionError extensionError) {
 				if (extensionError != null) {
 					Log.error("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerPlacesResponseContent for Places Monitor request events: %s",
-								extensionError.getErrorName());
+							  extensionError.getErrorName());
 				}
 			}
 		});
@@ -83,17 +83,17 @@ class PlacesMonitorInternal extends Extension {
 
 		// register a listener for os response events
 		extensionApi.registerEventListener(
-				PlacesMonitorConstants.EventType.OS,
-				PlacesMonitorConstants.EventSource.RESPONSE_CONTENT,
-				PlacesMonitorListenerOSResponseContent.class, new ExtensionErrorCallback<ExtensionError>() {
-					@Override
-					public void error(ExtensionError extensionError) {
-						if (extensionError != null) {
-							Log.error("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerOSResponseContent for OS response events: %s",
-									extensionError.getErrorName());
-						}
-					}
-				});
+			PlacesMonitorConstants.EventType.OS,
+			PlacesMonitorConstants.EventSource.RESPONSE_CONTENT,
+		PlacesMonitorListenerOSResponseContent.class, new ExtensionErrorCallback<ExtensionError>() {
+			@Override
+			public void error(ExtensionError extensionError) {
+				if (extensionError != null) {
+					Log.error("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerOSResponseContent for OS response events: %s",
+							  extensionError.getErrorName());
+				}
+			}
+		});
 
 		// initialize location, geofence Manager and the events queue
 		locationManager = new PlacesLocationManager(this);
@@ -101,7 +101,8 @@ class PlacesMonitorInternal extends Extension {
 		geofenceManager.loadPersistedData();
 		eventQueue = new ConcurrentLinkedQueue<>();
 
-		Log.debug(PlacesMonitorConstants.LOG_TAG,"Registering Places Monitoring extension - version %s", PlacesMonitorConstants.EXTENSION_VERSION);
+		Log.debug(PlacesMonitorConstants.LOG_TAG, "Registering Places Monitoring extension - version %s",
+				  PlacesMonitorConstants.EXTENSION_VERSION);
 	}
 
 	/**
@@ -111,7 +112,9 @@ class PlacesMonitorInternal extends Extension {
 	 */
 	@Override
 	protected void onUnexpectedError(ExtensionUnexpectedError extensionUnexpectedError) {
-		Log.error(PlacesMonitorConstants.LOG_TAG, String.format("Unexpected error occurred while registering PlacesMonitor extension. Error message %s", extensionUnexpectedError.getMessage()));
+		Log.error(PlacesMonitorConstants.LOG_TAG,
+				  String.format("Unexpected error occurred while registering PlacesMonitor extension. Error message %s",
+								extensionUnexpectedError.getMessage()));
 		this.onUnregistered();
 	}
 
@@ -236,7 +239,7 @@ class PlacesMonitorInternal extends Extension {
 			}
 
 			else if (PlacesMonitorConstants.EventType.OS.equalsIgnoreCase(eventToProcess.getType()) &&
-					PlacesMonitorConstants.EventSource.RESPONSE_CONTENT.equalsIgnoreCase(eventToProcess.getSource())) {
+					 PlacesMonitorConstants.EventSource.RESPONSE_CONTENT.equalsIgnoreCase(eventToProcess.getSource())) {
 				// handle the places monitor request event
 				processOSResponseEvent(eventToProcess);
 			}
@@ -264,7 +267,8 @@ class PlacesMonitorInternal extends Extension {
 
 			boolean shouldClear = false;
 			EventData data = event.getData();
-			if(data != null && !data.isEmpty()){
+
+			if (data != null && !data.isEmpty()) {
 				shouldClear = data.optBoolean(PlacesMonitorConstants.EventDataKey.CLEAR, false);
 			}
 
@@ -273,8 +277,7 @@ class PlacesMonitorInternal extends Extension {
 			updateLocation();
 		} else if (PlacesMonitorConstants.EVENTNAME_SET_LOCATION_PERMISSION.equals(eventName)) {
 			setLocationPermission(event.getEventData());
-		}
-		else {
+		} else {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
 						"PlacesMonitorInternal : Could not process places monitor request event, Invalid/Unknown event name");
 		}
@@ -297,20 +300,25 @@ class PlacesMonitorInternal extends Extension {
 	 */
 	private void processOSResponseEvent(final Event event) {
 		EventData eventData = event.getData();
-		if(eventData == null || eventData.isEmpty()){
+
+		if (eventData == null || eventData.isEmpty()) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Received empty eventData , Ignoring OS event.");
 			return;
 		}
+
 		String eventType;
+
 		try {
 			eventType = eventData.getString2(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE);
 		} catch (VariantException exception) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Invalid eventType for OS responseContent event, Ignoring OS event.");
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"PlacesMonitorInternal : Invalid eventType for OS responseContent event, Ignoring OS event.");
 			return;
 		}
 
-		if(StringUtils.isNullOrEmpty(eventType)){
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Null/Empty eventType for OS responseContent event, Ignoring OS event.");
+		if (StringUtils.isNullOrEmpty(eventType)) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"PlacesMonitorInternal : Null/Empty eventType for OS responseContent event, Ignoring OS event.");
 			return;
 		}
 
@@ -330,8 +338,10 @@ class PlacesMonitorInternal extends Extension {
 				handlePermissionChange(eventData);
 				break;
 			}
+
 			default: {
-				Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Invalid eventType for OS responseContent event, Ignoring OS event.");
+				Log.warning(PlacesMonitorConstants.LOG_TAG,
+							"PlacesMonitorInternal : Invalid eventType for OS responseContent event, Ignoring OS event.");
 			}
 
 		}
@@ -344,30 +354,36 @@ class PlacesMonitorInternal extends Extension {
 	 */
 	private void handlePermissionChange(final EventData eventData) {
 		String permissionStatus;
+
 		try {
 			permissionStatus = eventData.getString2(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION_STATUS);
 		} catch (VariantException exp) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Unable to read permission status from the OS responseContent event. Ignoring Permission status change event.");
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"PlacesMonitorInternal : Unable to read permission status from the OS responseContent event. Ignoring Permission status change event.");
 			return;
 		}
 
-		if(StringUtils.isNullOrEmpty(permissionStatus)){
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Null/empty permission status value from the OS responseContent event. Ignoring Permission status change event.");
+		if (StringUtils.isNullOrEmpty(permissionStatus)) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"PlacesMonitorInternal : Null/empty permission status value from the OS responseContent event. Ignoring Permission status change event.");
 			return;
 		}
 
-		switch (permissionStatus){
+		switch (permissionStatus) {
 			case PlacesMonitorConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_GRANTED: {
 				locationManager.beginLocationTracking();
 				break;
 			}
+
 			case PlacesMonitorConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_DENIED: {
 				locationManager.stopMonitoring();
 				geofenceManager.stopMonitoringFences(true);
 				break;
 			}
+
 			default: {
-				Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Invalid permission status value from the OS responseContent event. Ignoring Permission status change event.");
+				Log.warning(PlacesMonitorConstants.LOG_TAG,
+							"PlacesMonitorInternal : Invalid permission status value from the OS responseContent event. Ignoring Permission status change event.");
 			}
 		}
 	}
@@ -381,29 +397,37 @@ class PlacesMonitorInternal extends Extension {
 	 */
 	private void handlePlacesRequestError(final PlacesRequestError error) {
 		String errorString = "";
+
 		switch (error) {
 			case CONNECTIVITY_ERROR:
 				errorString = "No network connectivity.";
 				break;
+
 			case INVALID_LATLONG_ERROR:
-				errorString = "An invalid latitude and/or longitude was provided.  Valid values are -90 to 90 (lat) and -180 to 180 (lon).";
+				errorString =
+					"An invalid latitude and/or longitude was provided.  Valid values are -90 to 90 (lat) and -180 to 180 (lon).";
 				break;
+
 			case QUERY_SERVICE_UNAVAILABLE:
 				errorString = "The Places Query Service is unavailable. Try again later.";
 				break;
+
 			case SERVER_RESPONSE_ERROR:
 				errorString = "There is an error in the response from the server.";
 				break;
+
 			case CONFIGURATION_ERROR:
 				errorString = "Missing Places configuration.";
 				stopMonitoring(true);
 				break;
+
 			default:
 				errorString = "Unknown error.";
 				break;
 		}
 
-		Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : An error occurred while attempting to retrieve nearby points of interest: " + errorString);
+		Log.warning(PlacesMonitorConstants.LOG_TAG,
+					"PlacesMonitorInternal : An error occurred while attempting to retrieve nearby points of interest: " + errorString);
 	}
 
 	// ========================================================================================
@@ -437,7 +461,8 @@ class PlacesMonitorInternal extends Extension {
 	private void stopMonitoring(final boolean clearData) {
 		locationManager.stopMonitoring();
 		geofenceManager.stopMonitoringFences(clearData);
-		if(clearData){
+
+		if (clearData) {
 			Places.clear();
 		}
 	}
@@ -451,14 +476,16 @@ class PlacesMonitorInternal extends Extension {
 		locationManager.updateLocation();
 	}
 
-	private void setLocationPermission(final Map<String,Object> eventData) {
-		if(eventData == null || eventData.isEmpty()) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "Invalid location permission value set. Ignoring setLocationPermission API call");
+	private void setLocationPermission(final Map<String, Object> eventData) {
+		if (eventData == null || eventData.isEmpty()) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"Invalid location permission value set. Ignoring setLocationPermission API call");
 			return;
 		}
 
 		String locationPermissionString = (String)eventData.get(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION);
-		PlacesMonitorLocationPermission placesMonitorLocationPermission = PlacesMonitorLocationPermission.fromString(locationPermissionString);
+		PlacesMonitorLocationPermission placesMonitorLocationPermission = PlacesMonitorLocationPermission.fromString(
+					locationPermissionString);
 		locationManager.setLocationPermission(placesMonitorLocationPermission);
 	}
 

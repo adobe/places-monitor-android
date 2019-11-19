@@ -193,7 +193,8 @@ public class PlacesActivityTests {
 	@Test
 	public void test_isBackgroundPermissionGranted_when_PermissionGranted() throws Exception {
 		// setup
-		Mockito.when(ActivityCompat.checkSelfPermission(context, BACKGROUND_LOCATION)).thenReturn(PackageManager.PERMISSION_GRANTED);
+		Mockito.when(ActivityCompat.checkSelfPermission(context,
+					 BACKGROUND_LOCATION)).thenReturn(PackageManager.PERMISSION_GRANTED);
 
 		// test
 		boolean isGranted = PlacesActivity.isBackgroundPermissionGranted();
@@ -205,7 +206,8 @@ public class PlacesActivityTests {
 	@Test
 	public void test_isBackgroundPermissionGranted_when_PermissionDenied() throws Exception {
 		// setup
-		Mockito.when(ActivityCompat.checkSelfPermission(context, BACKGROUND_LOCATION)).thenReturn(PackageManager.PERMISSION_DENIED);
+		Mockito.when(ActivityCompat.checkSelfPermission(context,
+					 BACKGROUND_LOCATION)).thenReturn(PackageManager.PERMISSION_DENIED);
 
 		// test
 		boolean isGranted = PlacesActivity.isBackgroundPermissionGranted();
@@ -270,7 +272,8 @@ public class PlacesActivityTests {
 		// verify
 		verify(window, times(1)).addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
 		verifyStatic(ActivityCompat.class, Mockito.times(1));
-		ActivityCompat.requestPermissions(eq(placesActivity), eq(new String[]{FINE_LOCATION, BACKGROUND_LOCATION}), eq(PlacesMonitorTestConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE));
+		ActivityCompat.requestPermissions(eq(placesActivity), eq(new String[] {FINE_LOCATION, BACKGROUND_LOCATION}),
+										  eq(PlacesMonitorTestConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE));
 	}
 
 	@Test
@@ -285,7 +288,8 @@ public class PlacesActivityTests {
 		// verify
 		verify(window, times(1)).addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
 		verifyStatic(ActivityCompat.class, Mockito.times(1));
-		ActivityCompat.requestPermissions(eq(placesActivity), eq(new String[]{FINE_LOCATION}), eq(PlacesMonitorTestConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE));
+		ActivityCompat.requestPermissions(eq(placesActivity), eq(new String[] {FINE_LOCATION}),
+										  eq(PlacesMonitorTestConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE));
 	}
 
 	@Test
@@ -427,14 +431,19 @@ public class PlacesActivityTests {
 		// verify dispatched event
 		Event event = eventCaptor.getValue();
 		assertNotNull("The dispatched event should not be null", event);
-		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_OS_PERMISSION_CHANGE, event.getName());
+		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_OS_PERMISSION_CHANGE,
+					 event.getName());
 		assertEquals("the event type should be correct", PlacesMonitorTestConstants.EventType.OS, event.getType());
 		assertEquals("the event source should be correct", PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT,
-				event.getSource());
+					 event.getSource());
 		EventData eventData = event.getData();
 		assertEquals("the event data should contain two element", 2, eventData.size());
-		assertEquals("the event data should contain the right event type", PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_PERMISSION_CHANGE, eventData.getString2(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE));
-		assertEquals("the event data should contain the right permission status", PlacesMonitorConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_DENIED , eventData.getString2(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION_STATUS));
+		assertEquals("the event data should contain the right event type",
+					 PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_PERMISSION_CHANGE,
+					 eventData.getString2(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE));
+		assertEquals("the event data should contain the right permission status",
+					 PlacesMonitorConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_DENIED,
+					 eventData.getString2(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION_STATUS));
 
 		// verify the activity is removed from UI
 		verify(placesActivity, times(1)).finish();
@@ -449,14 +458,19 @@ public class PlacesActivityTests {
 		// verify dispatched event
 		Event event = eventCaptor.getValue();
 		assertNotNull("The dispatched event should not be null", event);
-		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_OS_PERMISSION_CHANGE, event.getName());
+		assertEquals("the event name should be correct", PlacesMonitorTestConstants.EVENTNAME_OS_PERMISSION_CHANGE,
+					 event.getName());
 		assertEquals("the event type should be correct", PlacesMonitorTestConstants.EventType.OS, event.getType());
 		assertEquals("the event source should be correct", PlacesMonitorTestConstants.EventSource.RESPONSE_CONTENT,
-				event.getSource());
+					 event.getSource());
 		EventData eventData = event.getData();
 		assertEquals("the event data should contain two element", 2, eventData.size());
-		assertEquals("the event data should contain the right event type", PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_PERMISSION_CHANGE, eventData.getString2(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE));
-		assertEquals("the event data should contain the right permission status", PlacesMonitorConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_GRANTED , eventData.getString2(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION_STATUS));
+		assertEquals("the event data should contain the right event type",
+					 PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_PERMISSION_CHANGE,
+					 eventData.getString2(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE));
+		assertEquals("the event data should contain the right permission status",
+					 PlacesMonitorConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_GRANTED,
+					 eventData.getString2(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION_STATUS));
 
 		// verify the activity is removed from UI
 		verify(placesActivity, times(1)).finish();
