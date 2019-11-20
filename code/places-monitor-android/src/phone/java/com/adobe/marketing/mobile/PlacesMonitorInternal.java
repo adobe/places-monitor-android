@@ -101,7 +101,7 @@ class PlacesMonitorInternal extends Extension {
 		geofenceManager.loadPersistedData();
 		eventQueue = new ConcurrentLinkedQueue<>();
 
-		Log.debug(PlacesMonitorConstants.LOG_TAG, "Registering Places Monitoring extension - version %s",
+		Log.debug(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Registering Places Monitoring extension - version %s",
 				  PlacesMonitorConstants.EXTENSION_VERSION);
 	}
 
