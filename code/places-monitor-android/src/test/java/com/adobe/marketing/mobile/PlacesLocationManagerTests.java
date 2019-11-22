@@ -24,7 +24,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Build;
-import java.lang.reflect.Modifier;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Status;
@@ -53,11 +52,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.mockito.Mockito.when;
+import java.util.HashMap;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -68,13 +63,9 @@ import static org.junit.Assert.*;
 @PrepareForTest({Context.class, App.class, LocationServices.class, PendingIntent.class, LocationResult.class, Build.class, PlacesActivity.class})
 public class PlacesLocationManagerTests {
 	private PlacesLocationManager locationManager;
-	private LocationResult locationResult;
 
 	@Mock
 	Context context;
-
-	@Mock
-	Intent intent;
 
 	@Mock
 	FusedLocationProviderClient locationProviderClient;
@@ -104,9 +95,6 @@ public class PlacesLocationManagerTests {
 	Location mockLocation;
 
 	@Mock
-	Location location1, location2;
-
-	@Mock
 	PlacesMonitorInternal mockPlacesMonitorInternal;
 
 	@Mock
@@ -116,7 +104,7 @@ public class PlacesLocationManagerTests {
 	SharedPreferences.Editor mockSharedPreferenceEditor;
 
 	@Before
-	public void before() throws Exception {
+	public void before() {
 		PowerMockito.mockStatic(App.class);
 		PowerMockito.mockStatic(Build.class);
 		PowerMockito.mockStatic(LocationServices.class);
@@ -309,7 +297,8 @@ public class PlacesLocationManagerTests {
 	public void test_startMonitoring_when_WhileInUsePermissionRequested_WhileInUsePermissionNotGranted() {
 		// setup
 		Mockito.when(PlacesActivity.isWhileInUsePermissionGranted()).thenReturn(false);
-		Whitebox.setInternalState(locationManager, "requestedLocationPermission", PlacesMonitorLocationPermission.WHILE_USING_APP);
+		Whitebox.setInternalState(locationManager, "requestedLocationPermission",
+								  PlacesMonitorLocationPermission.WHILE_USING_APP);
 
 		// test
 		locationManager.startMonitoring();
@@ -326,7 +315,8 @@ public class PlacesLocationManagerTests {
 	public void test_startMonitoring_when_WhileInUsePermissionRequested_WhileInUsePermissionGranted() {
 		// setup
 		Mockito.when(PlacesActivity.isWhileInUsePermissionGranted()).thenReturn(true);
-		Whitebox.setInternalState(locationManager, "requestedLocationPermission", PlacesMonitorLocationPermission.WHILE_USING_APP);
+		Whitebox.setInternalState(locationManager, "requestedLocationPermission",
+								  PlacesMonitorLocationPermission.WHILE_USING_APP);
 
 		// test
 		locationManager.startMonitoring();
@@ -339,23 +329,23 @@ public class PlacesLocationManagerTests {
 		verify(locationManager, times(1)).beginLocationTracking();
 	}
 
-    @Test
-    public void test_startMonitoring_when_AlwaysAllow_Requested_WhileInUsePermissionGranted() {
-        // setup
-        Mockito.when(PlacesActivity.isWhileInUsePermissionGranted()).thenReturn(true);
+	@Test
+	public void test_startMonitoring_when_AlwaysAllow_Requested_WhileInUsePermissionGranted() {
+		// setup
+		Mockito.when(PlacesActivity.isWhileInUsePermissionGranted()).thenReturn(true);
 		Mockito.when(PlacesActivity.isBackgroundPermissionGranted()).thenReturn(false);
-        Whitebox.setInternalState(locationManager, "requestedLocationPermission", PlacesMonitorLocationPermission.ALWAYS_ALLOW);
+		Whitebox.setInternalState(locationManager, "requestedLocationPermission", PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
-        // test
-        locationManager.startMonitoring();
+		// test
+		locationManager.startMonitoring();
 
-        // verify the SDK asks from background permission
-        verifyStatic(PlacesActivity.class, Mockito.times(1));
-        PlacesActivity.askPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
+		// verify the SDK asks from background permission
+		verifyStatic(PlacesActivity.class, Mockito.times(1));
+		PlacesActivity.askPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify if location updates are not requested
 		verify(locationManager, times(0)).beginLocationTracking();
-    }
+	}
 
 	@Test
 	public void test_startMonitoring_when_AlwaysAllow_Requested_BackgroundPermissionGranted() {
@@ -381,7 +371,8 @@ public class PlacesLocationManagerTests {
 		// setup
 		Mockito.when(PlacesActivity.isWhileInUsePermissionGranted()).thenReturn(true);
 		Mockito.when(PlacesActivity.isBackgroundPermissionGranted()).thenReturn(true);
-		Whitebox.setInternalState(locationManager, "requestedLocationPermission", PlacesMonitorLocationPermission.WHILE_USING_APP);
+		Whitebox.setInternalState(locationManager, "requestedLocationPermission",
+								  PlacesMonitorLocationPermission.WHILE_USING_APP);
 
 		// test
 		locationManager.startMonitoring();
@@ -617,21 +608,23 @@ public class PlacesLocationManagerTests {
 		locationManager.setHasMonitoringStarted(true);
 
 		// verify
-		verify(mockSharedPreferenceEditor, times(1)).putBoolean(PlacesMonitorTestConstants.SharedPreference.HAS_MONITORING_STARTED_KEY, true);
+		verify(mockSharedPreferenceEditor, times(1)).putBoolean(
+			PlacesMonitorTestConstants.SharedPreference.HAS_MONITORING_STARTED_KEY, true);
 		Boolean hasMonitoringStarted = Whitebox.getInternalState(locationManager, "hasMonitoringStarted");
 		assertTrue(hasMonitoringStarted);
 	}
 
 	@Test
 	public void test_setHasMonitoringStarted_whenSharedPreferenceNull() {
-	    // setup
-        Mockito.when(context.getSharedPreferences(PlacesMonitorTestConstants.SharedPreference.MASTER_KEY,
-                0)).thenReturn(null);
+		// setup
+		Mockito.when(context.getSharedPreferences(PlacesMonitorTestConstants.SharedPreference.MASTER_KEY,
+					 0)).thenReturn(null);
 		// test
 		locationManager.setHasMonitoringStarted(true);
 
 		// verify
-		verify(mockSharedPreferenceEditor, times(0)).putBoolean(PlacesMonitorTestConstants.SharedPreference.HAS_MONITORING_STARTED_KEY, true);
+		verify(mockSharedPreferenceEditor, times(0)).putBoolean(
+			PlacesMonitorTestConstants.SharedPreference.HAS_MONITORING_STARTED_KEY, true);
 		Boolean hasMonitoringStarted = Whitebox.getInternalState(locationManager, "hasMonitoringStarted");
 		assertTrue(hasMonitoringStarted);
 	}
@@ -645,7 +638,8 @@ public class PlacesLocationManagerTests {
 		locationManager.setHasMonitoringStarted(true);
 
 		// verify
-		verify(mockSharedPreferenceEditor, times(0)).putBoolean(PlacesMonitorTestConstants.SharedPreference.HAS_MONITORING_STARTED_KEY, true);
+		verify(mockSharedPreferenceEditor, times(0)).putBoolean(
+			PlacesMonitorTestConstants.SharedPreference.HAS_MONITORING_STARTED_KEY, true);
 		Boolean hasMonitoringStarted = Whitebox.getInternalState(locationManager, "hasMonitoringStarted");
 		assertTrue(hasMonitoringStarted);
 	}
@@ -661,23 +655,29 @@ public class PlacesLocationManagerTests {
 		locationManager.saveRequestedLocationPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify
-		verify(mockSharedPreferenceEditor, times(1)).putString(PlacesMonitorTestConstants.SharedPreference.LOCATION_PERMISSION_KEY, PlacesMonitorLocationPermission.ALWAYS_ALLOW.getValue());
-		PlacesMonitorLocationPermission locationPermission = Whitebox.getInternalState(locationManager, "requestedLocationPermission");
-		assertEquals(PlacesMonitorLocationPermission.ALWAYS_ALLOW,locationPermission);
+		verify(mockSharedPreferenceEditor, times(1)).putString(
+			PlacesMonitorTestConstants.SharedPreference.LOCATION_PERMISSION_KEY,
+			PlacesMonitorLocationPermission.ALWAYS_ALLOW.getValue());
+		PlacesMonitorLocationPermission locationPermission = Whitebox.getInternalState(locationManager,
+				"requestedLocationPermission");
+		assertEquals(PlacesMonitorLocationPermission.ALWAYS_ALLOW, locationPermission);
 	}
 
 	@Test
 	public void test_saveRequestedLocationPermission_whenSharedPreferenceNull() {
 		// setup
 		Mockito.when(context.getSharedPreferences(PlacesMonitorTestConstants.SharedPreference.MASTER_KEY,
-				0)).thenReturn(null);
+					 0)).thenReturn(null);
 		// test
 		locationManager.saveRequestedLocationPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify
-		verify(mockSharedPreferenceEditor, times(0)).putString(PlacesMonitorTestConstants.SharedPreference.LOCATION_PERMISSION_KEY, PlacesMonitorLocationPermission.ALWAYS_ALLOW.getValue());
-		PlacesMonitorLocationPermission locationPermission = Whitebox.getInternalState(locationManager, "requestedLocationPermission");
-		assertEquals(PlacesMonitorLocationPermission.ALWAYS_ALLOW,locationPermission);
+		verify(mockSharedPreferenceEditor, times(0)).putString(
+			PlacesMonitorTestConstants.SharedPreference.LOCATION_PERMISSION_KEY,
+			PlacesMonitorLocationPermission.ALWAYS_ALLOW.getValue());
+		PlacesMonitorLocationPermission locationPermission = Whitebox.getInternalState(locationManager,
+				"requestedLocationPermission");
+		assertEquals(PlacesMonitorLocationPermission.ALWAYS_ALLOW, locationPermission);
 	}
 
 
@@ -690,9 +690,12 @@ public class PlacesLocationManagerTests {
 		locationManager.saveRequestedLocationPermission(PlacesMonitorLocationPermission.ALWAYS_ALLOW);
 
 		// verify
-		verify(mockSharedPreferenceEditor, times(0)).putString(PlacesMonitorTestConstants.SharedPreference.LOCATION_PERMISSION_KEY, PlacesMonitorLocationPermission.ALWAYS_ALLOW.getValue());
-		PlacesMonitorLocationPermission locationPermission = Whitebox.getInternalState(locationManager, "requestedLocationPermission");
-		assertEquals(PlacesMonitorLocationPermission.ALWAYS_ALLOW,locationPermission);
+		verify(mockSharedPreferenceEditor, times(0)).putString(
+			PlacesMonitorTestConstants.SharedPreference.LOCATION_PERMISSION_KEY,
+			PlacesMonitorLocationPermission.ALWAYS_ALLOW.getValue());
+		PlacesMonitorLocationPermission locationPermission = Whitebox.getInternalState(locationManager,
+				"requestedLocationPermission");
+		assertEquals(PlacesMonitorLocationPermission.ALWAYS_ALLOW, locationPermission);
 	}
 
 	// ========================================================================================
@@ -700,115 +703,70 @@ public class PlacesLocationManagerTests {
 	// ========================================================================================
 
 	@Test
-	public void test_onLocationReceived() throws Exception {
+	public void test_onLocationReceived() {
 		// setup
-		List<Location> locationList = new ArrayList<>();
-		locationList.add(location1);
-		locationList.add(location2);
-		locationResult = LocationResult.create(locationList);
-		initiateLocationMocking();
+		final ArgumentCaptor<Location> locationCaptor = ArgumentCaptor.forClass(Location.class);
 
 		// test
-		locationManager.onLocationReceived(intent);
+		locationManager.onLocationReceived(locationUpdateEventData(22.22, 33.33));
 
 		// verify
-		verify(mockPlacesMonitorInternal, times(1)).getPOIsForLocation(location1);
+		verify(mockPlacesMonitorInternal, times(1)).getPOIsForLocation(locationCaptor.capture());
+		assertNotNull(locationCaptor.getValue());
 	}
 
 	@Test
-	public void test_onLocationReceived_whenNullIntent() throws Exception {
-		// setup
-		initiateLocationMocking();
-
+	public void test_onLocationReceived_InvalidLatitude() {
 		// test
-		locationManager.onLocationReceived(null);
+		locationManager.onLocationReceived(locationUpdateEventData(222.22, 33.33));
 
 		// verify
-		verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(location1);
+		verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(any(Location.class));
 	}
 
 	@Test
-	public void test_onLocationReceived_when_unknownAction() throws Exception {
-		// setup
-		initiateLocationMocking();
-		when(intent.getAction()).thenReturn("unknownAction");
-
+	public void test_onLocationReceived_InvalidLongitude() {
 		// test
-		locationManager.onLocationReceived(intent);
+		locationManager.onLocationReceived(locationUpdateEventData(22.22, 333.33));
 
 		// verify
-		verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(location1);
-	}
-
-
-	@Test
-	public void test_onLocationReceived_when_intentLocationResultIsNull() throws Exception {
-		// setup
-		locationResult = null;
-		PowerMockito.mockStatic(LocationResult.class);
-		PowerMockito.when(LocationResult.class, "extractResult", any(Intent.class)).thenReturn(locationResult);
-		when(intent.getAction()).thenReturn(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_LOCATION);
-		Mockito.when(LocationResult.extractResult(any(Intent.class))).thenReturn(null);
-
-		// test
-		locationManager.onLocationReceived(intent);
-
-		// verify
-		verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(location1);
+		verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(any(Location.class));
 	}
 
 	@Test
-	public void test_onLocationReceived_when_intentWithNoLocation() throws Exception {
+	public void test_onLocationReceived_EventDataWithInvalidLatitudeDataType() {
 		// setup
-		List<Location> locationList = new ArrayList<>();
-		locationResult = LocationResult.create(locationList);
-		PowerMockito.mockStatic(LocationResult.class);
-		when(intent.getAction()).thenReturn(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_LOCATION);
-		Mockito.when(LocationResult.extractResult(any(Intent.class))).thenReturn(locationResult);
+		EventData eventData = new EventData(new HashMap<String, Variant>() {
+			{
+				put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE,
+					Variant.fromString(PlacesMonitorTestConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_UPDATE));
+				put(PlacesMonitorConstants.EventDataKey.LATITUDE, Variant.fromString("invalidTypeInLatitudeKey"));
+				put(PlacesMonitorConstants.EventDataKey.LONGITUDE, Variant.fromDouble(22.3));
+			}
+		});
 
 		// test
-		locationManager.onLocationReceived(intent);
+		locationManager.onLocationReceived(eventData);
 
 		// verify
-		verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(location1);
+		verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(any(Location.class));
 	}
 
 
-	@Test
-	public void test_OnReceive_when_intentWithEmptyFirstLocations() throws Exception {
-		// setup
-		List<Location> locations = new ArrayList<Location>();
-		locations.add(null);
-		locations.add(location2);
-		locationResult = LocationResult.create(locations);
-		PowerMockito.mockStatic(LocationResult.class);
-		Mockito.when(LocationResult.extractResult(any(Intent.class))).thenReturn(locationResult);
-		when(intent.getAction()).thenReturn(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_LOCATION);
+	// ========================================================================================
+	// private helper methods
+	// ========================================================================================
 
-		// test
-		locationManager.onLocationReceived(intent);
-
-		// verify
-		verify(mockPlacesMonitorInternal, times(0)).getPOIsForLocation(location1);
+	private EventData locationUpdateEventData(final double latitude, final double longitude) {
+		return new EventData(new HashMap<String, Variant>() {
+			{
+				put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE,
+					Variant.fromString(PlacesMonitorTestConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_UPDATE));
+				put(PlacesMonitorConstants.EventDataKey.LATITUDE, Variant.fromDouble(latitude));
+				put(PlacesMonitorConstants.EventDataKey.LONGITUDE, Variant.fromDouble(longitude));
+			}
+		});
 	}
 
-	private void initiateLocationMocking() throws Exception {
-		// static mocks
-		List<Location> locationList = new ArrayList<>();
-		locationList.add(location1);
-		locationList.add(location2);
-		locationResult = LocationResult.create(locationList);
-		PowerMockito.mockStatic(LocationResult.class);
-		PowerMockito.when(LocationResult.class, "extractResult", any(Intent.class)).thenReturn(locationResult);
-		when(intent.getAction()).thenReturn(PlacesMonitorConstants.INTERNAL_INTENT_ACTION_LOCATION);
-	}
-
-	static void setFinalStatic(Field field, Object newValue) throws Exception {
-		field.setAccessible(true);
-		Field modifiersField = Field.class.getDeclaredField("modifiers");
-		modifiersField.setAccessible(true);
-		modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-		field.set(null, newValue);
-	}
 
 }
