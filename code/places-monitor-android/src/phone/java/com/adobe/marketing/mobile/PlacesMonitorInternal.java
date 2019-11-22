@@ -60,7 +60,7 @@ class PlacesMonitorInternal extends Extension {
 			@Override
 			public void error(ExtensionError extensionError) {
 				if (extensionError != null) {
-					Log.error("There was an error registering PlacesMonitorListenerHubSharedState for Event Hub shared state events: %s",
+					Log.error(PlacesMonitorConstants.LOG_TAG,"There was an error registering PlacesMonitorListenerHubSharedState for Event Hub shared state events: %s",
 							  extensionError.getErrorName());
 				}
 			}
@@ -74,7 +74,7 @@ class PlacesMonitorInternal extends Extension {
 			@Override
 			public void error(ExtensionError extensionError) {
 				if (extensionError != null) {
-					Log.error("There was an error registering PlacesMonitorListenerPlacesResponseContent for Places Monitor request events: %s",
+					Log.error(PlacesMonitorConstants.LOG_TAG,"There was an error registering PlacesMonitorListenerPlacesResponseContent for Places Monitor request events: %s",
 							  extensionError.getErrorName());
 				}
 			}
@@ -89,7 +89,7 @@ class PlacesMonitorInternal extends Extension {
 			@Override
 			public void error(ExtensionError extensionError) {
 				if (extensionError != null) {
-					Log.error("There was an error registering PlacesMonitorListenerOSResponseContent for OS response events: %s",
+					Log.error(PlacesMonitorConstants.LOG_TAG,"There was an error registering PlacesMonitorListenerOSResponseContent for OS response events: %s",
 							  extensionError.getErrorName());
 				}
 			}
