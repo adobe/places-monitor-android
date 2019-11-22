@@ -23,11 +23,11 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.view.WindowManager;
 import com.google.android.gms.location.LocationSettingsStates;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static com.google.android.gms.common.ConnectionResult.RESOLUTION_REQUIRED;
@@ -116,7 +116,7 @@ public class PlacesActivity extends Activity {
 		Context context = App.getAppContext();
 
 		if (context == null) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "Unable to request permission, context is null");
+			Log.warning(PlacesMonitorConstants.LOG_TAG, "Unable to request permission, App context is null");
 			return;
 		}
 
@@ -140,10 +140,12 @@ public class PlacesActivity extends Activity {
 		// make the activity not interactable
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
 
-		if(getIntent() == null || getIntent().getExtras() == null){
+		if (getIntent() == null || getIntent().getExtras() == null) {
 			Log.debug(PlacesMonitorConstants.LOG_TAG, "Cannot request permission. PlacesActivity Intent is null");
 		}
-		PlacesMonitorLocationPermission locationPermission = (PlacesMonitorLocationPermission) getIntent().getExtras().get(INTENT_PERMISSION_KEY);
+
+		PlacesMonitorLocationPermission locationPermission = (PlacesMonitorLocationPermission) getIntent().getExtras().get(
+					INTENT_PERMISSION_KEY);
 
 		boolean shouldProvideRationale =
 			ActivityCompat.shouldShowRequestPermissionRationale(this,
@@ -226,9 +228,11 @@ public class PlacesActivity extends Activity {
 	private static String[] getPermissionArray(PlacesMonitorLocationPermission placesMonitorLocationPermission) {
 		List<String> permissionList = new ArrayList<String>();
 		permissionList.add(FINE_LOCATION);
+
 		if (PlacesMonitorLocationPermission.ALWAYS_ALLOW == placesMonitorLocationPermission) {
 			permissionList.add(BACKGROUND_LOCATION);
 		}
+
 		return permissionList.toArray(new String[permissionList.size()]);
 	}
 
@@ -240,10 +244,7 @@ public class PlacesActivity extends Activity {
 	 * Permission handler method called when user has given permission to access fine location.
 	 */
 	private void onPermissionGranted() {
-	    Intent intent = new Intent();
-	    intent.setAction(PlacesMonitorConstants.INTENT_ACTION_PERMISSION_GRANTED);
-		LocalBroadcastManager manager = LocalBroadcastManager.getInstance(getApplicationContext());
-		manager.sendBroadcast(intent);
+		dispatchPermissionChangeOSEvent(PlacesMonitorConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_GRANTED);
 		finish();
 	}
 
@@ -251,9 +252,7 @@ public class PlacesActivity extends Activity {
 	 * Permission handler method called when user has denied permission to access fine location.
 	 */
 	private void onPermissionDenied() {
-        Intent intent = new Intent(PlacesMonitorConstants.INTENT_ACTION_PERMISSION_DENIED);
-        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(getApplicationContext());
-        manager.sendBroadcast(intent);
+		dispatchPermissionChangeOSEvent(PlacesMonitorConstants.EventDataValue.OS_LOCATION_PERMISSION_STATUS_DENIED);
 		finish();
 	}
 
@@ -276,8 +275,27 @@ public class PlacesActivity extends Activity {
 		Log.debug(PlacesMonitorConstants.LOG_TAG, "Permission not granted on the first attempt. PlacesMonitor extension " +
 				  "doesn't support showing rationale. Requesting permission again");
 		ActivityCompat.requestPermissions(this,
-				  						  getPermissionArray(locationPermission),
+										  getPermissionArray(locationPermission),
 										  PlacesMonitorConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE);
+	}
+
+	/**
+	 * Dispatch an OS event to eventHub, indicating the change in location permission
+	 *
+	 * @param status A {@link String} value representing the status of the changed permission.
+	 */
+	private void dispatchPermissionChangeOSEvent(final String status) {
+		// create eventData
+		HashMap<String, Object> eventData = new HashMap<>();
+		eventData.put(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE,
+					  PlacesMonitorConstants.EventDataValue.OS_EVENT_TYPE_LOCATION_PERMISSION_CHANGE);
+		eventData.put(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION_STATUS, status);
+
+		// dispatch OS event
+		Event event = new Event.Builder(PlacesMonitorConstants.EVENTNAME_OS_PERMISSION_CHANGE,
+										PlacesMonitorConstants.EventType.OS, PlacesMonitorConstants.EventSource.RESPONSE_CONTENT).
+		setEventData(eventData).build();
+		MobileCore.dispatchEvent(event, null);
 	}
 
 }

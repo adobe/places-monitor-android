@@ -28,7 +28,6 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
@@ -39,13 +38,17 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 
-import java.util.List;
-
 
 /**
  * Class to manage location updates from Android OS
  */
 class PlacesLocationManager {
+
+	// Latitude/Longitude constants
+	private static final double MAX_LAT		= 90d;
+	private static final double MIN_LAT		= -90d;
+	private static final double MAX_LON		= 180d;
+	private static final double MIN_LON		= -180d;
 
 	// permission constants
 	private FusedLocationProviderClient fusedLocationClient;
@@ -98,18 +101,18 @@ class PlacesLocationManager {
 
 		if (context == null) {
 			Log.debug(PlacesMonitorConstants.LOG_TAG,
-					"Unable to start monitoring places, App context is null");
+					  "Unable to start monitoring places, App context is null");
 			return;
 		}
 
 		Log.debug(PlacesMonitorConstants.LOG_TAG,
-				"Location permission is granted. Starting to monitor location updates");
+				  "Location permission is granted. Starting to monitor location updates");
 
 
 		// Begin by checking if the device has the necessary location settings.
 		final LocationRequest locationRequest = getLocationRequest();
 		LocationSettingsRequest settingsRequest = new LocationSettingsRequest.Builder()
-				.addLocationRequest(locationRequest).build();
+		.addLocationRequest(locationRequest).build();
 		SettingsClient settingsClient = LocationServices.getSettingsClient(context);
 		Task<LocationSettingsResponse> task = settingsClient.checkLocationSettings(settingsRequest);
 		task.addOnSuccessListener(new OnSuccessListener<LocationSettingsResponse>() {
@@ -120,7 +123,7 @@ class PlacesLocationManager {
 
 				if (fusedLocationProviderClient == null) {
 					Log.warning(PlacesMonitorConstants.LOG_TAG,
-							"Unable to start monitoring location, fusedLocationProviderClient instance is null");
+								"Unable to start monitoring location, fusedLocationProviderClient instance is null");
 					return;
 				}
 
@@ -128,7 +131,7 @@ class PlacesLocationManager {
 
 				if (locationIntent == null) {
 					Log.warning(PlacesMonitorConstants.LOG_TAG,
-							"Unable to start monitoring location, Places Location Broadcast Receiver cannot be initialized");
+								"Unable to start monitoring location, Places Location Broadcast Receiver cannot be initialized");
 					return;
 				}
 
@@ -149,7 +152,7 @@ class PlacesLocationManager {
 				switch (statusCode) {
 					case LocationSettingsStatusCodes.RESOLUTION_REQUIRED: {
 						Log.debug(PlacesMonitorConstants.LOG_TAG,
-								"Failed to start location updates, status code : RESOLUTION_REQUIRED.  Attempting to get permission.");
+								  "Failed to start location updates, status code : RESOLUTION_REQUIRED.  Attempting to get permission.");
 
 						// Location settings are not satisfied. But could be fixed by showing the
 						// user a dialog.
@@ -173,8 +176,8 @@ class PlacesLocationManager {
 
 					case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE: {
 						Log.error(PlacesMonitorConstants.LOG_TAG,
-								"Failed to start location updates, status code : SETTINGS_CHANGE_UNAVAILABLE. " +
-                                        "Location settings can't be changed to meet the requirements, no dialog pops up");
+								  "Failed to start location updates, status code : SETTINGS_CHANGE_UNAVAILABLE. " +
+								  "Location settings can't be changed to meet the requirements, no dialog pops up");
 						break;
 					}
 
@@ -254,58 +257,39 @@ class PlacesLocationManager {
 
 	/**
 	 * Handler for processing the received location event.
-	 *
 	 * <p>
-	 * This method is called by the internal {@link android.content.BroadcastReceiver} on receiving an intent with {@link Location}.
-	 * Calls the {@link PlacesExtension} to get the closest POIs around the given location.
+	 * This method will be called when the OS event on location update is received.
+	 * This method attempts to fetch and monitor 20 near by POIs around the given location.
 	 *
-	 * No action is performed if the intents action is not same as {@link PlacesMonitorConstants#INTERNAL_INTENT_ACTION_LOCATION}.
-	 * No action is performed if the received {@code LocationResult} is null.
-	 * No action is performed if the location array or the location is null.
-	 *
-	 * @param intent broadcasted geofence event message wrapped in an intent
+	 * @param eventData {@link EventData} from the location update OS event.
 	 * @see Places#getNearbyPointsOfInterest(Location, int, AdobeCallback)
 	 */
-	void onLocationReceived(final Intent intent) {
+	void onLocationReceived(final EventData eventData) {
+		double latitude;
+		double longitude;
 
-		if (intent == null) {
+		try {
+			latitude = eventData.getDouble(PlacesMonitorConstants.EventDataKey.LATITUDE);
+			longitude = eventData.getDouble(PlacesMonitorConstants.EventDataKey.LONGITUDE);
+		} catch (VariantException exception) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Cannot process the location update, The received intent from the location broadcast receiver  is null");
+						String.format("PlacesLocationManager : Exception occurred while extracting latitude/longitude from the OS event. Ignoring location update event. Error message - %s",
+									  exception.getMessage()));
 			return;
 		}
 
-		final String action = intent.getAction();
 
-		if (!PlacesMonitorConstants.INTERNAL_INTENT_ACTION_LOCATION.equals(action)) {
-			Log.trace(PlacesMonitorConstants.LOG_TAG,
-					  "Cannot process the location update, Invalid action type received from location broadcast receiver");
+		if (!isValidLat(latitude) || !isValidLon(longitude)) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+						"PlacesLocationManager : Invalid Latitude: (" + latitude + ") or Longitude (" + longitude +
+						") obtained from the OS event. Ignoring location update event.");
 			return;
 		}
 
-		LocationResult result = LocationResult.extractResult(intent);
 
-		if (result == null) {
-			return;
-		}
-
-		List<Location> locations = result.getLocations();
-
-		if (locations == null || locations.isEmpty()) {
-			Log.trace(PlacesMonitorConstants.LOG_TAG, "Cannot process the location update, Received location array is null");
-			return;
-		}
-
-		Location location = locations.get(0);
-
-		if (location == null) {
-			Log.trace(PlacesMonitorConstants.LOG_TAG, "Cannot process the location update, Received location is null");
-			return;
-		}
-
-		String locationLog = "Location Received: Accuracy: " + location.getAccuracy() + " lat: " + location.getLatitude() +
-							 " lon: " +
-							 location.getLongitude();
-		Log.debug(PlacesMonitorConstants.LOG_TAG, locationLog);
+		Location location = new Location("Places Monitor location");
+		location.setLatitude(latitude);
+		location.setLongitude(longitude);
 		placesMonitorInternal.getPOIsForLocation(location);
 	}
 
@@ -466,7 +450,7 @@ class PlacesLocationManager {
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Unable to save location permission value to persistence, sharedPreference is null");
+						"Unable to save location permission value to persistence, sharedPreference is null");
 			return;
 		}
 
@@ -474,7 +458,7 @@ class PlacesLocationManager {
 
 		if (editor == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"Unable to save location permission value to persistence, shared preference editor is null");
+						"Unable to save location permission value to persistence, shared preference editor is null");
 			return;
 		}
 
@@ -502,7 +486,8 @@ class PlacesLocationManager {
 		Log.trace(PlacesMonitorConstants.LOG_TAG,
 				  "PlacesLocationManager has loaded " + hasMonitoringStarted +  " for hasMonitoringStarted from persistence");
 
-		String locationPermissionString = sharedPreferences.getString(PlacesMonitorConstants.SharedPreference.LOCATION_PERMISSION_KEY, "");
+		String locationPermissionString = sharedPreferences.getString(
+											  PlacesMonitorConstants.SharedPreference.LOCATION_PERMISSION_KEY, "");
 		this.requestedLocationPermission = PlacesMonitorLocationPermission.fromString(locationPermissionString);
 	}
 
@@ -522,5 +507,29 @@ class PlacesLocationManager {
 
 		return appContext.getSharedPreferences(PlacesMonitorConstants.SharedPreference.MASTER_KEY, 0);
 	}
+
+
+	/**
+	 * Verifies if the provided latitude is valid.
+	 *
+	 * @param latitude the latitude
+	 * @return true if latitude is in the range [-90,90]
+	 */
+	private boolean isValidLat(final double latitude) {
+		return latitude >= MIN_LAT && latitude <= MAX_LAT;
+	}
+
+
+	/**
+	 * Verifies if the provided longitude is valid.
+	 *
+	 * @param longitude the longitude
+	 * @return true if longitude is in the range [-180,180]
+	 */
+	private boolean isValidLon(final double longitude) {
+		return longitude >= MIN_LON && longitude <= MAX_LON;
+	}
+
+
 
 }
