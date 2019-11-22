@@ -1,4 +1,4 @@
-### 2.1.1 (19 Nov, 2019)
+### 2.1.1 (22 Nov, 2019)
 - Now recognizes boot of an Android device and, if required, re-registers geofences with the OS according to the device's current location.
 - Fixed a race condition that sometimes caused entry/exit events to be discarded.
 
