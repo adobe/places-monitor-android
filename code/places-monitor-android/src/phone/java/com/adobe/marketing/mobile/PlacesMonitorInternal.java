@@ -60,7 +60,7 @@ class PlacesMonitorInternal extends Extension {
 			@Override
 			public void error(ExtensionError extensionError) {
 				if (extensionError != null) {
-					Log.error("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerHubSharedState for Event Hub shared state events: %s",
+					Log.error(PlacesMonitorConstants.LOG_TAG,"There was an error registering PlacesMonitorListenerHubSharedState for Event Hub shared state events: %s",
 							  extensionError.getErrorName());
 				}
 			}
@@ -74,7 +74,7 @@ class PlacesMonitorInternal extends Extension {
 			@Override
 			public void error(ExtensionError extensionError) {
 				if (extensionError != null) {
-					Log.error("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerPlacesResponseContent for Places Monitor request events: %s",
+					Log.error(PlacesMonitorConstants.LOG_TAG,"There was an error registering PlacesMonitorListenerPlacesResponseContent for Places Monitor request events: %s",
 							  extensionError.getErrorName());
 				}
 			}
@@ -89,7 +89,7 @@ class PlacesMonitorInternal extends Extension {
 			@Override
 			public void error(ExtensionError extensionError) {
 				if (extensionError != null) {
-					Log.error("PlacesMonitorInternal : There was an error registering PlacesMonitorListenerOSResponseContent for OS response events: %s",
+					Log.error(PlacesMonitorConstants.LOG_TAG,"There was an error registering PlacesMonitorListenerOSResponseContent for OS response events: %s",
 							  extensionError.getErrorName());
 				}
 			}
@@ -163,12 +163,12 @@ class PlacesMonitorInternal extends Extension {
 	void getPOIsForLocation(final Location location) {
 		if (location == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"PlacesMonitorInternal : Null location is obtained from OS, Ignoring to get near by pois");
+						"Null location is obtained from OS, Ignoring to get near by pois");
 			return;
 		}
 
 		Log.debug(PlacesMonitorConstants.LOG_TAG,
-				  "PlacesMonitorInternal : New location obtained: " + location.getLatitude() + location.getLongitude() +
+				  "New location obtained: " + location.getLatitude() + location.getLongitude() +
 				  "Attempting to get the near by pois");
 		Places.getNearbyPointsOfInterest(location, PlacesMonitorConstants.NEARBY_GEOFENCES_COUNT,
 		new AdobeCallback<List<PlacesPOI>>() {
@@ -217,7 +217,7 @@ class PlacesMonitorInternal extends Extension {
 				public void error(final ExtensionError extensionError) {
 					if (extensionError != null) {
 						Log.warning(PlacesMonitorConstants.LOG_TAG,
-									String.format("PlacesMonitorInternal : Could not process event, an error occurred while retrieving configuration shared state: %s",
+									String.format("Could not process event, an error occurred while retrieving configuration shared state: %s",
 												  extensionError.getErrorName()));
 					}
 				}
@@ -228,7 +228,7 @@ class PlacesMonitorInternal extends Extension {
 			// NOTE: configuration is mandatory processing the event, so if shared state is null (pending) stop processing events
 			if (configSharedState == null) {
 				Log.warning(PlacesMonitorConstants.LOG_TAG,
-							"PlacesMonitorInternal : Could not process event, configuration shared state is pending");
+							"Could not process event, configuration shared state is pending");
 				return;
 			}
 
@@ -279,7 +279,7 @@ class PlacesMonitorInternal extends Extension {
 			setLocationPermission(event.getEventData());
 		} else {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"PlacesMonitorInternal : Could not process places monitor request event, Invalid/Unknown event name");
+						"Could not process places monitor request event, Invalid/Unknown event name");
 		}
 	}
 
@@ -302,7 +302,7 @@ class PlacesMonitorInternal extends Extension {
 		EventData eventData = event.getData();
 
 		if (eventData == null || eventData.isEmpty()) {
-			Log.warning(PlacesMonitorConstants.LOG_TAG, "PlacesMonitorInternal : Received empty eventData , Ignoring OS event.");
+			Log.warning(PlacesMonitorConstants.LOG_TAG, "Received empty eventData , Ignoring OS event.");
 			return;
 		}
 
@@ -312,13 +312,13 @@ class PlacesMonitorInternal extends Extension {
 			eventType = eventData.getString2(PlacesMonitorConstants.EventDataKey.OS_EVENT_TYPE);
 		} catch (VariantException exception) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"PlacesMonitorInternal : Invalid eventType for OS responseContent event, Ignoring OS event.");
+						"Invalid eventType for OS responseContent event, Ignoring OS event.");
 			return;
 		}
 
 		if (StringUtils.isNullOrEmpty(eventType)) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"PlacesMonitorInternal : Null/Empty eventType for OS responseContent event, Ignoring OS event.");
+						"Null/Empty eventType for OS responseContent event, Ignoring OS event.");
 			return;
 		}
 
@@ -341,7 +341,7 @@ class PlacesMonitorInternal extends Extension {
 
 			default: {
 				Log.warning(PlacesMonitorConstants.LOG_TAG,
-							"PlacesMonitorInternal : Invalid eventType for OS responseContent event, Ignoring OS event.");
+							"Invalid eventType for OS responseContent event, Ignoring OS event.");
 			}
 
 		}
@@ -359,13 +359,13 @@ class PlacesMonitorInternal extends Extension {
 			permissionStatus = eventData.getString2(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION_STATUS);
 		} catch (VariantException exp) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"PlacesMonitorInternal : Unable to read permission status from the OS responseContent event. Ignoring Permission status change event.");
+						"Unable to read permission status from the OS responseContent event. Ignoring Permission status change event.");
 			return;
 		}
 
 		if (StringUtils.isNullOrEmpty(permissionStatus)) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"PlacesMonitorInternal : Null/empty permission status value from the OS responseContent event. Ignoring Permission status change event.");
+						"Null/empty permission status value from the OS responseContent event. Ignoring Permission status change event.");
 			return;
 		}
 
@@ -383,7 +383,7 @@ class PlacesMonitorInternal extends Extension {
 
 			default: {
 				Log.warning(PlacesMonitorConstants.LOG_TAG,
-							"PlacesMonitorInternal : Invalid permission status value from the OS responseContent event. Ignoring Permission status change event.");
+							"Invalid permission status value from the OS responseContent event. Ignoring Permission status change event.");
 			}
 		}
 	}
@@ -427,7 +427,7 @@ class PlacesMonitorInternal extends Extension {
 		}
 
 		Log.warning(PlacesMonitorConstants.LOG_TAG,
-					"PlacesMonitorInternal : An error occurred while attempting to retrieve nearby points of interest: " + errorString);
+					"An error occurred while attempting to retrieve nearby points of interest: " + errorString);
 	}
 
 	// ========================================================================================

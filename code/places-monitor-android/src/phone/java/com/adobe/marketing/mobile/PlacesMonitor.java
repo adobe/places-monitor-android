@@ -35,7 +35,7 @@ public class PlacesMonitor {
 		MobileCore.registerExtension(PlacesMonitorInternal.class, new ExtensionErrorCallback<ExtensionError>() {
 			@Override
 			public void error(ExtensionError extensionError) {
-				Log.debug("There was an error registering Places Monitoring Extension: %s", extensionError.getErrorName());
+				Log.debug(PlacesMonitorConstants.LOG_TAG,"There was an error registering Places Monitoring Extension: %s", extensionError.getErrorName());
 			}
 		});
 	}
