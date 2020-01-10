@@ -48,7 +48,7 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ExtensionApi.class, PlacesLocationManager.class, PlacesGeofenceManager.class, PlacesMonitorInternal.class, App.class, Context.class, Intent.class, Places.class, Location.class})
+@PrepareForTest({ExtensionApi.class, PlacesLocationManager.class, PlacesGeofenceManager.class, PlacesMonitorInternal.class, App.class, Context.class, Intent.class, Places.class, Location.class, PlacesActivity.class})
 public class PlacesMonitorInternalTests {
 	private PlacesMonitorInternal monitorInternal;
 
@@ -169,6 +169,10 @@ public class PlacesMonitorInternalTests {
 		callbackCaptor1.getValue().error(ExtensionError.UNEXPECTED_ERROR);
 		callbackCaptor2.getValue().error(ExtensionError.UNEXPECTED_ERROR);
 		callbackCaptor3.getValue().error(ExtensionError.UNEXPECTED_ERROR);
+
+		// verify location auth status got initialized
+		verifyStatic(Places.class, times(1));
+		Places.setAuthorizationStatus(PlacesAuthorizationStatus.ALWAYS);
 	}
 
 	@Test
@@ -884,6 +888,55 @@ public class PlacesMonitorInternalTests {
 		Places.clear();
 		verify(locationManager, times(0)).stopMonitoring();
 		verify(geofenceManager, times(0)).stopMonitoringFences(anyBoolean());
+	}
+
+	// ========================================================================================
+	// updateLocationAuthorizationStatus
+	// ========================================================================================
+	@Test
+	public void test_UpdateLocationAuthorizationStatus_when_always_then_sentToPlacesExtension() {
+		// setup
+		initWithContext(context);
+		verifyStatic(Places.class, times(1)); // once for initialization
+		Places.setAuthorizationStatus(PlacesAuthorizationStatus.ALWAYS);
+		PowerMockito.stub(PowerMockito.method(PlacesActivity.class, "isBackgroundPermissionGranted")).toReturn(true);
+
+		// test
+		monitorInternal.updateLocationAuthorizationStatus();
+
+		// verify
+		verifyStatic(Places.class, times(2)); // once after the call
+		Places.setAuthorizationStatus(PlacesAuthorizationStatus.ALWAYS);
+	}
+
+	@Test
+	public void test_UpdateLocationAuthorizationStatus_when_whenInUse_then_sentToPlacesExtension() {
+		// setup
+		initWithContext(context);
+		PowerMockito.stub(PowerMockito.method(PlacesActivity.class, "isBackgroundPermissionGranted")).toReturn(false);
+		PowerMockito.stub(PowerMockito.method(PlacesActivity.class, "isWhileInUsePermissionGranted")).toReturn(true);
+
+		// test
+		monitorInternal.updateLocationAuthorizationStatus();
+
+		// verify
+		verifyStatic(Places.class, times(1));
+		Places.setAuthorizationStatus(PlacesAuthorizationStatus.WHEN_IN_USE);
+	}
+
+	@Test
+	public void test_UpdateLocationAuthorizationStatus_when_denied_then_sentToPlacesExtension() {
+		// setup
+		initWithContext(context);
+		PowerMockito.stub(PowerMockito.method(PlacesActivity.class, "isBackgroundPermissionGranted")).toReturn(false);
+		PowerMockito.stub(PowerMockito.method(PlacesActivity.class, "isWhileInUsePermissionGranted")).toReturn(false);
+
+		// test
+		monitorInternal.updateLocationAuthorizationStatus();
+
+		// verify
+		verifyStatic(Places.class, times(1));
+		Places.setAuthorizationStatus(PlacesAuthorizationStatus.DENIED);
 	}
 
 	// ========================================================================================
