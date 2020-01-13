@@ -101,6 +101,10 @@ class PlacesMonitorInternal extends Extension {
 		geofenceManager.loadPersistedData();
 		eventQueue = new ConcurrentLinkedQueue<>();
 
+		// authorization status can change while the app is not running, so we must validate
+		// that our current shared state value is still accurate
+		updateLocationAuthorizationStatus();
+
 		Log.debug(PlacesMonitorConstants.LOG_TAG, "Registering Places Monitoring extension - version %s",
 				  PlacesMonitorConstants.EXTENSION_VERSION);
 	}
@@ -386,9 +390,25 @@ class PlacesMonitorInternal extends Extension {
 							"Invalid permission status value from the OS responseContent event. Ignoring Permission status change event.");
 			}
 		}
+
+		updateLocationAuthorizationStatus();
 	}
 
-
+	/**
+	 * Update the location authorization status held by the Places extension.
+	 *
+	 * The status will be stored in the Places shared state and is for reference only.
+	 * Calling this method has no impact on the location authorization status for this device.
+	 */
+	 void updateLocationAuthorizationStatus() {
+		if (PlacesActivity.isBackgroundPermissionGranted()) {
+			Places.setAuthorizationStatus(PlacesAuthorizationStatus.ALWAYS);
+		} else if (PlacesActivity.isWhileInUsePermissionGranted()) {
+			Places.setAuthorizationStatus(PlacesAuthorizationStatus.WHEN_IN_USE);
+		} else {
+			Places.setAuthorizationStatus(PlacesAuthorizationStatus.DENIED);
+		}
+	}
 
 	/**
 	 * Method to handle the error that occurred while getting the nearbyPointOfInterest.
@@ -396,7 +416,7 @@ class PlacesMonitorInternal extends Extension {
 	 * @param error 	A {@link PlacesRequestError} representing the type of error
 	 */
 	private void handlePlacesRequestError(final PlacesRequestError error) {
-		String errorString = "";
+		String errorString = "Unknown error.";
 
 		switch (error) {
 			case CONNECTIVITY_ERROR:
@@ -422,7 +442,6 @@ class PlacesMonitorInternal extends Extension {
 				break;
 
 			default:
-				errorString = "Unknown error.";
 				break;
 		}
 
