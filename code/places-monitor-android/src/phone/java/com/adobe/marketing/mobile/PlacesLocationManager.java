@@ -416,7 +416,7 @@ class PlacesLocationManager {
 	 */
 	void setHasMonitoringStarted(final boolean hasMonitoringStarted) {
 		this.hasMonitoringStarted = hasMonitoringStarted;
-		SharedPreferences sharedPreferences = getSharedPreference();
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
@@ -446,7 +446,7 @@ class PlacesLocationManager {
 	 */
 	void saveRequestedLocationPermission(final PlacesMonitorLocationPermission locationPermission) {
 		this.requestedLocationPermission = locationPermission;
-		SharedPreferences sharedPreferences = getSharedPreference();
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
@@ -473,7 +473,7 @@ class PlacesLocationManager {
 	 * Loading of persisted data fails if the {@link SharedPreferences} or App's {@link Context} is null.
 	 */
 	void loadPersistedData() {
-		SharedPreferences sharedPreferences = getSharedPreference();
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
@@ -489,23 +489,6 @@ class PlacesLocationManager {
 		String locationPermissionString = sharedPreferences.getString(
 											  PlacesMonitorConstants.SharedPreference.LOCATION_PERMISSION_KEY, "");
 		this.requestedLocationPermission = PlacesMonitorLocationPermission.fromString(locationPermissionString);
-	}
-
-	/**
-	 * Getter for applications {@link SharedPreferences}
-	 * <p>
-	 * Returns null if app context is not available
-	 *
-	 * @return a {@code SharedPreferences} instance
-	 */
-	private SharedPreferences getSharedPreference() {
-		Context appContext = App.getAppContext();
-
-		if (appContext == null) {
-			return null;
-		}
-
-		return appContext.getSharedPreferences(PlacesMonitorConstants.SharedPreference.MASTER_KEY, 0);
 	}
 
 

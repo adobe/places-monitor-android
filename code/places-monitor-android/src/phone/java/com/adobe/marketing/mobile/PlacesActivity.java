@@ -19,6 +19,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -34,9 +35,67 @@ import static com.google.android.gms.common.ConnectionResult.RESOLUTION_REQUIRED
 
 public class PlacesActivity extends Activity {
 
+
 	private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
 	private static final String BACKGROUND_LOCATION = Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 	private static final String INTENT_PERMISSION_KEY = "intent permission key";
+
+
+	/**
+	 * Update the location authorization status held by the Places extension.
+	 *
+	 * The status will be stored in the Places shared state and is for reference only.
+	 * Calling this method has no impact on the location authorization status for this device.
+	 */
+	public static void updateLocationAuthorizationStatus () {
+		// for version below API 23, location permission are granted at install time
+		if (!isRuntimePermissionRequired()) {
+			Places.setAuthorizationStatus(PlacesAuthorizationStatus.ALWAYS);
+			return;
+		}
+
+		// get hold of the app context. bail out with unknown status if context is unavailable
+		Context context = App.getAppContext();
+
+		if (context == null) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG, "Unable to check location permission, App context is not available. Defaulting acquired permission level to unknown");
+			Places.setAuthorizationStatus(PlacesAuthorizationStatus.UNKNOWN);
+			return;
+		}
+
+		int permissionStatus = ActivityCompat.checkSelfPermission(context, FINE_LOCATION);
+		if(permissionStatus == PackageManager.PERMISSION_GRANTED) {
+			// if the permission for accessing fine location is granted. one of the following is true
+			// 1. permission is granted to access location only `when app in use` (for API 29 and above)
+			// 2. permission is granted to access location in background
+
+			// for android version below API 29, background location permission are granted by default
+			if(isBackgroundLocationAccessGrantedByDefault()){
+				Places.setAuthorizationStatus(PlacesAuthorizationStatus.ALWAYS);
+				return;
+			}
+
+			// for android version above API 29. verify if the access to background location is granted specifically
+			if(isBackgroundPermissionGranted()) {
+				Places.setAuthorizationStatus(PlacesAuthorizationStatus.ALWAYS);
+				return;
+			}
+			Places.setAuthorizationStatus(PlacesAuthorizationStatus.WHEN_IN_USE);
+			return;
+
+		} else {
+			// if the permission for accessing fine location is denied. It could be because one of the following reasons
+			// 1. the location permission dialog is never prompted to the user.
+			// 2. the use of location is denied by the user.
+			// 3. the use of location is denied by the user by checking ‘Never ask again’.
+			if (hasLocationDialogEverPrompted()) {
+				Places.setAuthorizationStatus(PlacesAuthorizationStatus.DENIED);
+				return;
+			}
+			Places.setAuthorizationStatus(PlacesAuthorizationStatus.UNKNOWN);
+			return;
+		}
+	}
 
 	/**
 	 * Checks if permission to access fine location while app is in use has been granted.
@@ -91,9 +150,20 @@ public class PlacesActivity extends Activity {
 			return false;
 		}
 
-		// verify the permission for fine location
-		int permissionState = ActivityCompat.checkSelfPermission(context, BACKGROUND_LOCATION);
-		return permissionState == PackageManager.PERMISSION_GRANTED;
+		// verify the permission for fine location is granted
+		int permissionState = ActivityCompat.checkSelfPermission(context, FINE_LOCATION);
+		if(permissionState == PackageManager.PERMISSION_GRANTED) {
+
+			// for android version below API 29, background location permission are granted by default when fine location permission is granted
+			// for android version above API 29, explicitly verify if the background location permission is granted
+			if(!isBackgroundLocationAccessGrantedByDefault()) {
+				int bgLocationPermissionState = ActivityCompat.checkSelfPermission(context, BACKGROUND_LOCATION);
+				return bgLocationPermissionState  == PackageManager.PERMISSION_GRANTED;
+			}
+			return true;
+		}
+
+		return false;
 	}
 
 
@@ -166,6 +236,7 @@ public class PlacesActivity extends Activity {
 	@Override
 	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		setLocationDialogEverPrompted(true);
 
 		if (requestCode != PlacesMonitorConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE) {
 			onInvalidRequestCode();
@@ -223,6 +294,10 @@ public class PlacesActivity extends Activity {
 	 */
 	private static boolean isRuntimePermissionRequired() {
 		return (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M);
+	}
+
+	private static boolean isBackgroundLocationAccessGrantedByDefault() {
+		return (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q);
 	}
 
 	private static String[] getPermissionArray(PlacesMonitorLocationPermission placesMonitorLocationPermission) {
@@ -297,6 +372,38 @@ public class PlacesActivity extends Activity {
 		setEventData(eventData).build();
 		MobileCore.dispatchEvent(event, null);
 	}
+
+	private static boolean hasLocationDialogEverPrompted() {
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
+		if (sharedPreferences == null) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+					"Unable to save flag which determines if location dialog was prompted into persistence, sharedPreference is null");
+			return false;
+		}
+
+		return sharedPreferences.getBoolean(PlacesMonitorConstants.SharedPreference.HAS_LOCATION_DIALOG_PROMPTED, false);
+	}
+
+	private static void setLocationDialogEverPrompted (final boolean isPrompted) {
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
+		if (sharedPreferences == null) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+					"Unable to save flag which determines if location dialog was prompted into persistence, sharedPreference is null");
+			return;
+		}
+
+		SharedPreferences.Editor editor = sharedPreferences.edit();
+
+		if (editor == null) {
+			Log.warning(PlacesMonitorConstants.LOG_TAG,
+					"Unable to save flag which determines if location dialog was prompted into persistence, shared preference editor is null");
+			return;
+		}
+
+		editor.putBoolean(PlacesMonitorConstants.SharedPreference.HAS_LOCATION_DIALOG_PROMPTED, isPrompted);
+		editor.apply();
+	}
+
 
 }
 

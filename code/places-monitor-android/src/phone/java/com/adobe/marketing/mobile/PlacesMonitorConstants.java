@@ -98,13 +98,14 @@ final class PlacesMonitorConstants {
 
 	static final class  SharedPreference {
 		static final String MASTER_KEY = "com.adobe.placesMonitor";
+		static final String HAS_LOCATION_DIALOG_PROMPTED = "adb_hasLocationDialogPrompted";
 		static final String USERWITHIN_GEOFENCES_KEY = "adb_userWithinGeofences";
 		static final String HAS_MONITORING_STARTED_KEY = "adb_hasMonitoringStarted";
 		static final String LOCATION_PERMISSION_KEY = "adb_locationPermission";
 		private SharedPreference() {
 		}
 	}
-
+	
 	private PlacesMonitorConstants() {
 	}
 }
