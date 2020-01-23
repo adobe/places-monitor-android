@@ -103,7 +103,7 @@ class PlacesMonitorInternal extends Extension {
 
 		// authorization status can change while the app is not running, so we must validate
 		// that our current shared state value is still accurate
-		updateLocationAuthorizationStatus();
+		PlacesActivity.updateLocationAuthorizationStatus();
 
 		Log.debug(PlacesMonitorConstants.LOG_TAG, "Registering Places Monitoring extension - version %s",
 				  PlacesMonitorConstants.EXTENSION_VERSION);
@@ -391,23 +391,7 @@ class PlacesMonitorInternal extends Extension {
 			}
 		}
 
-		updateLocationAuthorizationStatus();
-	}
-
-	/**
-	 * Update the location authorization status held by the Places extension.
-	 *
-	 * The status will be stored in the Places shared state and is for reference only.
-	 * Calling this method has no impact on the location authorization status for this device.
-	 */
-	 void updateLocationAuthorizationStatus() {
-		if (PlacesActivity.isBackgroundPermissionGranted()) {
-			Places.setAuthorizationStatus(PlacesAuthorizationStatus.ALWAYS);
-		} else if (PlacesActivity.isWhileInUsePermissionGranted()) {
-			Places.setAuthorizationStatus(PlacesAuthorizationStatus.WHEN_IN_USE);
-		} else {
-			Places.setAuthorizationStatus(PlacesAuthorizationStatus.DENIED);
-		}
+		PlacesActivity.updateLocationAuthorizationStatus();
 	}
 
 	/**

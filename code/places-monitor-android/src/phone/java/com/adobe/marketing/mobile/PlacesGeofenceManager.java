@@ -302,7 +302,7 @@ class PlacesGeofenceManager {
 	 *
 	 */
 	void loadPersistedData() {
-		SharedPreferences sharedPreferences = getSharedPreference();
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
@@ -320,7 +320,7 @@ class PlacesGeofenceManager {
 	 * Saves the in-memory variable {@link #userWithinGeofences} in persistence.
 	 */
 	void saveUserWithinGeofences() {
-		SharedPreferences sharedPreferences = getSharedPreference();
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
@@ -571,24 +571,6 @@ class PlacesGeofenceManager {
 
 		geofencingClient = LocationServices.getGeofencingClient(context);
 		return geofencingClient;
-	}
-
-
-	/**
-	 * Getter for the applications {@link SharedPreferences}
-	 * <p>
-	 * Returns null if the app context is not available
-	 *
-	 * @return a {@code SharedPreferences} instance
-	 */
-	private SharedPreferences getSharedPreference() {
-		Context appContext = App.getAppContext();
-
-		if (appContext == null) {
-			return null;
-		}
-
-		return appContext.getSharedPreferences(PlacesMonitorConstants.SharedPreference.MASTER_KEY, 0);
 	}
 
 

@@ -19,6 +19,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -54,7 +55,7 @@ import static org.mockito.ArgumentMatchers.*;
 
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Context.class, App.class, ActivityCompat.class, Build.class, PlacesMonitor.class, LocationSettingsStates.class, Intent.class, MobileCore.class})
+@PrepareForTest({Context.class, App.class, ActivityCompat.class, Build.class, PlacesMonitor.class, LocationSettingsStates.class, Intent.class, MobileCore.class, Places.class})
 public class PlacesActivityTests {
 	private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
 	private static final String BACKGROUND_LOCATION = Manifest.permission.ACCESS_BACKGROUND_LOCATION;
@@ -83,8 +84,15 @@ public class PlacesActivityTests {
 	@Mock
 	LocationSettingsStates locationSettingsStates;
 
+	@Mock
+	SharedPreferences mockSharedPreference;
+
+	@Mock
+	SharedPreferences.Editor mockSharedPreferenceEditor;
+
 	@Before
 	public void before() throws Exception {
+		PowerMockito.mockStatic(Places.class);
 		PowerMockito.mockStatic(PlacesMonitor.class);
 		PowerMockito.mockStatic(Build.class);
 		PowerMockito.mockStatic(App.class);
@@ -103,8 +111,120 @@ public class PlacesActivityTests {
 		Mockito.when(placesActivity.getWindow()).thenReturn(window);
 		Mockito.when(placesActivity.getIntent()).thenReturn(mockIntent);
 		Mockito.when(mockIntent.getExtras()).thenReturn(mockExtra);
+		Mockito.when(context.getSharedPreferences(PlacesMonitorTestConstants.SharedPreference.MASTER_KEY,
+				0)).thenReturn(mockSharedPreference);
+		Mockito.when(mockSharedPreference.edit()).thenReturn(mockSharedPreferenceEditor);
 	}
 
+	// ========================================================================================
+	// updateLocationAuthorizationStatus
+	// ========================================================================================
+	@Test
+	public void test_UpdateLocationAuthorizationStatus_when_APILevel_below_AndroidM() throws Exception{
+		// setup
+		// API level for Android M is 23
+		setFinalStatic(Build.VERSION.class.getField("SDK_INT"), 19);
+
+		// test
+		PlacesActivity.updateLocationAuthorizationStatus();
+
+		// verify
+		verifyStatic(Places.class, times(1));
+		Places.setAuthorizationStatus(PlacesAuthorizationStatus.ALWAYS);
+	}
+
+	@Test
+	public void test_UpdateLocationAuthorizationStatus_when_AppContextNull() throws Exception{
+		// setup
+		Mockito.when(App.getAppContext()).thenReturn(null);
+
+		// test
+		PlacesActivity.updateLocationAuthorizationStatus();
+
+		// verify
+		verifyStatic(Places.class, times(1));
+		Places.setAuthorizationStatus(PlacesAuthorizationStatus.UNKNOWN);
+	}
+
+	@Test
+	public void test_UpdateLocationAuthorizationStatus_when_only_FineLocationGranted_APILevel_below_AndroidQ() throws Exception{
+		// setup
+		// API level for Android Qis 29
+		setFinalStatic(Build.VERSION.class.getField("SDK_INT"), 25);
+		Mockito.when(ActivityCompat.checkSelfPermission(context, FINE_LOCATION)).thenReturn(PackageManager.PERMISSION_GRANTED);
+
+		// test
+		PlacesActivity.updateLocationAuthorizationStatus();
+
+		// verify
+		verifyStatic(Places.class, times(1));
+		Places.setAuthorizationStatus(PlacesAuthorizationStatus.ALWAYS);
+	}
+
+
+	@Test
+	public void test_UpdateLocationAuthorizationStatus_when_only_FineLocationGranted_APILevel_above_AndroidQ() throws Exception{
+		// setup
+		// API level for Android Qis 29
+		setFinalStatic(Build.VERSION.class.getField("SDK_INT"), 29);
+		Mockito.when(ActivityCompat.checkSelfPermission(context, FINE_LOCATION)).thenReturn(PackageManager.PERMISSION_GRANTED);
+		Mockito.when(ActivityCompat.checkSelfPermission(context, BACKGROUND_LOCATION)).thenReturn(PackageManager.PERMISSION_DENIED);
+
+		// test
+		PlacesActivity.updateLocationAuthorizationStatus();
+
+		// verify
+		verifyStatic(Places.class, times(1));
+		Places.setAuthorizationStatus(PlacesAuthorizationStatus.WHEN_IN_USE);
+	}
+
+	@Test
+	public void test_UpdateLocationAuthorizationStatus_when_backgroundLocationGranted_APILevel_above_AndroidQ() throws Exception{
+		// setup
+		setFinalStatic(Build.VERSION.class.getField("SDK_INT"), 29);
+		Mockito.when(ActivityCompat.checkSelfPermission(context, FINE_LOCATION)).thenReturn(PackageManager.PERMISSION_GRANTED);
+		Mockito.when(ActivityCompat.checkSelfPermission(context, BACKGROUND_LOCATION)).thenReturn(PackageManager.PERMISSION_GRANTED);
+
+		// test
+		PlacesActivity.updateLocationAuthorizationStatus();
+
+		// verify
+		verifyStatic(Places.class, times(1));
+		Places.setAuthorizationStatus(PlacesAuthorizationStatus.ALWAYS);
+	}
+
+
+	@Test
+	public void test_UpdateLocationAuthorizationStatus_when_permissionDenied() throws Exception{
+		// setup
+		// mockSharedPreference to respond with true for hasLocationDialogEverPrompted
+		Mockito.when(mockSharedPreference.getBoolean(anyString(),anyBoolean())).thenReturn(true);
+		setFinalStatic(Build.VERSION.class.getField("SDK_INT"), 29);
+		Mockito.when(ActivityCompat.checkSelfPermission(context, FINE_LOCATION)).thenReturn(PackageManager.PERMISSION_DENIED);
+
+		// test
+		PlacesActivity.updateLocationAuthorizationStatus();
+
+		// verify
+		verifyStatic(Places.class, times(1));
+		Places.setAuthorizationStatus(PlacesAuthorizationStatus.DENIED);
+	}
+
+	@Test
+	public void test_UpdateLocationAuthorizationStatus_when_permissionNotAsked() throws Exception{
+		// setup
+		// mockSharedPreference to respond with false for hasLocationDialogEverPrompted
+		Mockito.when(mockSharedPreference.getBoolean(anyString(),anyBoolean())).thenReturn(false);
+		setFinalStatic(Build.VERSION.class.getField("SDK_INT"), 29);
+		Mockito.when(ActivityCompat.checkSelfPermission(context, FINE_LOCATION)).thenReturn(PackageManager.PERMISSION_DENIED);
+
+		// test
+		PlacesActivity.updateLocationAuthorizationStatus();
+
+		// verify
+		verifyStatic(Places.class, times(1));
+		Places.setAuthorizationStatus(PlacesAuthorizationStatus.UNKNOWN);
+	}
 
 	// ========================================================================================
 	// isFineLocationPermissionGranted
@@ -206,6 +326,7 @@ public class PlacesActivityTests {
 	@Test
 	public void test_isBackgroundPermissionGranted_when_PermissionDenied() throws Exception {
 		// setup
+		setFinalStatic(Build.VERSION.class.getField("SDK_INT"), 29);
 		Mockito.when(ActivityCompat.checkSelfPermission(context,
 					 BACKGROUND_LOCATION)).thenReturn(PackageManager.PERMISSION_DENIED);
 

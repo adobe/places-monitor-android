@@ -891,55 +891,6 @@ public class PlacesMonitorInternalTests {
 	}
 
 	// ========================================================================================
-	// updateLocationAuthorizationStatus
-	// ========================================================================================
-	@Test
-	public void test_UpdateLocationAuthorizationStatus_when_always_then_sentToPlacesExtension() {
-		// setup
-		initWithContext(context);
-		verifyStatic(Places.class, times(1)); // once for initialization
-		Places.setAuthorizationStatus(PlacesAuthorizationStatus.ALWAYS);
-		PowerMockito.stub(PowerMockito.method(PlacesActivity.class, "isBackgroundPermissionGranted")).toReturn(true);
-
-		// test
-		monitorInternal.updateLocationAuthorizationStatus();
-
-		// verify
-		verifyStatic(Places.class, times(2)); // once after the call
-		Places.setAuthorizationStatus(PlacesAuthorizationStatus.ALWAYS);
-	}
-
-	@Test
-	public void test_UpdateLocationAuthorizationStatus_when_whenInUse_then_sentToPlacesExtension() {
-		// setup
-		initWithContext(context);
-		PowerMockito.stub(PowerMockito.method(PlacesActivity.class, "isBackgroundPermissionGranted")).toReturn(false);
-		PowerMockito.stub(PowerMockito.method(PlacesActivity.class, "isWhileInUsePermissionGranted")).toReturn(true);
-
-		// test
-		monitorInternal.updateLocationAuthorizationStatus();
-
-		// verify
-		verifyStatic(Places.class, times(1));
-		Places.setAuthorizationStatus(PlacesAuthorizationStatus.WHEN_IN_USE);
-	}
-
-	@Test
-	public void test_UpdateLocationAuthorizationStatus_when_denied_then_sentToPlacesExtension() {
-		// setup
-		initWithContext(context);
-		PowerMockito.stub(PowerMockito.method(PlacesActivity.class, "isBackgroundPermissionGranted")).toReturn(false);
-		PowerMockito.stub(PowerMockito.method(PlacesActivity.class, "isWhileInUsePermissionGranted")).toReturn(false);
-
-		// test
-		monitorInternal.updateLocationAuthorizationStatus();
-
-		// verify
-		verifyStatic(Places.class, times(1));
-		Places.setAuthorizationStatus(PlacesAuthorizationStatus.DENIED);
-	}
-
-	// ========================================================================================
 	// Private helper methods
 	// ========================================================================================
 

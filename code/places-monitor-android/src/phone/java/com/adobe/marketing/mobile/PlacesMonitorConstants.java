@@ -22,7 +22,7 @@ final class PlacesMonitorConstants {
 	static final String LOG_TAG = PlacesMonitor.class.getSimpleName();
 	static final String EXTENSION_NAME = "com.adobe.placesMonitor";
 
-	static final String EXTENSION_VERSION = "2.1.1";
+	static final String EXTENSION_VERSION = "2.1.2";
 
 	// event names for places monitor request content
 	static final String EVENTNAME_START = "start monitoring";
@@ -98,13 +98,14 @@ final class PlacesMonitorConstants {
 
 	static final class  SharedPreference {
 		static final String MASTER_KEY = "com.adobe.placesMonitor";
+		static final String HAS_LOCATION_DIALOG_PROMPTED = "adb_hasLocationDialogPrompted";
 		static final String USERWITHIN_GEOFENCES_KEY = "adb_userWithinGeofences";
 		static final String HAS_MONITORING_STARTED_KEY = "adb_hasMonitoringStarted";
 		static final String LOCATION_PERMISSION_KEY = "adb_locationPermission";
 		private SharedPreference() {
 		}
 	}
-
+	
 	private PlacesMonitorConstants() {
 	}
 }
