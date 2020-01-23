@@ -760,17 +760,6 @@ public class PlacesGeofenceManagerTests {
 		assertNull(intent);
 	}
 
-	@Test
-	public void test_getSharedPreference_when_context_isNull() throws Exception {
-		// setup
-		Mockito.when(App.getAppContext()).thenReturn(null);
-
-		// test
-		SharedPreferences sharedPreferences = Whitebox.invokeMethod(geofenceManager, "getSharedPreference");
-
-		// verify
-		assertNull(sharedPreferences);
-	}
 
 	@Test
 	public void test_checkPermissions_when_context_isNull() throws Exception {
