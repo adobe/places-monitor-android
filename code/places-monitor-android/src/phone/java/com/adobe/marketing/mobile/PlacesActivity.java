@@ -82,7 +82,7 @@ public class PlacesActivity extends Activity {
 			// if the permission for accessing fine location is denied. It could be because one of the following reasons
 			// 1. the location permission dialog is never prompted to the user.
 			// 2. the use of location is denied by the user.
-			// 3. the use of location is denied by the user by checking ‘Never ask again’.);
+			// 3. the use of location is denied by the user by checking ‘Never ask again’.
 			if (hasLocationDialogEverPrompted()) {
 				Places.setAuthorizationStatus(PlacesAuthorizationStatus.DENIED);
 			} else {
