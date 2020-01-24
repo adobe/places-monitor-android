@@ -416,7 +416,7 @@ class PlacesLocationManager {
 	 */
 	void setHasMonitoringStarted(final boolean hasMonitoringStarted) {
 		this.hasMonitoringStarted = hasMonitoringStarted;
-		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreferences();
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
@@ -446,7 +446,7 @@ class PlacesLocationManager {
 	 */
 	void saveRequestedLocationPermission(final PlacesMonitorLocationPermission locationPermission) {
 		this.requestedLocationPermission = locationPermission;
-		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreferences();
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
@@ -473,7 +473,7 @@ class PlacesLocationManager {
 	 * Loading of persisted data fails if the {@link SharedPreferences} or App's {@link Context} is null.
 	 */
 	void loadPersistedData() {
-		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreferences();
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,

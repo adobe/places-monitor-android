@@ -69,31 +69,25 @@ public class PlacesActivity extends Activity {
 			// 1. permission is granted to access location only `when app in use` (for API 29 and above)
 			// 2. permission is granted to access location in background
 
-			// for android version below API 29, background location permission are granted by default
-			if(isBackgroundLocationAccessGrantedByDefault()){
-				Places.setAuthorizationStatus(PlacesAuthorizationStatus.ALWAYS);
-				return;
-			}
 
+			// for android version below API 29, background location permission are granted by default
 			// for android version above API 29. verify if the access to background location is granted specifically
-			if(isBackgroundPermissionGranted()) {
+			if (isBackgroundLocationAccessGrantedByDefault() || isBackgroundPermissionGranted()) {
 				Places.setAuthorizationStatus(PlacesAuthorizationStatus.ALWAYS);
-				return;
+			} else {
+				Places.setAuthorizationStatus(PlacesAuthorizationStatus.WHEN_IN_USE);
 			}
-			Places.setAuthorizationStatus(PlacesAuthorizationStatus.WHEN_IN_USE);
-			return;
 
 		} else {
 			// if the permission for accessing fine location is denied. It could be because one of the following reasons
 			// 1. the location permission dialog is never prompted to the user.
 			// 2. the use of location is denied by the user.
-			// 3. the use of location is denied by the user by checking ‘Never ask again’.
+			// 3. the use of location is denied by the user by checking ‘Never ask again’.);
 			if (hasLocationDialogEverPrompted()) {
 				Places.setAuthorizationStatus(PlacesAuthorizationStatus.DENIED);
-				return;
+			} else {
+				Places.setAuthorizationStatus(PlacesAuthorizationStatus.UNKNOWN);
 			}
-			Places.setAuthorizationStatus(PlacesAuthorizationStatus.UNKNOWN);
-			return;
 		}
 	}
 
@@ -374,7 +368,7 @@ public class PlacesActivity extends Activity {
 	}
 
 	private static boolean hasLocationDialogEverPrompted() {
-		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreferences();
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
 					"Unable to save flag which determines if location dialog was prompted into persistence, sharedPreference is null");
@@ -385,7 +379,7 @@ public class PlacesActivity extends Activity {
 	}
 
 	private static void setLocationDialogEverPrompted (final boolean isPrompted) {
-		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreferences();
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
 					"Unable to save flag which determines if location dialog was prompted into persistence, sharedPreference is null");

@@ -302,7 +302,7 @@ class PlacesGeofenceManager {
 	 *
 	 */
 	void loadPersistedData() {
-		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreferences();
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
@@ -320,7 +320,7 @@ class PlacesGeofenceManager {
 	 * Saves the in-memory variable {@link #userWithinGeofences} in persistence.
 	 */
 	void saveUserWithinGeofences() {
-		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreferences();
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
