@@ -411,7 +411,7 @@ public class PlacesLocationManagerTests {
 		// test
 		locationManager.startMonitoring();
 
-		// verify if location updates are not requested
+		// verify if location updates are requested
 		verify(locationManager, times(1)).beginLocationTracking();
 	}
 
@@ -426,7 +426,7 @@ public class PlacesLocationManagerTests {
 		// test
 		locationManager.startMonitoring();
 
-		// verify if location updates are not requested
+		// verify if location updates are requested
 		verify(locationManager, times(1)).beginLocationTracking();
 	}
 
