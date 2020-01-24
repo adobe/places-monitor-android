@@ -89,6 +89,14 @@ class PlacesLocationManager {
 				PlacesActivity.askPermission(requestedLocationPermission);
 				return;
 			}
+		} else if(requestedLocationPermission == PlacesMonitorLocationPermission.NONE) {
+			// if the location permission hasn't been already granted, do not begin location tracking.
+			// log a message letting the developer know that
+			if(!(PlacesActivity.isWhileInUsePermissionGranted() || PlacesActivity.isBackgroundPermissionGranted())) {
+				Log.warning(PlacesMonitorConstants.LOG_TAG, "Places Monitor doesn't have apps location permission to start monitoring. Please request for location permission" +
+						"in your application or call startMonitoring by setting setLocationPermission API to WHILE_USING_APP or ALWAYS_ALLOW");
+				return;
+			}
 		}
 
 		beginLocationTracking();

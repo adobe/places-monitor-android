@@ -385,6 +385,51 @@ public class PlacesLocationManagerTests {
 		verify(locationManager, times(1)).beginLocationTracking();
 	}
 
+	@Test
+	public void test_startMonitoring_when_SetRequestPermissionNONE_and_noLocationPermissionGrantedByApp() {
+		// setup
+		Mockito.when(PlacesActivity.isWhileInUsePermissionGranted()).thenReturn(false);
+		Mockito.when(PlacesActivity.isBackgroundPermissionGranted()).thenReturn(false);
+		Whitebox.setInternalState(locationManager, "requestedLocationPermission",
+				PlacesMonitorLocationPermission.NONE);
+
+		// test
+		locationManager.startMonitoring();
+
+		// verify if location updates are not requested
+		verify(locationManager, times(0)).beginLocationTracking();
+	}
+
+	@Test
+	public void test_startMonitoring_when_SetRequestPermissionNONE_and_whileInUsePermissionGrantedByApp() {
+		// setup
+		Mockito.when(PlacesActivity.isWhileInUsePermissionGranted()).thenReturn(true);
+		Mockito.when(PlacesActivity.isBackgroundPermissionGranted()).thenReturn(false);
+		Whitebox.setInternalState(locationManager, "requestedLocationPermission",
+				PlacesMonitorLocationPermission.NONE);
+
+		// test
+		locationManager.startMonitoring();
+
+		// verify if location updates are not requested
+		verify(locationManager, times(1)).beginLocationTracking();
+	}
+
+	@Test
+	public void test_startMonitoring_when_SetRequestPermissionNONE_and_AlwaysPermissionGrantedByApp() {
+		// setup
+		Mockito.when(PlacesActivity.isWhileInUsePermissionGranted()).thenReturn(false);
+		Mockito.when(PlacesActivity.isBackgroundPermissionGranted()).thenReturn(true);
+		Whitebox.setInternalState(locationManager, "requestedLocationPermission",
+				PlacesMonitorLocationPermission.NONE);
+
+		// test
+		locationManager.startMonitoring();
+
+		// verify if location updates are not requested
+		verify(locationManager, times(1)).beginLocationTracking();
+	}
+
 
 	// ========================================================================================
 	// stopMonitoring
