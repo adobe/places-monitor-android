@@ -75,11 +75,7 @@ public class PlacesMonitor {
 	 */
 	@Deprecated
 	public static void setLocationPermission(final PlacesMonitorLocationPermission placesMonitorLocationPermission) {
-		EventData data = new EventData();
-		String locationPermissionString = placesMonitorLocationPermission == null ? null :
-										  placesMonitorLocationPermission.getValue();
-		data.putString(PlacesMonitorConstants.EventDataKey.LOCATION_PERMISSION, locationPermissionString);
-		dispatchMonitorEvent(PlacesMonitorConstants.EVENTNAME_SET_LOCATION_PERMISSION, data);
+		setRequestLocationPermission(placesMonitorLocationPermission);
 	}
 
 
