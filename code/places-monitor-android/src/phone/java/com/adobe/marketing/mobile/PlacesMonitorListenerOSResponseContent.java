@@ -26,7 +26,7 @@ package com.adobe.marketing.mobile;
  * </ul>
  * @see PlacesMonitorInternal
  */
-public class PlacesMonitorListenerOSResponseContent extends ExtensionListener {
+class PlacesMonitorListenerOSResponseContent extends ExtensionListener {
 
 	/**
 	 * Constructor.

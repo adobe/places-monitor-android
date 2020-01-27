@@ -28,6 +28,7 @@ package com.adobe.marketing.mobile;
  * A new permission "Allow only while using the app" is added.
  */
 public enum PlacesMonitorLocationPermission {
+
 	/**
 	 * Permission for Places Monitor to access location while using application.
 	 * An app is considered to be in use when the user is looking at the app on their device screen (i.e) an activity is running in the foreground.
@@ -40,7 +41,12 @@ public enum PlacesMonitorLocationPermission {
 	/**
 	 * Permission for Places Monitor to access location in foreground and background.
 	 */
-	ALWAYS_ALLOW("alwaysAllow");
+	ALWAYS_ALLOW("alwaysAllow"),
+
+	/**
+	 * On Choosing NONE, Places Monitor extension will not attempt to request for location permissions when startMonitoring API is called for the first time.
+	 */
+	NONE("none");
 
 	private final String value;
 

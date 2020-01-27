@@ -1,3 +1,7 @@
+### 2.2.0 (27 Jan, 2020)
+- Call new Places API to collect location authorization status when the app launches and when authorization changes while the app is running.
+- Added setRequestLocationPermission API and deprecated setLocationPermision API.
+
 ### 2.1.1 (22 Nov, 2019)
 - Now recognizes boot of an Android device and, if required, re-registers geofences with the OS according to the device's current location.
 - Fixed a race condition that sometimes caused entry/exit events to be discarded.
