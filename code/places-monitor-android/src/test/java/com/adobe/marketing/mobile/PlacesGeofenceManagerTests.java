@@ -569,9 +569,9 @@ public class PlacesGeofenceManagerTests {
 		PlacesPOI poi2 = new PlacesPOI("id2", "name2", 22.22, 33.33, 100, "libraryID", 200, null);
 		PlacesPOI poi3 = new PlacesPOI("id3", "name3", 22.22, 33.33, 100, "libraryID", 200, null);
 		PlacesPOI poi4 = new PlacesPOI("id4", "name3", 22.22, 33.33, 100, "libraryID", 200, null);
-		poi2.setContainsUser(true);
-		poi3.setContainsUser(false);
-		poi4.setContainsUser(true);
+		poi2.setUserIsWithin(true);
+		poi3.setUserIsWithin(false);
+		poi4.setUserIsWithin(true);
 		nearByPOIs.add(poi2);
 		nearByPOIs.add(poi3);
 		nearByPOIs.add(poi4);
@@ -603,9 +603,9 @@ public class PlacesGeofenceManagerTests {
 		PlacesPOI poi2 = new PlacesPOI("id2", "name2", 22.22, 33.33, 100, "libraryID", 200, null);
 		PlacesPOI poi3 = new PlacesPOI("id3", "name3", 22.22, 33.33, 100, "libraryID", 200, null);
 		PlacesPOI poi4 = new PlacesPOI("id4", "name3", 22.22, 33.33, 100, "libraryID", 200, null);
-		poi2.setContainsUser(true);
-		poi3.setContainsUser(false);
-		poi4.setContainsUser(true);
+		poi2.setUserIsWithin(true);
+		poi3.setUserIsWithin(false);
+		poi4.setUserIsWithin(true);
 		nearByPOIs.add(poi2);
 		nearByPOIs.add(poi3);
 		nearByPOIs.add(poi4);
@@ -760,17 +760,6 @@ public class PlacesGeofenceManagerTests {
 		assertNull(intent);
 	}
 
-	@Test
-	public void test_getSharedPreference_when_context_isNull() throws Exception {
-		// setup
-		Mockito.when(App.getAppContext()).thenReturn(null);
-
-		// test
-		SharedPreferences sharedPreferences = Whitebox.invokeMethod(geofenceManager, "getSharedPreference");
-
-		// verify
-		assertNull(sharedPreferences);
-	}
 
 	@Test
 	public void test_checkPermissions_when_context_isNull() throws Exception {
@@ -791,10 +780,10 @@ public class PlacesGeofenceManagerTests {
 	private List<PlacesPOI> poiListA() {
 		List<PlacesPOI> pois = new ArrayList<>();
 		PlacesPOI poi1 = new PlacesPOI("id1", "name1", 22.22, 33.33, 100, "libraryID", 200, null);
-		poi1.setContainsUser(true);
+		poi1.setUserIsWithin(true);
 		pois.add(poi1);
 		PlacesPOI poi2 = new PlacesPOI("id2", "name2", 22.22, 33.33, 100, "libraryID", 200, null);
-		poi2.setContainsUser(true);
+		poi2.setUserIsWithin(true);
 		pois.add(poi2);
 		pois.add(new PlacesPOI("id3", "name3", 22.22, 33.33, 100, "libraryID", 200, null));
 		pois.add(new PlacesPOI("id4", "name4", 22.22, 33.33, 100, "libraryID", 200, null));

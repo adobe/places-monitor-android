@@ -101,6 +101,10 @@ class PlacesMonitorInternal extends Extension {
 		geofenceManager.loadPersistedData();
 		eventQueue = new ConcurrentLinkedQueue<>();
 
+		// authorization status can change while the app is not running, so we must validate
+		// that our current shared state value is still accurate
+		PlacesActivity.updateLocationAuthorizationStatus();
+
 		Log.debug(PlacesMonitorConstants.LOG_TAG, "Registering Places Monitoring extension - version %s",
 				  PlacesMonitorConstants.EXTENSION_VERSION);
 	}
@@ -386,9 +390,9 @@ class PlacesMonitorInternal extends Extension {
 							"Invalid permission status value from the OS responseContent event. Ignoring Permission status change event.");
 			}
 		}
+
+		PlacesActivity.updateLocationAuthorizationStatus();
 	}
-
-
 
 	/**
 	 * Method to handle the error that occurred while getting the nearbyPointOfInterest.
@@ -396,7 +400,7 @@ class PlacesMonitorInternal extends Extension {
 	 * @param error 	A {@link PlacesRequestError} representing the type of error
 	 */
 	private void handlePlacesRequestError(final PlacesRequestError error) {
-		String errorString = "";
+		String errorString = "Unknown error.";
 
 		switch (error) {
 			case CONNECTIVITY_ERROR:
@@ -422,7 +426,6 @@ class PlacesMonitorInternal extends Extension {
 				break;
 
 			default:
-				errorString = "Unknown error.";
 				break;
 		}
 
