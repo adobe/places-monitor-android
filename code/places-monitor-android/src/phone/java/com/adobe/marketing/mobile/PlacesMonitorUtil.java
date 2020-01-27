@@ -18,7 +18,7 @@ package com.adobe.marketing.mobile;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-public class PlacesMonitorUtil {
+class PlacesMonitorUtil {
 
     /**
      * Getter for the applications {@link SharedPreferences}
@@ -27,7 +27,7 @@ public class PlacesMonitorUtil {
      *
      * @return a {@code SharedPreferences} instance
      */
-    public static SharedPreferences getSharedPreference() {
+    static SharedPreferences getSharedPreferences() {
         Context appContext = App.getAppContext();
 
         if (appContext == null) {

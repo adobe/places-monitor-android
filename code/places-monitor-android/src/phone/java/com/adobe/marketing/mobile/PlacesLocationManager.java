@@ -89,6 +89,14 @@ class PlacesLocationManager {
 				PlacesActivity.askPermission(requestedLocationPermission);
 				return;
 			}
+		} else if(requestedLocationPermission == PlacesMonitorLocationPermission.NONE) {
+			// if the location permission hasn't been already granted, do not begin location tracking.
+			// log a message letting the developer know that the permission should be requested by the application.
+			if(!(PlacesActivity.isWhileInUsePermissionGranted() || PlacesActivity.isBackgroundPermissionGranted())) {
+				Log.warning(PlacesMonitorConstants.LOG_TAG, "Places Monitor doesn't have apps location permission to start monitoring. Please request for location permission " +
+						"in your application or call startMonitoring by setting setLocationPermission API to WHILE_USING_APP or ALWAYS_ALLOW");
+				return;
+			}
 		}
 
 		beginLocationTracking();
@@ -416,7 +424,7 @@ class PlacesLocationManager {
 	 */
 	void setHasMonitoringStarted(final boolean hasMonitoringStarted) {
 		this.hasMonitoringStarted = hasMonitoringStarted;
-		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreferences();
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
@@ -446,7 +454,7 @@ class PlacesLocationManager {
 	 */
 	void saveRequestedLocationPermission(final PlacesMonitorLocationPermission locationPermission) {
 		this.requestedLocationPermission = locationPermission;
-		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreferences();
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
@@ -473,7 +481,7 @@ class PlacesLocationManager {
 	 * Loading of persisted data fails if the {@link SharedPreferences} or App's {@link Context} is null.
 	 */
 	void loadPersistedData() {
-		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreference();
+		SharedPreferences sharedPreferences = PlacesMonitorUtil.getSharedPreferences();
 
 		if (sharedPreferences == null) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
