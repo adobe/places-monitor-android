@@ -1,4 +1,4 @@
-### 2.1.2 (27 Jan, 2020)
+### 2.2.0 (27 Jan, 2020)
 - Call new Places API to collect location authorization status when the app launches and when authorization changes while the app is running.
 
 ### 2.1.1 (22 Nov, 2019)
