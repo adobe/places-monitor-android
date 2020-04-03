@@ -94,7 +94,8 @@ class PlacesLocationManager {
 			// log a message letting the developer know that the permission should be requested by the application.
 			if(!(PlacesActivity.isWhileInUsePermissionGranted() || PlacesActivity.isBackgroundPermissionGranted())) {
 				Log.warning(PlacesMonitorConstants.LOG_TAG, "Places Monitor doesn't have apps location permission to start monitoring. Please request for location permission " +
-						"in your application or call startMonitoring by setting setLocationPermission API to WHILE_USING_APP or ALWAYS_ALLOW");
+						"in your application or call startMonitoring by setting setLocationPermission API to WHILE_USING_APP or ALWAYS_ALLOW. For more details refer to %s",
+						PlacesMonitorConstants.DocLinks.SET_LOCATION_PERMISSION);
 				return;
 			}
 		}
@@ -215,7 +216,8 @@ class PlacesLocationManager {
 	void updateLocation() {
 		if (!hasMonitoringStarted) {
 			Log.debug(PlacesMonitorConstants.LOG_TAG,
-					  "Location updates are stopped or never started. Please start monitoring to get the location update");
+					  "Location updates are stopped or never started. Please start monitoring to get the location update. For more details refer to %s",
+					PlacesMonitorConstants.DocLinks.START_MONITOR);
 			return;
 		}
 
