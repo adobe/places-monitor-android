@@ -482,7 +482,8 @@ class PlacesMonitorInternal extends Extension {
 	private void setLocationPermission(final Map<String, Object> eventData) {
 		if (eventData == null || eventData.isEmpty()) {
 			Log.warning(PlacesMonitorConstants.LOG_TAG,
-						"Invalid location permission value set. Ignoring setLocationPermission API call");
+						"Invalid location permission value set. Ignoring setLocationPermission API call. For more details refer to %s",
+					PlacesMonitorConstants.DocLinks.SET_LOCATION_PERMISSION);
 			return;
 		}
 

@@ -22,7 +22,7 @@ final class PlacesMonitorConstants {
 	static final String LOG_TAG = PlacesMonitor.class.getSimpleName();
 	static final String EXTENSION_NAME = "com.adobe.placesMonitor";
 
-	static final String EXTENSION_VERSION = "2.2.0";
+	static final String EXTENSION_VERSION = "2.2.1";
 
 	// event names for places monitor request content
 	static final String EVENTNAME_START = "start monitoring";
@@ -104,6 +104,12 @@ final class PlacesMonitorConstants {
 		static final String LOCATION_PERMISSION_KEY = "adb_locationPermission";
 		private SharedPreference() {
 		}
+	}
+
+	static final class DocLinks {
+		static final String REGISTER_PLACES_MONITOR = "https://docs.adobe.com/content/help/en/places/using/places-ext-aep-sdks/places-monitor-extension/places-monitor-api-reference.html#registerextension-android";
+		static final String SET_LOCATION_PERMISSION = "https://docs.adobe.com/help/en/places/using/configure-places-with-sdk/places-monitor-extension/places-monitor-api-reference.html#setlocationpermission-android";
+		static final String START_MONITOR = "https://docs.adobe.com/help/en/places/using/configure-places-with-sdk/places-monitor-extension/places-monitor-api-reference.html#start-android";
 	}
 	
 	private PlacesMonitorConstants() {
