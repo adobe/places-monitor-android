@@ -22,7 +22,7 @@ The Places Monitor for Android is used to manage the integration between Android
 
 Integrate the Places Monitor into your app by including the following in your gradle file's `dependencies`:
 
-```implementation 'com.adobe.marketing.mobile:places-monitor:1.+'```
+```implementation 'com.adobe.marketing.mobile:places-monitor:2.+'```
 
 <!--
 [![CircleCI](https://img.shields.io/circleci/project/github/adobe/places-monitor-android/master.svg?logo=circleci)](https://circleci.com/gh/adobe/workflows/places-monitor-android)
