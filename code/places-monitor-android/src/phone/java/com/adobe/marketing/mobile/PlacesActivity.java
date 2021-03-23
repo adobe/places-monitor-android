@@ -17,6 +17,7 @@ package com.adobe.marketing.mobile;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -218,8 +219,13 @@ public class PlacesActivity extends Activity {
 		if (shouldProvideRationale) {
 			onShowRationale(locationPermission);
 		} else {
-			ActivityCompat.requestPermissions(this, getPermissionArray(locationPermission),
-											  PlacesMonitorConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE);
+			try {
+				ActivityCompat.requestPermissions(this, getPermissionArray(locationPermission),
+						PlacesMonitorConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE);
+			} catch (ActivityNotFoundException exception) {
+				Log.warning(PlacesMonitorConstants.LOG_TAG, "Unable to find System Activity to hand request permission activity dialog. Hence Places Monitor cannot request for location permission.");
+			}
+
 		}
 	}
 
@@ -397,7 +403,4 @@ public class PlacesActivity extends Activity {
 		editor.putBoolean(PlacesMonitorConstants.SharedPreference.HAS_LOCATION_DIALOG_PROMPTED, isPrompted);
 		editor.apply();
 	}
-
-
 }
-
