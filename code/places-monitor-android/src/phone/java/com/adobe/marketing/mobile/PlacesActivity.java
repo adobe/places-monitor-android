@@ -223,7 +223,7 @@ public class PlacesActivity extends Activity {
 				ActivityCompat.requestPermissions(this, getPermissionArray(locationPermission),
 						PlacesMonitorConstants.MONITOR_LOCATION_PERMISSION_REQUEST_CODE);
 			} catch (ActivityNotFoundException exception) {
-				Log.warning(PlacesMonitorConstants.LOG_TAG, "Unable to find System Activity to hand request permission activity dialog. Hence Places Monitor cannot request for location permission.");
+				Log.warning(PlacesMonitorConstants.LOG_TAG, "Unable to find System Activity to handle request permission activity dialog. Hence Places Monitor cannot request for location permission.");
 			}
 
 		}
