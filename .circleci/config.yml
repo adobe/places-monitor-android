@@ -9,7 +9,7 @@ workflows:
       - build-and-test
 
 jobs:
-  build:
+  build-and-test:
     working_directory: ~/code
     docker:
       - image: circleci/android:api-29
@@ -32,14 +32,3 @@ jobs:
            path: ci/unit-test/build/reports
       - store_test_results:
            path: ci/unit-test/build/test-results
-  test:
-    working_directory: ~/code
-    docker:
-      - image: circleci/android:api-29
-    environment:
-      JVM_OPTS: -Xmx3200m
-    steps:
-      - checkout
-      - run:
-          name: UnitTests
-          command: code/gradlew -p code/places-monitor-android platformUnitTestJacocoReport
