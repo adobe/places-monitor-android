@@ -21,7 +21,7 @@ final class PlacesMonitorTestConstants {
 
 	static final String EXTENSION_NAME = "com.adobe.placesMonitor";
 
-	static final String EXTENSION_VERSION = "2.2.1";
+	static final String EXTENSION_VERSION = "2.2.2";
 
 	// event names for places monitor request content
 	static final String EVENTNAME_START = "start monitoring";
