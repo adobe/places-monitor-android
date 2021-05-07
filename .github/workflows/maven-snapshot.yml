@@ -1,4 +1,4 @@
-name: Publish package to the Maven Central Repository
+name: Publish package to the Maven snapshot sonatype
 on: workflow_dispatch
 
 jobs:
@@ -31,4 +31,3 @@ jobs:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
           GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
-          
