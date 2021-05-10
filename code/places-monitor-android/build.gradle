@@ -27,20 +27,11 @@ android {
 
     }
 
-    flavorDimensions "target", "coreImplementation"
+    flavorDimensions "target"
     productFlavors {
-        coreBundle {
-            dimension "coreImplementation"
-        }
-
         phone {
             dimension "target"
         }
-
-        watch {
-            dimension "target"
-        }
-
     }
 
     buildTypes {
@@ -59,6 +50,10 @@ android {
         unitTests.returnDefaultValues = true
     }
 
+    lintOptions {
+        abortOnError false
+    }
+
     compileOptions {
         sourceCompatibility rootProject.ext.sourceCompatibility
         targetCompatibility rootProject.ext.targetCompatibility
@@ -68,8 +63,7 @@ android {
 
 android.libraryVariants.all { variant ->
     tasks.withType(Javadoc) {
-        source = [android.sourceSets.main.java.sourceFiles, android.sourceSets.phone.java.sourceFiles,
-                  android.sourceSets.coreBundle.java.sourceFiles]
+        source = [android.sourceSets.main.java.sourceFiles, android.sourceSets.phone.java.sourceFiles]
         ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
 
         doFirst{classpath = files(variant.javaCompile.classpath.files) + files(ext.androidJar)}
@@ -110,23 +104,21 @@ tasks.withType(Test) {
     }
 }
 
-task platformUnitTestJacocoReport(type: JacocoReport, dependsOn: "testPhoneCoreBundleDebugUnitTest") {
-    sourceDirectories = files(android.sourceSets.main.java.sourceFiles)
-    sourceDirectories += files(android.sourceSets.coreBundle.java.sourceFiles)
-    sourceDirectories += files(android.sourceSets.phone.java.sourceFiles)
-    executionData "$buildDir/jacoco/testPhoneCoreBundleDebugUnitTest.exec"
-    classDirectories = fileTree(dir: "$buildDir/intermediates/classes/phoneCoreBundle/debug/com/adobe/marketing/mobile")
-}
+task platformUnitTestJacocoReport(type: JacocoReport, dependsOn: "testPhoneDebugUnitTest") {
+    def excludeRegex = ['**/ADB*.class']
+    def debugTree = fileTree(dir: "${project.buildDir}/intermediates/javac/phoneDebug/classes/com/adobe/marketing/mobile", excludes: excludeRegex)
 
-tasks.withType(Test) {
-    jacoco {
-        append = true
-        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
-        includeNoLocationClasses = false
-        includes = ['*/phone/java/com/adobe/marketing/mobile/*.java']
+    additionalClassDirs.setFrom files([debugTree])
+    additionalSourceDirs.setFrom files(android.sourceSets.main.java.sourceFiles)
+    sourceDirectories.setFrom files(android.sourceSets.phone.java.sourceFiles)
+    executionData "$buildDir/jacoco/testPhoneDebugUnitTest.exec"
+
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.enabled true
     }
 }
-
 
 publishing {
     publications {
@@ -217,7 +209,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }
-
 
 configurations.all {
     resolutionStrategy {
