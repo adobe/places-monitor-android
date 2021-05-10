@@ -1,6 +1,7 @@
 apply plugin: "com.android.library"
 apply plugin: "jacoco"
-apply plugin: "com.jfrog.bintray"
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
 ext {
     srcFolders = file("./").listFiles().findAll {
@@ -9,9 +10,8 @@ ext {
 
 }
 
-repositories {
-    google()
-    jcenter()
+jacoco {
+    toolVersion = rootProject.ext.jacocoVersion
 }
 
 android {
@@ -27,20 +27,11 @@ android {
 
     }
 
-    flavorDimensions "target", "coreImplementation"
+    flavorDimensions "target"
     productFlavors {
-        coreBundle {
-            dimension "coreImplementation"
-        }
-
         phone {
             dimension "target"
         }
-
-        watch {
-            dimension "target"
-        }
-
     }
 
     buildTypes {
@@ -59,6 +50,10 @@ android {
         unitTests.returnDefaultValues = true
     }
 
+    lintOptions {
+        abortOnError false
+    }
+
     compileOptions {
         sourceCompatibility rootProject.ext.sourceCompatibility
         targetCompatibility rootProject.ext.targetCompatibility
@@ -66,48 +61,9 @@ android {
 
 }
 
-dependencies {
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation 'com.adobe.marketing.mobile:sdk-core:1.2.2'
-    implementation 'com.adobe.marketing.mobile:places:1.4.0'
-    implementation 'com.google.android.gms:play-services-location:16.0.0'
-    testImplementation 'junit:junit:4.12'
-    testImplementation "org.mockito:mockito-core:${rootProject.ext.mockitoCoreVersion}"
-    testImplementation 'org.powermock:powermock-api-mockito2:2.0.0'
-    testImplementation 'org.powermock:powermock-module-junit4:2.0.0'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-}
-
-tasks.withType(Test) {
-    testLogging {
-        exceptionFormat "full"
-        events "started", "skipped", "passed", "failed"
-        showStandardStreams true
-    }
-}
-
-task platformUnitTestJacocoReport(type: JacocoReport, dependsOn: "testPhoneCoreBundleDebugUnitTest") {
-    sourceDirectories = files(android.sourceSets.main.java.sourceFiles)
-    sourceDirectories += files(android.sourceSets.coreBundle.java.sourceFiles)
-    sourceDirectories += files(android.sourceSets.phone.java.sourceFiles)
-    executionData "$buildDir/jacoco/testPhoneCoreBundleDebugUnitTest.exec"
-    classDirectories = fileTree(dir: "$buildDir/intermediates/classes/phoneCoreBundle/debug/com/adobe/marketing/mobile")
-}
-
-tasks.withType(Test) {
-    jacoco {
-        append = true
-        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
-        includeNoLocationClasses = false
-        includes = ['*/phone/java/com/adobe/marketing/mobile/*.java']
-    }
-}
-
 android.libraryVariants.all { variant ->
     tasks.withType(Javadoc) {
-        source = [android.sourceSets.main.java.sourceFiles, android.sourceSets.phone.java.sourceFiles,
-                  android.sourceSets.coreBundle.java.sourceFiles]
+        source = [android.sourceSets.main.java.sourceFiles, android.sourceSets.phone.java.sourceFiles]
         ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
 
         doFirst{classpath = files(variant.javaCompile.classpath.files) + files(ext.androidJar)}
@@ -119,7 +75,6 @@ android.libraryVariants.all { variant ->
             links "https://developer.android.com/reference"
         }
     }
-
 }
 
 task javadocInternal(type: Javadoc) {
@@ -137,145 +92,123 @@ task javadocPublish(type: Jar) {
     classifier = 'javadoc'
 }
 
+def isReleaseBuild() {
+    return hasProperty('release')
+}
 
-artifactoryPublish.dependsOn('assemblePhone')
+version = isReleaseBuild() ? rootProject.moduleVersion : rootProject.moduleVersion+"-SNAPSHOT"
+
+tasks.withType(Test) {
+    testLogging {
+        showStandardStreams = true
+    }
+}
+
+task platformUnitTestJacocoReport(type: JacocoReport, dependsOn: "testPhoneDebugUnitTest") {
+    def excludeRegex = ['**/ADB*.class']
+    def debugTree = fileTree(dir: "${project.buildDir}/intermediates/javac/phoneDebug/classes/com/adobe/marketing/mobile", excludes: excludeRegex)
+
+    additionalClassDirs.setFrom files([debugTree])
+    additionalSourceDirs.setFrom files(android.sourceSets.main.java.sourceFiles)
+    sourceDirectories.setFrom files(android.sourceSets.phone.java.sourceFiles)
+    executionData "$buildDir/jacoco/testPhoneDebugUnitTest.exec"
+
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.enabled true
+    }
+}
+
 publishing {
     publications {
-        aar(MavenPublication) {
+        release(MavenPublication) {
             groupId = 'com.adobe.marketing.mobile'
             artifactId = rootProject.moduleName
-            version = rootProject.moduleVersion
-            artifact("$buildDir/outputs/aar/${moduleAARName}")
+            version = version
+            artifact("$buildDir/outputs/aar/${rootProject.moduleAARName}")
             artifact javadocPublish
-            pom.withXml {
-                asNode().appendNode('name', mavenRepoName)
-                asNode().appendNode('description', mavenRepoDescription)
-                asNode().appendNode('url', 'https://mobilemarketing.adobe.com/')
-                def scmNode = asNode().appendNode('scm')
-                scmNode.appendNode('url', 'https://github.com/Adobe-Marketing-Cloud/mobile-services')
 
+            pom {
+                name = mavenRepoName
+                description = mavenRepoDescription
+                url = 'https://aep-sdks.gitbook.io'
+                licenses {
+                    license {
+                        name = 'Adobe Proprietary'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'adobe'
+                        name = 'adobe'
+                        email = 'adobe-mobile-testing@adobe.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:github.com//Adobe-Marketing-Cloud/acp-sdks.git'
+                    developerConnection = 'scm:git:ssh://github.com//Adobe-Marketing-Cloud/acp-sdks.git'
+                    url = 'https://github.com/Adobe-Marketing-Cloud/acp-sdks'
+                }
+                withXml {
+                    def dependenciesNode = asNode().appendNode('dependencies')
 
-                def developersNode = asNode().appendNode('developers')
-                def developerNode = developersNode.appendNode('developer')
-                developerNode.appendNode('id', 'adobe')
-                developerNode.appendNode('name', 'adobe')
+                    def coreDependencyNode = dependenciesNode.appendNode('dependency')
+                    coreDependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
+                    coreDependencyNode.appendNode('artifactId', 'core')
+                    coreDependencyNode.appendNode('version', mavenCoreVersion)
 
-                def licensesNode = asNode().appendNode('licenses')
-                def licenseNode = licensesNode.appendNode('license')
-                licenseNode.appendNode('name', 'Adobe Proprietary')
+                    def placesDependencyNode = dependenciesNode.appendNode('dependency')
+                    placesDependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
+                    placesDependencyNode.appendNode('artifactId', 'places')
+                    placesDependencyNode.appendNode('version', mavenPlacesVersion)
 
-                def dependenciesNode = asNode().appendNode('dependencies')
-
-                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
-
-                def coreDependencyNode = dependenciesNode.appendNode('dependency')
-                coreDependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
-                coreDependencyNode.appendNode('artifactId', 'core')
-                coreDependencyNode.appendNode('version', mavenCoreVersion)
-
-                def placesDependencyNode = dependenciesNode.appendNode('dependency')
-                placesDependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
-                placesDependencyNode.appendNode('artifactId', 'places')
-                placesDependencyNode.appendNode('version', mavenPlacesVersion)
-
-
-                def googleLocationServiceDependencyNode = dependenciesNode.appendNode('dependency')
-                googleLocationServiceDependencyNode.appendNode('groupId', 'com.google.android.gms')
-                googleLocationServiceDependencyNode.appendNode('artifactId', 'play-services-location')
-                googleLocationServiceDependencyNode.appendNode('version', mavenGoogleLocationServiceVersion)
+                    def googleLocationServiceDependencyNode = dependenciesNode.appendNode('dependency')
+                    googleLocationServiceDependencyNode.appendNode('groupId', 'com.google.android.gms')
+                    googleLocationServiceDependencyNode.appendNode('artifactId', 'play-services-location')
+                    googleLocationServiceDependencyNode.appendNode('version', mavenGoogleLocationServiceVersion)
+                }
             }
         }
-        aarSnapshot(MavenPublication) {
-            groupId = 'com.adobe.marketing.mobile'
-            artifactId = rootProject.moduleName
-            if (project.hasProperty("isMaster")) {
-                version = rootProject.moduleVersion + '-internal'
-            } else {
-                version = rootProject.moduleVersion + '-SNAPSHOT'
-            }
-            artifact("$buildDir/outputs/aar/${moduleAARName}")
-            artifact javadocPublish
-            pom.withXml {
-                asNode().appendNode('name', mavenRepoName)
-                asNode().appendNode('description', mavenRepoDescription)
-                asNode().appendNode('url', 'https://mobilemarketing.adobe.com/')
-                def scmNode = asNode().appendNode('scm')
-                scmNode.appendNode('url', 'https://github.com/Adobe-Marketing-Cloud/mobile-services')
-
-
-                def developersNode = asNode().appendNode('developers')
-                def developerNode = developersNode.appendNode('developer')
-                developerNode.appendNode('id', 'adobe')
-                developerNode.appendNode('name', 'adobe')
-
-                def licensesNode = asNode().appendNode('licenses')
-                def licenseNode = licensesNode.appendNode('license')
-                licenseNode.appendNode('name', 'Adobe Proprietary')
-
-                def dependenciesNode = asNode().appendNode('dependencies')
-
-                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
-
-                def coreDependencyNode = dependenciesNode.appendNode('dependency')
-                coreDependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
-                coreDependencyNode.appendNode('artifactId', 'core')
-                coreDependencyNode.appendNode('version', mavenCoreVersion)
-
-
-                def placesDependencyNode = dependenciesNode.appendNode('dependency')
-                placesDependencyNode.appendNode('groupId', 'com.adobe.marketing.mobile')
-                placesDependencyNode.appendNode('artifactId', 'places')
-                placesDependencyNode.appendNode('version', mavenPlacesVersion)
-
-
-                def googleLocationServiceDependencyNode = dependenciesNode.appendNode('dependency')
-                googleLocationServiceDependencyNode.appendNode('groupId', 'com.google.android.gms')
-                googleLocationServiceDependencyNode.appendNode('artifactId', 'play-services-location')
-                googleLocationServiceDependencyNode.appendNode('version', mavenGoogleLocationServiceVersion)
+    }
+    repositories {
+        maven {
+            name = "sonatype"
+            url = version.endsWith('SNAPSHOT') ? "https://oss.sonatype.org/content/repositories/snapshots/" : "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            credentials {
+                username = System.getenv("SONATYPE_USERNAME")
+                password = System.getenv("SONATYPE_PASSWORD")
             }
         }
     }
 }
 
+ext."signing.gnupg.executable"="gpg"
+ext."signing.gnupg.keyName"=System.getenv("GPG_KEY_ID")
+ext."signing.gnupg.passphrase"=System.getenv("GPG_PASSPHRASE")
 
-artifactoryPublish {
-    publications(publishing.publications.aarSnapshot)
-}
-
-bintray {
-    user = 'sdkci'
-    //This apiKey is passed as a gradle parameter to the task
-    //from the Jenkins Pipeline.
-    if (project.hasProperty("apiKey")) {
-        key = "$apiKey"
-    } else {
-        key = "xxxxxxxxxxxxxxx"
-    }
-
-    String gpgpass = "xxxxxxxxxxxxxxx"
-    if (project.hasProperty("gpgPassphrase")) {
-        gpgpass = "$gpgPassphrase"
-}
-    dryRun = false
-    pkg {
-        repo = "mobileservicesdk"
-        name = mavenRepoName
-        userOrg = "eaps"
-        version {
-            name = rootProject.moduleVersion
-            desc = mavenRepoDescription
-            gpg {
-                sign = true
-                passphrase = gpgpass
-            }
+signing {
+    useGpgCmd()
+    required {
+        tasks.withType(PublishToMavenRepository).find {
+            gradle.taskGraph.hasTask it
         }
     }
-
-    publications = ['aar']
+    sign publishing.publications
 }
 
-bintrayUpload.dependsOn('assemblePhone')
-
+dependencies {
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.adobe.marketing.mobile:sdk-core:1.2.2'
+    implementation 'com.adobe.marketing.mobile:places:1.4.0'
+    implementation 'com.google.android.gms:play-services-location:16.0.0'
+    testImplementation 'junit:junit:4.12'
+    testImplementation "org.mockito:mockito-core:${rootProject.ext.mockitoCoreVersion}"
+    testImplementation 'org.powermock:powermock-api-mockito2:2.0.0'
+    testImplementation 'org.powermock:powermock-module-junit4:2.0.0'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+}
 
 configurations.all {
     resolutionStrategy {
