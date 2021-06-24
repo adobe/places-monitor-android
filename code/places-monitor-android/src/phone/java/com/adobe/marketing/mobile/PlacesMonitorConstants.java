@@ -111,7 +111,7 @@ final class PlacesMonitorConstants {
 		static final String SET_LOCATION_PERMISSION = "https://docs.adobe.com/help/en/places/using/configure-places-with-sdk/places-monitor-extension/places-monitor-api-reference.html#setlocationpermission-android";
 		static final String START_MONITOR = "https://docs.adobe.com/help/en/places/using/configure-places-with-sdk/places-monitor-extension/places-monitor-api-reference.html#start-android";
 	}
-	
+
 	private PlacesMonitorConstants() {
 	}
 }
