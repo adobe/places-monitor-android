@@ -1,3 +1,9 @@
+### 2.2.3 (24 Jun, 2021)
+- Updating README.md with notice of deprecation on August 31, 2021.
+
+### 2.2.2 (10 May, 2021)
+- Fixed a crash that was caused when application did not find the required activity for requesting location permission.
+
 ### 2.2.1 (6 May, 2020)
 - Improvements to logging.
 
