@@ -16,7 +16,8 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name="com.adobe.marketing.mobile.PlacesMonitorOnBootReceiver">
+        <receiver android:name="com.adobe.marketing.mobile.PlacesMonitorOnBootReceiver"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
