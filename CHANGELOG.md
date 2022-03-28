@@ -1,5 +1,8 @@
 # Android PlaceMonitor change log
 
+#### 2.2.3 (28 Mar, 2022)
+- Fixed an error for app's targeting Android 12 that requires `android:exported` to be added for each broadcast receivers in Manifest file.
+
 #### 2.2.2 (10 May, 2021)
 - Fixed a crash that was caused when application did not find the required activity for requesting location permission.
 
