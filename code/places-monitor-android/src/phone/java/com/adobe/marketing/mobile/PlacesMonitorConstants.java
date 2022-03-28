@@ -22,7 +22,7 @@ final class PlacesMonitorConstants {
 	static final String LOG_TAG = PlacesMonitor.class.getSimpleName();
 	static final String EXTENSION_NAME = "com.adobe.placesMonitor";
 
-	static final String EXTENSION_VERSION = "2.2.2";
+	static final String EXTENSION_VERSION = "2.2.3";
 
 	// event names for places monitor request content
 	static final String EVENTNAME_START = "start monitoring";
